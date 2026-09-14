@@ -29,17 +29,19 @@
 
 ## Đang vướng
 
-1. **Khoá Gemini bị chính code của mình chặn.** Không phải lỗi HTTP referrer như
-   đoán lúc đầu. Đo ngày 14/09: khoá trên Netlify (context Production) dài 53 ký tự,
-   bắt đầu `AQ.` — đây là **định dạng khoá mới** Google AI Studio đang phát hành thay
-   cho `AIza` cũ. Nhưng `chat.mjs` có dòng kiểm tra `/^AIza[\w-]{30,}$/` nên chặn ngay
-   tại chỗ, chưa từng gọi tới Google lần nào.
-   → Sửa dòng kiểm tra đó để nhận cả `AQ.`, rồi thử lại trên nhánh dev.
+1. **Khoá Gemini — đã sửa phần code, còn chờ thử bằng khoá thật.**
+   Nguyên nhân không phải HTTP referrer như đoán lúc đầu. Khoá trên Netlify
+   (context Production) dài 53 ký tự, bắt đầu `AQ.` — **định dạng mới** Google AI Studio
+   đang phát hành thay cho `AIza`. Dòng `/^AIza[\w-]{30,}$/` trong `chat.mjs` chặn thẳng,
+   nên khoá chưa từng được gửi tới Google lần nào.
+   Đã sửa: nhận cả `AIza` lẫn `AQ`, và nếu khoá `AQ` bị 401/403 thì thử lại một lần
+   kiểu `Authorization: Bearer`. Thử dưới máy đủ 5 trường hợp, không văng lỗi.
+   → Còn phải thử bằng khoá thật trên bản dev mới biết chắc.
 
-2. **Context "Branch deploys" chưa có khoá riêng.** Netlify → Environment variables:
+2. **Context "Branch deploys" chưa có khoá.** Netlify → Environment variables:
    `GEMINI_API_KEY` mới chỉ có giá trị ở Production, các context khác ghi Empty.
-   Bản dev đang nhận một giá trị khác (JWT 366 ký tự, bắt đầu `eyJh` — không phải
-   khoá Gemini). Cần đặt khoá cho context Branch deploys thì chat trên bản dev mới chạy.
+   Bản dev đang nhận một JWT 366 ký tự (không phải khoá Gemini) nên chat báo dán nhầm.
+   Cần đặt khoá cho context **Branch deploys** thì chat trên bản dev mới chạy được.
    *(Việc nhập khoá do chủ dự án tự làm.)*
 
 ## Còn thiếu để chạy thật
