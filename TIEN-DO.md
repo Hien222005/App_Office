@@ -1,7 +1,7 @@
 # Văn Phòng Agent — tiến độ
 
 > Đọc file này + `README.md` là nắm đủ để làm tiếp, kể cả sau khi `/clear`.
-> Cập nhật: 13/09/2026
+> Cập nhật: 14/09/2026
 
 ## Link
 
@@ -54,15 +54,40 @@
   (WebKit cold start trả 0). Người dùng chỉnh tay được qua nút ổ khoá, lưu localStorage.
 - `body{position:fixed}` + `.device{height:100%}`, KHÔNG dùng `100dvh` cho container.
 
-## Quy trình deploy
+## Quy trình thử và deploy
+
+> **Credit Netlify**: gói Free 300 credit/tháng, reset đầu chu kỳ, không mua thêm được.
+> Mỗi lần **deploy production tốn 15 credit** — hết sạch thì Netlify **tạm dừng cả site**.
+> Deploy preview và branch deploy **tốn 0 credit**. Vì vậy: thử ở nhánh `dev`,
+> chỉ merge vào `main` khi đã ưng.
+
+**Bước 1 — thử tại chỗ (0 credit).** Nhanh nhất, sửa thấy ngay:
 
 ```bash
 cd ~/Documents/Công\ việc/agent-app
-D=/tmp/vp && rm -rf $D && mkdir -p $D/site/netlify/functions
-cp app.html $D/site/index.html && cp netlify.toml $D/site/
-cp netlify/functions/chat.mjs $D/site/netlify/functions/
-cd $D && zip -qr vanphong.zip site
-# rồi kéo thả vanphong.zip vào Netlify → Deploys
+node dev-server.mjs
 ```
-Sau mỗi lần deploy, trên iPhone phải **xoá icon cũ + xoá dữ liệu trang web trong
-Cài đặt → Safari → Nâng cao**, rồi Thêm vào MH chính lại. iOS cache web app rất dai.
+Mac mở `http://localhost:8888`, iPhone mở `http://<IP-Mac>:8888` cùng Wi-Fi
+(địa chỉ in ra lúc chạy). Chạy cả `/api/chat`. Khoá Gemini để ở `.env` gốc dự án.
+Hạn chế: iPhone qua `http://` thì phần **nói** không chạy (Safari đòi https),
+phần đọc to vẫn chạy.
+
+**Bước 2 — bản preview https trên điện thoại (0 credit).** Dùng khi cần thử
+giọng nói, PWA, thêm vào màn hình chính:
+
+```bash
+git add -A && git commit -m "..." && git push origin dev
+```
+Netlify tự dựng `https://dev--courageous-sprite-17c1ff.netlify.app`.
+Địa chỉ này cố định, thêm vào MH chính iPhone một lần là xong.
+Cần bật một lần: Netlify → Project configuration → Build & deploy →
+Branches and deploy contexts → thêm `dev` vào branch deploys.
+
+**Bước 3 — lên thật (15 credit).** Chỉ khi bản dev đã chạy đúng:
+
+```bash
+git checkout main && git merge dev && git push origin main
+```
+
+Sau mỗi lần deploy production, trên iPhone phải **xoá icon cũ + xoá dữ liệu trang web
+trong Cài đặt → Safari → Nâng cao**, rồi Thêm vào MH chính lại. iOS cache web app rất dai.
