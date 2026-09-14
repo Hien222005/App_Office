@@ -30,11 +30,17 @@ export default async (req) => {
   // .trim() vì dán vào ô web rất hay lẫn dấu cách hoặc ký tự xuống dòng ở cuối
   const KEY = (process.env.GEMINI_API_KEY || '').trim();
   if (!KEY) return json({ loi: 'Máy chủ chưa có GEMINI_API_KEY' }, 500);
-  if (!/^AIza[\w-]{30,}$/.test(KEY)) {
+  // Google đang phát hành hai định dạng: "AIza..." (cũ, 39 ký tự) và "AQ..." (mới,
+  // dài hơn). Nhận cả hai. Chỗ này chỉ để bắt lỗi dán nhầm — đúng sai thật thì
+  // để Google trả lời, đừng tự chặn khoá hợp lệ.
+  if (!/^(AIza[\w-]{30,}|AQ[\w.-]{20,})$/.test(KEY)) {
     return json({ loi:
-      `Khoá trên Netlify không đúng dạng khoá Gemini (dài ${KEY.length} ký tự, ` +
-      `bắt đầu bằng "${KEY.slice(0, 4)}"). Khoá đúng bắt đầu bằng AIza và dài khoảng 39 ký tự. ` +
-      `Vào aistudio.google.com/apikey tạo khoá mới rồi dán lại.` }, 500);
+      (KEY.startsWith('eyJ')
+        ? 'GEMINI_API_KEY đang chứa một khoá JWT — nhiều khả năng dán nhầm khoá Supabase. '
+        : `GEMINI_API_KEY không đúng dạng khoá Gemini (dài ${KEY.length} ký tự, ` +
+          `bắt đầu bằng "${KEY.slice(0, 4)}"). `) +
+      'Khoá Gemini bắt đầu bằng "AIza" hoặc "AQ". ' +
+      'Vào aistudio.google.com/apikey lấy khoá rồi dán lại.' }, 500);
   }
 
   let body;
@@ -55,19 +61,24 @@ export default async (req) => {
       `BỐI CẢNH HÔM NAY (JSON):\n${JSON.stringify(body.boi_canh ?? {})}\n\nCÂU HỎI: ${cuoi.parts[0].text}`;
   }
 
+  const DIA_CHI = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+  const THAN = JSON.stringify({
+    contents,
+    systemInstruction: { parts: [{ text: CHI_DAN }] },
+    generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
+  });
+  const goi = (xac_thuc) => fetch(DIA_CHI, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...xac_thuc },
+    body: THAN,
+  });
+
   try {
-    const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': KEY },
-        body: JSON.stringify({
-          contents,
-          systemInstruction: { parts: [{ text: CHI_DAN }] },
-          generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
-        }),
-      }
-    );
+    let r = await goi({ 'x-goog-api-key': KEY });
+    // Khoá "AQ..." là loại xác thực mới. Tài liệu Google vẫn bảo gửi qua
+    // x-goog-api-key nên thử cách chuẩn trước; bị chặn thì thử lại kiểu Bearer.
+    if ((r.status === 401 || r.status === 403) && KEY.startsWith('AQ'))
+      r = await goi({ Authorization: `Bearer ${KEY}` });
 
     const d = await r.json();
     if (!r.ok) {
