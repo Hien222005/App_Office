@@ -29,23 +29,25 @@
 
 ## Đang vướng
 
-1. **Khoá Gemini — đã sửa phần code, còn chờ thử bằng khoá thật.**
-   Nguyên nhân không phải HTTP referrer như đoán lúc đầu. Khoá trên Netlify
-   (context Production) dài 53 ký tự, bắt đầu `AQ.` — **định dạng mới** Google AI Studio
-   đang phát hành thay cho `AIza`. Dòng `/^AIza[\w-]{30,}$/` trong `chat.mjs` chặn thẳng,
-   nên khoá chưa từng được gửi tới Google lần nào.
-   Đã sửa: nhận cả `AIza` lẫn `AQ`, và nếu khoá `AQ` bị 401/403 thì thử lại một lần
-   kiểu `Authorization: Bearer`. Thử dưới máy đủ 5 trường hợp, không văng lỗi.
-   → Còn phải thử bằng khoá thật trên bản dev mới biết chắc.
+Không còn. Chat Gemini đã chạy thật trên bản dev ngày 14/09/2026.
+Xem mục dưới để biết việc còn lại.
 
-2. **Context "Branch deploys" chưa có khoá.** Netlify → Environment variables:
-   `GEMINI_API_KEY` mới chỉ có giá trị ở Production, các context khác ghi Empty.
-   Bản dev đang nhận một JWT 366 ký tự (không phải khoá Gemini) nên chat báo dán nhầm.
-   Cần đặt khoá cho context **Branch deploys** thì chat trên bản dev mới chạy được.
-   *(Việc nhập khoá do chủ dự án tự làm.)*
+**Ba lỗi chồng nhau đã gỡ xong, ghi lại để khỏi dò lại:**
+
+1. `chat.mjs` chặn khoá bằng `/^AIza[\w-]{30,}$/`, mà Google đã đổi sang cấp khoá
+   bắt đầu bằng `AQ.`. Khoá chưa từng được gửi đi lần nào — lỗi "API key not valid"
+   là do chính dòng này, **không phải HTTP referrer**. Đã nhận cả hai định dạng.
+2. Google ngừng cấp `gemini-2.5-flash` cho người dùng mới. Đổi mặc định sang
+   `gemini-3.6-flash` (đổi được qua biến `GEMINI_MODEL`).
+3. Gemini 3 mặc định nghĩ ở mức cao, và **phần nghĩ đếm chung vào `maxOutputTokens`**,
+   nên trần 600 bị ăn hết, câu trả lời đứt giữa chừng. Đã nới lên 2000 và đặt
+   `thinkingLevel: 'LOW'`.
 
 ## Còn thiếu để chạy thật
 
+- **Đưa bản sửa lên site thật.** `main` vẫn đang chạy code cũ nên chat trên
+  `courageous-sprite-17c1ff.netlify.app` vẫn hỏng. Merge `dev` vào `main` là xong,
+  tốn 15 credit.
 - **Link repo tài liệu Lab** → clone vào `agent-app/lab-repo/`
 - **Mục tiêu kcal/protein thật** — đang để tạm 2200/150.
   Sửa: `update muc_tieu set kcal_ngay=..., protein_ngay=... where id=1;`
