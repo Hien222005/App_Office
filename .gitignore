@@ -1,0 +1,13 @@
+# BÍ MẬT — không bao giờ commit
+agent/.env
+.env
+*.key
+
+# rác
+sao-luu/
+lab-repo/
+node_modules/
+.DS_Store
+*.bak
+*.zip
+/tmp/
