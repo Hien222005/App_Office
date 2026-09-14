@@ -62,10 +62,16 @@ export default async (req) => {
   }
 
   const DIA_CHI = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+  // Model Gemini 3 mặc định "nghĩ" ở mức cao, và phần nghĩ ĐẾM CHUNG vào
+  // maxOutputTokens — để 600 như cũ thì nghĩ hết sạch, câu trả lời bị cụt giữa chừng.
+  // Việc ở đây chỉ là tóm tắt và đếm số, không cần nghĩ sâu: hạ mức nghĩ, nới trần chữ.
+  const CAU_HINH = { temperature: 0.4, maxOutputTokens: 2000 };
+  if (/^gemini-3/.test(MODEL)) CAU_HINH.thinkingConfig = { thinkingLevel: 'LOW' };
+
   const THAN = JSON.stringify({
     contents,
     systemInstruction: { parts: [{ text: CHI_DAN }] },
-    generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
+    generationConfig: CAU_HINH,
   });
   const goi = (xac_thuc) => fetch(DIA_CHI, {
     method: 'POST',
@@ -97,7 +103,9 @@ export default async (req) => {
       return json({ loi: goc + them }, 502);
     }
     const text = d?.candidates?.[0]?.content?.parts?.map((p) => p.text).join('').trim();
-    if (!text) return json({ loi: 'Gemini không trả về nội dung' }, 502);
+    if (!text) return json({ loi: d?.candidates?.[0]?.finishReason === 'MAX_TOKENS'
+      ? 'Gemini nghĩ hết sạch hạn mức chữ nên không còn chỗ trả lời. Nới maxOutputTokens hoặc hạ thinkingLevel trong chat.mjs.'
+      : 'Gemini không trả về nội dung' }, 502);
     return json({ tra_loi: text });
   } catch (e) {
     return json({ loi: 'Không gọi được Gemini: ' + e.message }, 502);
