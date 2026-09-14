@@ -29,12 +29,18 @@
 
 ## Đang vướng
 
-1. **Khoá Gemini chưa chạy** — Google báo `API key not valid`.
-   Nhiều khả năng khoá bị giới hạn theo HTTP referrer nên gọi từ máy chủ bị chặn.
-   Cách nhanh: tạo khoá mới ở aistudio.google.com/apikey (mặc định không giới hạn),
-   dán vào Netlify → Environment variables → `GEMINI_API_KEY` (ô **Production**),
-   rồi **Trigger deploy → Clear cache and deploy**.
-   Model đặt qua biến `GEMINI_MODEL`, mặc định `gemini-2.5-flash`.
+1. **Khoá Gemini bị chính code của mình chặn.** Không phải lỗi HTTP referrer như
+   đoán lúc đầu. Đo ngày 14/09: khoá trên Netlify (context Production) dài 53 ký tự,
+   bắt đầu `AQ.` — đây là **định dạng khoá mới** Google AI Studio đang phát hành thay
+   cho `AIza` cũ. Nhưng `chat.mjs` có dòng kiểm tra `/^AIza[\w-]{30,}$/` nên chặn ngay
+   tại chỗ, chưa từng gọi tới Google lần nào.
+   → Sửa dòng kiểm tra đó để nhận cả `AQ.`, rồi thử lại trên nhánh dev.
+
+2. **Context "Branch deploys" chưa có khoá riêng.** Netlify → Environment variables:
+   `GEMINI_API_KEY` mới chỉ có giá trị ở Production, các context khác ghi Empty.
+   Bản dev đang nhận một giá trị khác (JWT 366 ký tự, bắt đầu `eyJh` — không phải
+   khoá Gemini). Cần đặt khoá cho context Branch deploys thì chat trên bản dev mới chạy.
+   *(Việc nhập khoá do chủ dự án tự làm.)*
 
 ## Còn thiếu để chạy thật
 
