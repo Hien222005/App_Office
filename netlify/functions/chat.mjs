@@ -2,9 +2,9 @@
 // xuống trình duyệt. Đặt biến GEMINI_API_KEY trong Netlify → Environment variables.
 
 // Đổi model không cần sửa code: đặt biến GEMINI_MODEL trên Netlify.
-// gemini-2.5-flash  → mặc định, hạn mức free rộng, đủ cho việc tóm tắt/thống kê
-// gemini-2.5-pro    → thông minh hơn nhưng hạn mức free rất thấp
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+// gemini-3.6-flash  → mặc định. Google đã ngừng cấp gemini-2.5-flash cho
+//                     người dùng mới (14/09/2026), chính Google chỉ sang bản này.
+const MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
 const CHI_DAN = `Bạn là trợ lý trong app "Văn Phòng Agent" của một người quản lý bốn mảng việc:
 Lab Coach (dạy lab), E-learning (sửa bug khoá học), Kinh doanh (Fitness Tracker), Dinh dưỡng.
