@@ -1,0 +1,149 @@
+/* NGUỒN DỮ LIỆU — app đọc ghi Supabase, hoặc chạy dữ liệu mẫu nếu chưa đăng nhập.
+ *
+ * Ba chế độ, app luôn nói rõ đang ở chế độ nào:
+ *   'mau'      — chưa có cấu hình, hoặc chưa đăng nhập → dùng dữ liệu mẫu trong bộ nhớ
+ *   'chua-doi' — đã đăng nhập nhưng database chưa chạy doi-2-workflow.sql (thiếu cột mới)
+ *   'that'     — đọc ghi thật
+ *
+ * Khoá anon là khoá công khai; RLS trong Supabase chỉ cho email chủ nhân đọc ghi.
+ */
+(() => {
+  const C = window.CAU_HINH || {};
+  const KHOA_PHIEN = 'vp_phien';
+  const NG = {
+    cheDo: C.url && C.anon ? 'chua-dang-nhap' : 'mau',
+    loi: null,
+    email: null,
+  };
+
+  const phiên = () => { try { return JSON.parse(localStorage.getItem(KHOA_PHIEN) || 'null'); } catch { return null; } };
+  const lưuPhiên = (p) => { try { localStorage.setItem(KHOA_PHIEN, JSON.stringify(p)); } catch {} };
+  const xoáPhiên = () => { try { localStorage.removeItem(KHOA_PHIEN); } catch {} };
+
+  async function gọi(đường, opt = {}, thửLại = true) {
+    const p = phiên();
+    const r = await fetch(`${C.url}${đường}`, {
+      ...opt,
+      headers: {
+        apikey: C.anon,
+        Authorization: `Bearer ${p?.access_token || C.anon}`,
+        'Content-Type': 'application/json',
+        ...opt.headers,
+      },
+    });
+    // Hết hạn thẻ vào cửa thì xin thẻ mới bằng refresh_token rồi gọi lại một lần.
+    if (r.status === 401 && p?.refresh_token && thửLại) {
+      const ok = await làmMớiPhiên(p.refresh_token);
+      if (ok) return gọi(đường, opt, false);
+    }
+    const text = await r.text();
+    if (!r.ok) {
+      const e = new Error(text.slice(0, 300));
+      e.status = r.status;
+      try { e.chiTiet = JSON.parse(text); } catch {}
+      throw e;
+    }
+    return text ? JSON.parse(text) : null;
+  }
+
+  async function làmMớiPhiên(refresh) {
+    try {
+      const r = await fetch(`${C.url}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { apikey: C.anon, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refresh }),
+      });
+      if (!r.ok) { xoáPhiên(); return false; }
+      const d = await r.json();
+      lưuPhiên(d);
+      return true;
+    } catch { return false; }
+  }
+
+  /* ── đăng nhập bằng magic link ────────────────────────────────────────── */
+  NG.guiLink = async (email) => {
+    await fetch(`${C.url}/auth/v1/otp`, {
+      method: 'POST',
+      headers: { apikey: C.anon, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, create_user: false, gotrue_meta_security: {} }),
+    }).then(async (r) => { if (!r.ok) throw new Error((await r.text()).slice(0, 200)); });
+  };
+
+  // Link trong email trả token về ở phần sau dấu # của địa chỉ.
+  NG.batTokenTuLink = () => {
+    const h = location.hash.slice(1);
+    if (!h.includes('access_token')) return false;
+    const q = new URLSearchParams(h);
+    lưuPhiên({ access_token: q.get('access_token'), refresh_token: q.get('refresh_token') });
+    history.replaceState(null, '', location.pathname);
+    return true;
+  };
+
+  NG.dangXuat = () => { xoáPhiên(); NG.cheDo = C.url && C.anon ? 'chua-dang-nhap' : 'mau'; };
+  NG.daDangNhap = () => !!phiên()?.access_token;
+
+  /* ── đọc ── */
+  const COT_MOI = ['han_chot', 'brief', 'link_san_pham', 'da_tu_kiem', 'so_lan_lam_lai'];
+
+  NG.tai = async () => {
+    if (!C.url || !C.anon) { NG.cheDo = 'mau'; return null; }
+    if (!NG.daDangNhap()) { NG.cheDo = 'chua-dang-nhap'; return null; }
+    try {
+      const [ai] = await Promise.all([gọi('/auth/v1/user')]);
+      NG.email = ai?.email ?? null;
+    } catch { NG.email = null; }
+
+    // Thử đọc kèm cột mới. Thiếu cột nghĩa là chưa chạy doi-2-workflow.sql.
+    try {
+      const việc = await gọi(`/rest/v1/tasks?select=*&order=ngay.asc,thu_tu.asc`);
+      const thiếu = việc.length ? COT_MOI.filter((c) => !(c in việc[0])) : [];
+      if (thiếu.length) { NG.cheDo = 'chua-doi'; NG.loi = `Database còn thiếu cột: ${thiếu.join(', ')}`; return null; }
+      const hỏi = await gọi(`/rest/v1/questions?select=*&order=tao_luc.desc&limit=20`);
+      NG.cheDo = 'that';
+      NG.loi = null;
+      return { viec: việc.map(doiSangApp), hoi: hỏi.filter((h) => !h.tra_loi).map(doiHoi)[0] ?? null };
+    } catch (e) {
+      NG.cheDo = 'chua-doi';
+      NG.loi = e.chiTiet?.message || e.message || 'không đọc được dữ liệu';
+      return null;
+    }
+  };
+
+  const gioNgan = (s) => (s ? new Date(s).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : '');
+
+  function doiSangApp(t) {
+    return {
+      id: t.id, mang: t.mang, ngay: t.ngay, tieu_de: t.tieu_de,
+      chi_tiet: t.chi_tiet || '', tieu_chi: t.tieu_chi_xong || '',
+      tt: t.trang_thai, tin: t.tin_cay || 0, phan_hoi: t.phan_hoi_cua_toi || '',
+      ket: t.ghi_chu_agent || '', link: t.link_san_pham || '', tu_kiem: t.da_tu_kiem || '',
+      han: t.han_chot ? gioNgan(t.han_chot) : 'chưa có hạn',
+      tre: !!t.han_chot && new Date(t.han_chot) < new Date() && !['da_ghi', 'bo'].includes(t.trang_thai),
+      lan: t.so_lan_lam_lai || 0,
+      nk: Array.isArray(t.cac_buoc) ? t.cac_buoc : [],
+    };
+  }
+  const doiHoi = (h) => ({ id: h.id, task_id: h.task_id, cau_hoi: h.cau_hoi, pa: h.phuong_an || [], tl: h.tra_loi ?? null, tuGo: '' });
+
+  /* ── ghi · chỉ những nhãn của sếp ─────────────────────────────────────── */
+  const NHAN_SEP = ['da_chot', 'bo', 'da_duyet_kq', 'lam_lai', 'can_sep_sua'];
+
+  NG.doiNhan = async (id, nhãn, thêm = {}) => {
+    if (!NHAN_SEP.includes(nhãn)) throw new Error(`Nhãn "${nhãn}" không phải của sếp`);
+    return gọi(`/rest/v1/tasks?id=eq.${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ trang_thai: nhãn, cap_nhat_luc: new Date().toISOString(), ...thêm }),
+    });
+  };
+
+  NG.traLoi = async (idHỏi, trảLời, tựGõ) => gọi(`/rest/v1/questions?id=eq.${encodeURIComponent(idHỏi)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ tra_loi: trảLời, tra_loi_tu_go: !!tựGõ, tra_loi_luc: new Date().toISOString() }),
+  });
+
+  // Chốt ngày: đánh dấu mọi việc đã duyệt là chờ ghi — phần ghi vào file gốc do lệnh `chot` trên Mac làm.
+  NG.chotNgay = async (ids) => Promise.all(ids.map((id) => NG.doiNhan(id, 'da_duyet_kq')));
+
+  window.NGUON = NG;
+})();

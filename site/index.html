@@ -8,6 +8,8 @@
 <title>Văn Phòng Agent</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="cau-hinh.js"></script>
+<script src="nguon.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
 
 <style>
@@ -406,6 +408,7 @@ const TAB=['office','phong','food','ketqua'];
 const SEED=()=>({
   man:'office',taskId:null,kieu:'kinh',locDe:null,mealId:null,dangChay:false,
   chatMo:false, chatBan:false, chatTin:[], chatNhap:'', nghe:false, doc:true, chinhBar:false,
+  nguon:'mau', dangTai:false, emailGui:'', dangNhapXong:false,
   tasks:[
     {id:'t-0147',mang:'elearn',ngay:'2026-09-18',han:'14:00 hôm nay',lan:0,
      tieu_de:'Fix bug #13 — khoảng cách câu hỏi khi xem lại quiz',
@@ -544,6 +547,14 @@ function go(man,opt={}){
 }
 
 /* ══════════ HÀNH ĐỘNG ══════════ */
+/* Ghi lên Supabase khi đang dùng dữ liệu thật. Lỗi thì trả nhãn về như cũ,
+   không để app hiện một đằng database một nẻo. */
+async function ghiNhanLenServer(t,nhãn,thêm){
+  if(S.nguon!=='that') return true;
+  try{ await NG().doiNhan(t.id,nhãn,thêm); return true; }
+  catch(e){ toast('Không ghi được lên server: '+e.message,true); return false; }
+}
+
 function duyetTask(id,tt,nhan){
   const t=S.tasks.find(x=>x.id===id); if(!t) return;
   if(tt==='lam_lai'){
@@ -551,20 +562,35 @@ function duyetTask(id,tt,nhan){
     if(t.tt==='can_sep_sua'){ toast('Việc này đang chờ bạn sửa, không trả lại được nữa',true); return; }
     t.lan=(t.lan||0)+1;
     // Chạm trần thì việc thuộc bạn: agent không chạm vào nữa.
-    if(t.lan>=TRAN_LAM_LAI){ t.tt='can_sep_sua'; toast(`Đã trả lại ${t.lan} lần · việc chuyển sang bạn tự sửa`,true); }
-    else { t.tt='lam_lai'; toast(`Trả lại lần ${t.lan}/${TRAN_LAM_LAI} · agent làm lại ở lệnh lam`); }
-  } else { t.tt=tt; toast(nhan); }
+    const nhãnMới = t.lan>=TRAN_LAM_LAI ? 'can_sep_sua' : 'lam_lai';
+    const cũ=t.tt; t.tt=nhãnMới;
+    ghiNhanLenServer(t,nhãnMới,{so_lan_lam_lai:t.lan,phan_hoi_cua_toi:t.phan_hoi||null})
+      .then(ok=>{ if(!ok){ t.tt=cũ; t.lan--; render(); } });
+    toast(nhãnMới==='can_sep_sua'
+      ? `Đã trả lại ${t.lan} lần · việc chuyển sang bạn tự sửa`
+      : `Trả lại lần ${t.lan}/${TRAN_LAM_LAI} · agent làm lại ở lệnh lam`, nhãnMới==='can_sep_sua');
+  } else {
+    const cũ=t.tt; t.tt=tt;
+    ghiNhanLenServer(t,tt,{phan_hoi_cua_toi:t.phan_hoi||null}).then(ok=>{ if(!ok){ t.tt=cũ; render(); } });
+    toast(nhan);
+  }
   go('phong');
 }
 function chotNgay(){
   if(!chotDuoc()){ toast('Còn việc chờ bạn, chưa chốt ngày được',true); return; }
   const n=S.tasks.filter(t=>t.tt==='da_duyet_kq');
+  if(S.nguon==='that'){
+    // App chỉ đánh dấu đã duyệt. Việc chép vào file gốc do lệnh `chot` trên Mac làm.
+    toast(`${n.length} việc đã duyệt · gõ /task chot trên Mac để ghi vào file gốc`);
+    return;
+  }
   n.forEach(t=>{t.tt='da_ghi'; t.nk.push('12:58 · ghi vào file gốc · kiểm mã băm đạt');});
   toast(`Đã ghi ${n.length} việc vào file gốc · phiên ngày đóng`);
   render();
 }
 function traLoi(pa,tuGo){
   S.hoi.tl=pa; S.hoi.tuGo=tuGo||'';
+  if(S.nguon==='that'&&S.hoi.id) NG().traLoi(S.hoi.id,pa,!!tuGo).catch(e=>toast('Không ghi được: '+e.message,true));
   const t=S.tasks.find(x=>x.id===S.hoi.task_id);
   if(t&&t.tt==='can_sep_duyet'){ t.tt='da_chot'; t.nk.push(`12:40 · bạn trả lời: ${pa}`); }
   toast('Đã trả lời: '+pa); render();
@@ -862,15 +888,16 @@ function manPhong(){
   };
   const dsPhong=k?khoi(k):['lab','elearn','biz'].map(khoi).join('');
   return {back:'office',
-    head:`<h1>${k?TEN[k]:'Việc'}</h1><span class="sub">${choSep()?choSep()+' chờ bạn':'đã xử lý hết'}</span>`,
-    body:`${k?'':bangTinhTrang()}
+    head:`<h1>${k?TEN[k]:'Việc'}</h1><span class="sub">${S.dangTai?'đang tải…':choSep()?choSep()+' chờ bạn':'đã xử lý hết'}</span>
+      ${S.nguon==='that'?`<button class="kh" data-tailai="1" aria-label="Tải lại">${sv('chay')}</button>`:''}`,
+    body:`${k?'':bangChoNguon()}${k?'':bangTinhTrang()}
       ${hoiCho?theHoi():''}
       ${!k&&ton.length?`<div class="grp" style="color:var(--bad)">Tồn từ hôm trước
         <span>${ton.length} việc</span></div>${ton.map(t=>theTask(t,true)).join('')}`:''}
       ${dsPhong}
       ${chotDuoc()?`<div class="btnrow" style="margin-top:auto;padding-top:6px">
         <button class="btn pri" data-chot="1">Chốt ngày · ghi ${choGhi()} việc vào file gốc</button></div>`
-        :choSep()?`<div class="fl" style="margin-top:auto"><div class="tx" style="font-size:13.5px;color:var(--mut)">
+        :choSep()?`<div class="fld" style="margin-top:auto"><div class="tx" style="font-size:13.5px;color:var(--mut)">
           Còn ${choSep()} việc chờ bạn. Duyệt hết mới chốt ngày được.</div></div>`:''}`};
 }
 function manTask(){
@@ -1181,6 +1208,45 @@ function datGlide(){
 }
 
 /* ══════════ RENDER ══════════ */
+/* ══════════ NGUỒN DỮ LIỆU ══════════ */
+const NG=()=>window.NGUON;
+
+function bangChoNguon(){
+  const n=NG(); if(!n) return '';
+  if(n.cheDo==='that') return '';
+  const T={
+    mau:['Dữ liệu mẫu','Chưa có khoá Supabase. Chạy <code>node tao-cau-hinh.mjs</code> rồi tải lại.'],
+    'chua-dang-nhap':['Dữ liệu mẫu','Chưa đăng nhập. Bấm nút dưới để nhận link vào email.'],
+    'chua-doi':['Dữ liệu mẫu','Database chưa chạy <code>doi-2-workflow.sql</code>. '+(n.loi||'')],
+  }[n.cheDo]||['Dữ liệu mẫu',''];
+  return `<div class="fld" style="border-color:var(--wait)"><div class="lb" style="color:var(--wait)">${T[0]}</div>
+    <div class="tx" style="font-size:13px">${T[1]}</div>
+    ${n.cheDo==='chua-dang-nhap'?`<div class="btnrow" style="margin-top:9px">
+      <button class="btn gh" data-dangnhap="1">Đăng nhập để dùng dữ liệu thật</button></div>`:''}</div>`;
+}
+
+function manDangNhap(){
+  return {back:'phong',head:`<h1>Đăng nhập</h1>`,
+    body:`<div class="fld"><div class="lb">Email chủ nhân</div>
+        <input id="fMail" type="email" inputmode="email" placeholder="ban@gmail.com" value="${S.emailGui||''}"></div>
+      <div class="fld"><div class="tx" style="font-size:13.5px;color:var(--mut)">
+        Supabase gửi một link vào email. Mở link trên chính điện thoại này là xong, không cần mật khẩu.
+        Chỉ email chủ nhân đọc được dữ liệu — các email khác bị RLS chặn.</div></div>
+      ${S.dangNhapXong?`<div class="fld okb"><div class="tx">Đã gửi link tới ${S.emailGui}. Mở email rồi bấm link.</div></div>`:''}
+      <div class="btnrow" style="margin-top:auto"><button class="btn pri" data-guilink="1">Gửi link vào email</button></div>`};
+}
+
+async function taiTuNguon(){
+  const n=NG(); if(!n) return;
+  S.dangTai=true; render();
+  try{
+    const d=await n.tai();
+    S.nguon=n.cheDo;
+    if(d){ S.tasks=d.viec; if(d.hoi) S.hoi=d.hoi; }
+  }catch(e){ toast('Không tải được dữ liệu: '+e.message,true); }
+  S.dangTai=false; render();
+}
+
 function render(){
   const dev=document.getElementById('dev');
   let m;
@@ -1188,6 +1254,7 @@ function render(){
   else if(S.man==='phong') m=manPhong();
   else if(S.man==='task') m=manTask();
   else if(S.man==='food') m=manFood();
+  else if(S.man==='dangnhap') m=manDangNhap();
   else if(S.man==='lab') m=manLab();
   else m=manKetQua();
   dev.innerHTML=`<div class="head">${m.back?`<button class="bk" data-go="${m.back}">${sv('back')}</button>`:''}${m.head}
@@ -1217,6 +1284,15 @@ document.getElementById('dev').addEventListener('click',e=>{
   if(cu){ const el=document.getElementById('kh-'+cu.dataset.cuon), b=document.querySelector('.body');
     if(el&&b) b.scrollTop=el.offsetTop-b.offsetTop-8; return;}
   if(e.target.closest('[data-chot]')){ chotNgay(); return;}
+  if(e.target.closest('[data-dangnhap]')){ go('dangnhap'); return;}
+  if(e.target.closest('[data-guilink]')){
+    const o=document.getElementById('fMail'), v=(o?.value||'').trim();
+    if(!/.+@.+\..+/.test(v)){ o?.focus(); toast('Gõ email chủ nhân vào ô này',true); return; }
+    S.emailGui=v;
+    NG()?.guiLink(v).then(()=>{ S.dangNhapXong=true; render(); toast('Đã gửi link vào email'); })
+      .catch(err=>toast('Không gửi được: '+err.message,true));
+    return;}
+  if(e.target.closest('[data-tailai]')){ taiTuNguon(); return;}
   const act=e.target.closest('[data-act]');
   if(act){luu();
     const NH={da_chot:'Đã chốt · agent làm ở lệnh lam',bo:'Đã bỏ việc này',
@@ -1352,6 +1428,12 @@ document.addEventListener('visibilitychange', () => {
 // lưới an toàn: iOS có thể tính xong rất muộn, nhất là khi mở từ màn hình chính
 [0, 120, 350, 800, 1600].forEach(t => setTimeout(doVungAnToan, t));
 
+(function nguonKhoiDong(){
+  const n=window.NGUON; if(!n) return;
+  if(n.batTokenTuLink&&n.batTokenTuLink()) toast('Đã đăng nhập');
+  S.nguon=n.cheDo;
+  if(n.daDangNhap&&n.daDangNhap()) taiTuNguon();
+})();
 (function apNgay(){
   const v = tayChinh();
   if(v !== null){ document.documentElement.style.setProperty('--sab', v+'px'); sabCu = v; }

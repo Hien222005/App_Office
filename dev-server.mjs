@@ -14,6 +14,7 @@
 // Netlify rồi mở bản preview https (xem TIEN-DO.md).
 
 import { createServer } from 'node:http';
+import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { networkInterfaces } from 'node:os';
 import { extname, join, normalize } from 'node:path';
@@ -24,6 +25,9 @@ const CONG = Number(process.env.PORT) || 8888;
 
 // Khoá Gemini: để trong .env ở gốc dự án (.gitignore đã chặn file này).
 try { process.loadEnvFile(join(GOC, '.env')); } catch { /* chưa có thì thôi */ }
+
+// Sinh site/cau-hinh.js từ agent/.env để app nối được Supabase khi thử tại chỗ.
+try { execFileSync('node', [join(GOC, 'tao-cau-hinh.mjs')], { stdio: 'ignore' }); } catch { /* thiếu khoá thì app chạy dữ liệu mẫu */ }
 
 // Bản đồ đường dẫn, khớp [[redirects]] trong netlify.toml
 const HAM = { '/api/chat': './netlify/functions/chat.mjs' };

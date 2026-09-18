@@ -1,6 +1,11 @@
 # Chỉ thư mục site/ được publish. agent/ và supabase/ nằm ngoài nên
 # không ai tải về được qua đường web.
+#
+# command sinh site/cau-hinh.js từ biến môi trường của Netlify:
+# Project configuration → Environment → thêm SUPABASE_URL và SUPABASE_ANON_KEY.
+# Thiếu hai biến đó thì app vẫn chạy, nhưng ở chế độ dữ liệu mẫu.
 [build]
+  command = "node tao-cau-hinh.mjs"
   publish = "site"
   functions = "netlify/functions"
 
