@@ -87,6 +87,41 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
 .st.doing{background:var(--panel2); color:var(--mut)}
 
 .qcard{border:1px solid var(--wait); border-radius:18px; padding:15px; background:var(--waitbg)}
+.bang{flex:0 0 auto; border:1px solid var(--line); border-radius:16px; background:var(--panel); overflow:hidden}
+/* flex:0 0 auto bắt buộc: .body là flex column, item có overflow:hidden sẽ bị co về 0 nếu không khoá. */
+.bang .tr{display:grid; grid-template-columns:minmax(0,1fr) 62px 52px 52px 46px; align-items:center;
+  padding:9px 12px; width:100%; font-size:14px; font-weight:700; border-top:1px solid var(--line); text-align:left}
+.bang .tr:first-child{border-top:none}
+.bang .tr.th{font-size:10.5px; font-weight:800; letter-spacing:.03em; text-transform:uppercase;
+  color:var(--mut); background:var(--bg2); padding:7px 12px}
+.bang .tr.th span:not(:first-child),.bang .tr b,.bang .tr i{text-align:center}
+.bang .tr b{font-size:16px; font-weight:900; font-variant-numeric:tabular-nums; text-align:center}
+.bang .tr i{color:var(--dim); font-style:normal; text-align:center}
+.bang .tr.tong{background:var(--bg2); font-weight:900}
+.bang .tr:active{background:var(--panel2)}
+.grp{display:flex; align-items:baseline; gap:8px; font-size:12.5px; font-weight:900; letter-spacing:.04em;
+  text-transform:uppercase; margin:8px 2px 0}
+.grp span{margin-left:auto; font-size:11.5px; font-weight:700; color:var(--mut); text-transform:none; letter-spacing:0}
+.tcard .crit .ma{font-family:ui-monospace,Menlo,monospace; font-size:11.5px; color:var(--dim)}
+.plink{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; width:100%;
+  border:1px solid var(--info); background:var(--infobg); border-radius:16px; padding:12px 14px}
+.plink b{display:block; font-size:14.5px; font-weight:800; color:var(--tx)}
+.plink span span{font-family:ui-monospace,Menlo,monospace; font-size:11px; color:var(--info); word-break:break-all}
+.plink .go{color:var(--info); font-weight:900; font-size:19px}
+.soat{display:grid; gap:4px; font-size:13.5px; font-weight:700}
+.soat div{display:flex; gap:7px} .soat .y{color:var(--ok)} .soat .x{color:var(--wait)}
+.fld.okb{border-color:#2FE39B66} .fld.okb .lb{color:var(--ok)}
+.st.plan,.st.kq,.st.hoi{background:var(--waitbg); color:var(--wait)}
+.st.tre{background:var(--badbg); color:var(--bad)}
+.st.lam{background:var(--infobg); color:var(--info)}
+.st.xong{background:var(--okbg); color:var(--ok)}
+.st.redo{background:var(--badbg); color:var(--bad)}
+.qtu{display:flex; gap:7px; margin-top:9px}
+.qtu input{flex:1; min-width:0; background:var(--panel); border:1px solid var(--line2); color:var(--tx);
+  border-radius:12px; padding:10px 12px; font:inherit; font-size:14px; font-weight:600}
+.qtu input::placeholder{color:var(--dim); font-weight:500}
+.qtu button{flex:0 0 auto; padding:10px 15px; border-radius:12px; font-size:14px; font-weight:800;
+  border:1px solid var(--line2); background:var(--panel2)}
 .qcard .qh{font-size:13px; font-weight:800; color:var(--wait); margin-bottom:8px}
 .qcard p{font-size:15.5px; margin:0 0 12px; line-height:1.45; font-weight:600}
 .qopts{display:flex; flex-wrap:wrap; gap:8px}
@@ -372,35 +407,56 @@ const SEED=()=>({
   man:'office',taskId:null,kieu:'kinh',locDe:null,mealId:null,dangChay:false,
   chatMo:false, chatBan:false, chatTin:[], chatNhap:'', nghe:false, doc:true, chinhBar:false,
   tasks:[
-    {id:'t-0147',mang:'elearn',tieu_de:'Fix bug #13 — khoảng cách câu hỏi khi xem lại quiz',
-     chi_tiet:'Kiểm tra questions/sequential-quiz.css trong courses/Test_Module 4_Coding/module-04/. CHỈ sửa trong module-04, không đồng bộ sang templates hay module khác.',
-     tieu_chi:'Mở lại một unit đã pass, Câu 4 và Câu 5 cách nhau 32px và có đường kẻ phân tách.',
-     tt:'draft',tin:0,phan_hoi:'',ket:'',
-     nk:['06:34 · tạo từ bugs-con-lai-can-fix-2026-08-28.md','06:35 · đối chiếu mục 11b ngày 27/08']},
-    {id:'t-0148',mang:'elearn',tieu_de:'Ghi log fix vào bugs-con-lai-can-fix-2026-09-13.md',
-     chi_tiet:'Theo quy trình đã chốt: mọi yêu cầu sửa đều log vào file theo ngày — tên bug + đã sửa gì.',
-     tieu_chi:'File mới có mục đánh số tiếp theo, ghi rõ điều tra và kết luận.',
-     tt:'draft',tin:0,phan_hoi:'',ket:'',nk:['06:34 · tạo theo quy ước log hằng ngày']},
-    {id:'t-0149',mang:'elearn',tieu_de:'Đóng gói lại module-04-scorm.zip sau khi fix',
-     chi_tiet:'Nén lại thư mục module-04 thành gói SCORM, đặt tên theo ngày.',
+    {id:'t-0147',mang:'elearn',ngay:'2026-09-18',han:'14:00 hôm nay',lan:0,
+     tieu_de:'Fix bug #13 — khoảng cách câu hỏi khi xem lại quiz',
+     chi_tiet:'Đổi khoảng cách giữa hai câu hỏi ở chế độ xem lại lên 32px, thêm đường kẻ. Chỉ sửa trong module-04.',
+     tieu_chi:'Câu 4 và Câu 5 cách nhau 32px và có đường kẻ phân tách.',
+     tt:'cho_duyet_kq',tin:4,phan_hoi:'',ket:'Mở unit-8-quiz ở chế độ xem lại, hai câu cách nhau 32px.',
+     link:'192.168.1.12:8890/nhap/t-0147/unit-8-quiz.html',
+     tu_kiem:'Mở lại unit-8-quiz trong bản nháp, đo được 32px và thấy đường kẻ.',
+     nk:['11:42 · mở bản nháp','11:44 · bị chặn: định sửa templates/accordion.css','11:49 · xong, sinh link']},
+    {id:'t-0150',mang:'lab',ngay:'2026-09-18',han:'13:00 hôm nay',lan:1,
+     tieu_de:'Tóm tắt bài Lab chiều — RAG pipeline',
+     chi_tiet:'Viết tóm tắt 4 mục, đọc hết trong 5 phút, tối đa 700 chữ.',
+     tieu_chi:'Đủ 4 mục: mục tiêu, các bước, ba chỗ hay vướng, hai câu sẽ bị hỏi.',
+     tt:'cho_duyet_kq',tin:4,phan_hoi:'Mục ba chỗ hay vướng viết chung quá, ghi rõ hơn.',
+     ket:'Mở bản tóm tắt trong app, mục 3 đã ghi rõ từng chỗ.',
+     link:'courageous-sprite-17c1ff.netlify.app/#lab/2026-09-18',
+     tu_kiem:'Đọc lại bản tóm tắt, đếm 412 chữ, đủ 4 mục.',
+     nk:['11:31 · mở bản nháp','11:38 · xong lần 1','12:10 · sếp trả lại: mục 3 chưa rõ','12:20 · viết lại mục 3']},
+    {id:'t-0155',mang:'elearn',ngay:'2026-09-18',han:'T5 19/09',lan:0,
+     tieu_de:'Rà Module 5 theo checklist định dạng',
+     chi_tiet:'Đối chiếu 9 unit của Module 5 với checklist Stage A, chỉ liệt kê chỗ lệch, không sửa.',
+     tieu_chi:'Danh sách chỗ lệch, mỗi mục có unit và dòng.',
+     tt:'cho_sep_chot',tin:0,phan_hoi:'',ket:'',link:'',tu_kiem:'',
+     nk:['07:05 · đề xuất từ checklist định dạng']},
+    {id:'t-0149',mang:'elearn',ngay:'2026-09-18',han:'Hôm nay',lan:0,
+     tieu_de:'Đóng gói lại module-04-scorm.zip sau khi fix',
+     chi_tiet:'Nén lại module-04 thành gói SCORM, đặt tên theo ngày.',
      tieu_chi:'File zip mở được trên LMS thử, không lỗi manifest.',
-     tt:'draft',tin:0,phan_hoi:'',ket:'',nk:['06:34 · phụ thuộc t-0147 xong trước']},
-    {id:'t-0150',mang:'lab',tieu_de:'Tóm tắt bài Lab chiều — RAG pipeline',
-     chi_tiet:'Đọc tài liệu Lab hôm nay, viết tóm tắt gồm mục tiêu, các bước, ba chỗ hay vướng.',
-     tieu_chi:'Bản tóm tắt đọc hết trong 5 phút, có đủ bốn mục.',
-     tt:'draft',tin:0,phan_hoi:'',ket:'',nk:['06:34 · chờ link repo tài liệu Lab']},
-    {id:'t-0151',mang:'lab',tieu_de:'Chuẩn bị hai câu học viên nhiều khả năng sẽ hỏi',
+     tt:'can_sep_duyet',tin:0,phan_hoi:'',ket:'',link:'',tu_kiem:'',
+     nk:['11:52 · vướng: có hai bản đã đóng gói']},
+    {id:'t-0151',mang:'lab',ngay:'2026-09-18',han:'14:00 hôm nay',lan:0,
+     tieu_de:'Chuẩn bị hai câu học viên sẽ hỏi',
      chi_tiet:'Dựa trên ba chỗ hay vướng, soạn sẵn câu trả lời ngắn.',
-     tieu_chi:'Hai câu hỏi kèm câu trả lời dưới 100 chữ mỗi câu.',
-     tt:'draft',tin:0,phan_hoi:'',ket:'',nk:['06:34 · tạo kèm t-0150']},
-    {id:'t-0152',mang:'biz',tieu_de:'Soạn 3 bài đăng cho Fitness Tracker',
-     chi_tiet:'Ba bản nháp cho tuần này, đặt trong thư mục drafts.',
-     tieu_chi:'Ba file markdown trong drafts, mỗi bài có tiêu đề và phần mở.',
-     tt:'draft',tin:0,phan_hoi:'',ket:'',nk:['06:34 · chưa rõ giọng văn bạn muốn']},
-    {id:'t-0153',mang:'biz',tieu_de:'Rà lại bảng giá ba gói tập',
+     tieu_chi:'Hai câu kèm trả lời dưới 100 chữ mỗi câu.',
+     tt:'doing',tin:0,phan_hoi:'',ket:'',link:'',tu_kiem:'',nk:['12:05 · đang soạn']},
+    {id:'t-0148',mang:'elearn',ngay:'2026-09-18',han:'Hôm nay',lan:0,
+     tieu_de:'Ghi log fix bug #13 vào file theo ngày',
+     chi_tiet:'Ghi tên bug, triệu chứng, đã kiểm gì, đã sửa gì.',
+     tieu_chi:'File log có mục đánh số tiếp theo.',
+     tt:'da_duyet_kq',tin:5,phan_hoi:'',ket:'Mở file log, thấy mục 13.',
+     link:'192.168.1.12:8890/nhap/t-0148/bugs-con-lai-can-fix-2026-09-18.md',
+     tu_kiem:'Mở lại file log trong bản nháp, thấy đủ 4 dòng.',
+     nk:['11:50 · xong','12:30 · sếp duyệt kết quả']},
+    {id:'t-0153',mang:'biz',ngay:'2026-09-17',han:'trễ 1 ngày',lan:2,tre:true,
+     tieu_de:'Rà lại bảng giá ba gói tập',
      chi_tiet:'Đối chiếu bảng giá trên trang với file gốc, đánh dấu chỗ lệch.',
      tieu_chi:'Danh sách chỗ lệch, không tự sửa gì.',
-     tt:'draft',tin:0,phan_hoi:'',ket:'',nk:['06:34 · tạo từ ghi chú tuần trước']}
+     tt:'can_sep_sua',tin:0,phan_hoi:'Vẫn chưa đúng cột giá, làm lại lần 3 cũng lệch.',
+     ket:'',link:'',tu_kiem:'',
+     nk:['17/09 11:20 · làm lần 1','17/09 15:40 · sếp trả lại','17/09 16:30 · làm lần 2',
+         '18/09 09:10 · sếp trả lại lần 3 · chạm trần, chuyển cần sếp sửa']},
   ],
   hoi:{id:'q-31',task_id:'t-0149',
     cau_hoi:'Module 4 đang có hai bản đã đóng gói. Dùng bản nào làm gốc để đóng gói lại?',
@@ -426,19 +482,42 @@ const kcalOf=m=>Math.round(m.gram*m.kcal100/100);
 const proOf =m=>Math.round(m.gram*m.pro100/100);
 const tongKcal=()=>S.meals.reduce((a,m)=>a+kcalOf(m),0);
 const tongPro =()=>S.meals.reduce((a,m)=>a+proOf(m),0);
-const byMang=k=>S.tasks.filter(t=>t.mang===k);
+const byMang=k=>k?S.tasks.filter(t=>t.mang===k):S.tasks;   // không truyền phòng = cả ngày
 const dem=(k,tt)=>byMang(k).filter(t=>Array.isArray(tt)?tt.includes(t.tt):t.tt===tt).length;
-const choDuyet=k=>k?dem(k,'draft'):S.tasks.filter(t=>t.tt==='draft').length;
-const dangLam=k=>dem(k,['approved','doing']);
-const xongHet=()=>S.tasks.some(t=>['done','blocked'].includes(t.tt));
-/* Chỉ còn BA trạng thái. Người trong phòng lúc nào cũng đang gõ máy —
-   trạng thái thể hiện bằng huy hiệu nổi trên nóc, không bằng tư thế. */
+
+/* Nhãn phải khớp agent/nhan.mjs. Lệch một chữ là app và script hiểu khác nhau. */
+const NHAN={
+  cho_sep_chot:{ten:'Chờ bạn chốt',cls:'plan',cho:1},
+  da_chot:{ten:'Đã chốt',cls:'lam'},
+  bo:{ten:'Bỏ',cls:'redo',het:1},
+  doing:{ten:'Đang làm',cls:'lam'},
+  can_sep_duyet:{ten:'Cần bạn duyệt',cls:'hoi',cho:1},
+  can_sep_sua:{ten:'Cần bạn sửa',cls:'tre',cho:1},
+  cho_duyet_kq:{ten:'Chờ duyệt kết quả',cls:'kq',cho:1},
+  lam_lai:{ten:'Làm lại',cls:'redo'},
+  da_duyet_kq:{ten:'Đã duyệt · chờ ghi',cls:'xong'},
+  da_ghi:{ten:'Đã ghi vào file',cls:'xong',het:1},
+};
+const TRAN_LAM_LAI=3;
+const HOM_NAY='2026-09-18';
+const choSep=k=>(k?byMang(k):S.tasks).filter(t=>NHAN[t.tt]?.cho).length;
+const choDuyet=choSep;                       // thanh dưới dùng tên cũ
+const dangLam=k=>dem(k,['da_chot','doing','lam_lai']);
+const daGhi=k=>dem(k,['da_ghi']);
+const choGhi=k=>dem(k,['da_duyet_kq']);
+const treHan=k=>(k?byMang(k):S.tasks).filter(t=>t.tre&&!NHAN[t.tt]?.het).length;
+const laTon=t=>t.ngay<HOM_NAY&&!NHAN[t.tt]?.het;
+const viecTon=()=>S.tasks.filter(laTon);
+const xongHet=()=>S.tasks.some(t=>['da_duyet_kq','da_ghi'].includes(t.tt));
+/* Chốt ngày được khi không còn việc chờ bạn, và có việc đã duyệt đang chờ ghi. */
+const chotDuoc=()=>choSep()===0&&choGhi()>0;
+
+/* Chỉ còn BA trạng thái cho văn phòng neon. */
 function trangThai(k){
   if(k==='food') return S.meals.length ? 'xong' : 'lam';
-  if(choDuyet(k))                        return 'duyet';   // chờ sếp duyệt
-  if(dem(k,'blocked'))                   return 'duyet';   // vướng cũng là cần sếp
-  if(dem(k,['approved','doing']))        return 'lam';
-  if(dem(k,'done') && !dem(k,'draft'))   return 'xong';
+  if(choSep(k))                                   return 'duyet';
+  if(dangLam(k))                                  return 'lam';
+  if(daGhi(k)||choGhi(k))                         return 'xong';
   return 'lam';
 }
 const PING={
@@ -467,40 +546,54 @@ function go(man,opt={}){
 /* ══════════ HÀNH ĐỘNG ══════════ */
 function duyetTask(id,tt,nhan){
   const t=S.tasks.find(x=>x.id===id); if(!t) return;
-  t.tt=tt; toast(nhan); go('phong');
+  if(tt==='lam_lai'){
+    // Đã chạm trần thì không đếm thêm: việc đang thuộc bạn.
+    if(t.tt==='can_sep_sua'){ toast('Việc này đang chờ bạn sửa, không trả lại được nữa',true); return; }
+    t.lan=(t.lan||0)+1;
+    // Chạm trần thì việc thuộc bạn: agent không chạm vào nữa.
+    if(t.lan>=TRAN_LAM_LAI){ t.tt='can_sep_sua'; toast(`Đã trả lại ${t.lan} lần · việc chuyển sang bạn tự sửa`,true); }
+    else { t.tt='lam_lai'; toast(`Trả lại lần ${t.lan}/${TRAN_LAM_LAI} · agent làm lại ở lệnh lam`); }
+  } else { t.tt=tt; toast(nhan); }
+  go('phong');
 }
-function duyetPhong(){
-  const ds=S.locDe?byMang(S.locDe):S.tasks;
-  const n=ds.filter(t=>t.tt==='draft').length;
-  if(!n){toast('Không còn việc nào chờ duyệt',true); return;}
-  ds.forEach(t=>{if(t.tt==='draft') t.tt='approved';});
-  toast('Đã duyệt '+n+' việc'); render();
+function chotNgay(){
+  if(!chotDuoc()){ toast('Còn việc chờ bạn, chưa chốt ngày được',true); return; }
+  const n=S.tasks.filter(t=>t.tt==='da_duyet_kq');
+  n.forEach(t=>{t.tt='da_ghi'; t.nk.push('12:58 · ghi vào file gốc · kiểm mã băm đạt');});
+  toast(`Đã ghi ${n.length} việc vào file gốc · phiên ngày đóng`);
+  render();
 }
-function traLoi(pa){S.hoi.tl=pa; toast('Đã trả lời: '+pa); render();}
-function chayCaTrua(){
+function traLoi(pa,tuGo){
+  S.hoi.tl=pa; S.hoi.tuGo=tuGo||'';
+  const t=S.tasks.find(x=>x.id===S.hoi.task_id);
+  if(t&&t.tt==='can_sep_duyet'){ t.tt='da_chot'; t.nk.push(`12:40 · bạn trả lời: ${pa}`); }
+  toast('Đã trả lời: '+pa); render();
+}
+/* Mô phỏng lệnh `lam`: agent làm việc bạn đã chốt, rồi trả về chờ duyệt kết quả. */
+function chayLenhLam(){
   if(S.dangChay) return;
-  const ds=S.tasks.filter(t=>t.tt==='approved');
-  if(!ds.length){toast('Chưa có việc nào được duyệt',true); return;}
-  if(!S.hoi.tl&&ds.some(t=>t.id===S.hoi.task_id)){
-    toast('Còn một câu hỏi chưa trả lời',true); go('phong',{loc:'elearn'}); return;}
+  const ds=S.tasks.filter(t=>['da_chot','lam_lai'].includes(t.tt));
+  if(!ds.length){toast('Chưa có việc nào bạn chốt',true); return;}
+  if(S.hoi.tl===null&&ds.some(t=>t.id===S.hoi.task_id)){
+    toast('Còn một câu hỏi chờ bạn trả lời',true); go('phong'); return;}
   S.dangChay=true; ds.forEach(t=>t.tt='doing'); go('office');
-  toast('Luồng bắt đầu chạy · ca trưa');
+  toast('Agent bắt đầu làm · lệnh lam');
   let i=0;
   const buoc=()=>{
     if(i>=ds.length){
-      S.dangChay=false; render(); toast('Ca trưa xong · '+ds.length+' việc');
-      setTimeout(()=>go('ketqua'),800); return;}
+      S.dangChay=false; render(); toast(`Xong ${ds.length} việc · chờ bạn duyệt kết quả`);
+      setTimeout(()=>go('phong'),700); return;}
     const t=ds[i++];
-    if(t.mang==='biz'&&!t.phan_hoi){t.tt='done';t.tin=2;
-      t.ket='Chưa rõ giọng văn bạn muốn nên tự chấm thấp. Cần bạn xem kỹ.';}
-    else if(t.id==='t-0150'){t.tt='blocked';t.tin=0;
-      t.ket='Chưa có link repo tài liệu Lab nên không đọc được bài hôm nay.';}
-    else {t.tt='done';t.tin=t.phan_hoi?5:4;
-      t.ket=t.phan_hoi?'Đã làm theo đúng dặn dò của bạn. Đối chiếu đủ tiêu chí xong.'
-                      :'Đối chiếu đủ tiêu chí xong. Không có chỗ nào phải đoán.';}
-    render(); setTimeout(buoc,700);
+    t.tt='cho_duyet_kq';
+    t.tin=t.phan_hoi?4:3;
+    t.link=t.link||`192.168.1.12:8890/nhap/${t.id}/xem-thu.html`;
+    t.tu_kiem='Mở lại sản phẩm trong bản nháp, đối chiếu tiêu chí xong khi.';
+    t.ket=t.phan_hoi?'Đã làm theo nhận xét của bạn. Đối chiếu đủ tiêu chí.'
+                    :'Đối chiếu đủ tiêu chí xong. Không có chỗ nào phải đoán.';
+    t.nk.push(`${new Date().toTimeString().slice(0,5)} · làm xong, chờ bạn duyệt kết quả`);
+    render(); setTimeout(buoc,650);
   };
-  setTimeout(buoc,900);
+  setTimeout(buoc,800);
 }
 function themBua(mon){
   S.meals.push({id:Date.now(),ten:mon.ten,icon:mon.icon,gram:mon.gram,
@@ -717,68 +810,109 @@ function manOffice(){
   };
 }
 function theTask(t,click){
-  const NH={approved:'Đã duyệt',rejected:'Từ chối',redo:'Làm lại',
-    done:'Xong',blocked:'Vướng',doing:'Đang làm'};
-  const st=t.tt!=='draft'?`<span class="st ${t.tt}">${NH[t.tt]}</span>`:'<span></span>';
-  const vach=[1,2,3,4,5].map(i=>`<i class="${t.tin>=i?(t.tin>=3?'f':'w'):''}"></i>`).join('');
+  const n=NHAN[t.tt]||{ten:t.tt,cls:'lam'};
   const N=NEON[t.mang];
-  return `<button class="tcard ${['rejected','done','blocked'].includes(t.tt)?'gone':''}"
-      ${click?`data-task="${t.id}"`:''}>
+  const vach=[1,2,3,4,5].map(i=>`<i class="${t.tin>=i?(t.tin>=3?'f':'w'):''}"></i>`).join('');
+  const meta=[`<span class="ma">${t.id}</span>`,
+    t.tre?`<span style="color:var(--bad)">${t.han}</span>`:`<span>hạn ${t.han}</span>`,
+    t.lan?`<span style="color:var(--wait)">làm lại lần ${t.lan}/${TRAN_LAM_LAI}</span>`:''
+  ].filter(Boolean).join(' · ');
+  return `<button class="tcard ${NHAN[t.tt]?.het?'gone':''}" ${click?`data-task="${t.id}"`:''}>
     <div class="stripe">${vach}</div>
-    <div><span class="chip" style="color:${N.c};border-color:${N.c}55">${TEN[t.mang]}</span>
-      <span class="ti">${t.tieu_de}</span>
-      <div class="crit">${t.ket?t.ket:'Xong khi: '+t.tieu_chi}</div></div>
-    ${st}</button>`;
+    <div><span class="ti">${t.tieu_de}</span>
+      <div class="crit">${meta}</div></div>
+    <span class="st ${n.cls}">${n.ten}</span></button>`;
 }
-const theHoi=()=>`<div class="qcard"><div class="qh">◆ Agent cần bạn quyết</div>
+
+/* Bảng tình trạng theo phòng — số liệu giống v_tinh_trang trong Supabase.
+   Chạm một dòng thì nhảy xuống khối của phòng đó. */
+function bangTinhTrang(){
+  const o=(v,mau)=>v?`<b style="color:${mau}">${v}</b>`:'<i>·</i>';
+  const dong=['lab','elearn','biz'].map(m=>`<button class="tr" data-cuon="${m}">
+    <span style="color:${NEON[m].c}">${TEN[m]}</span>
+    ${o(choSep(m),'var(--wait)')}${o(dangLam(m),'var(--info)')}${o(choGhi(m)+daGhi(m),'var(--ok)')}${o(treHan(m),'var(--bad)')}
+  </button>`).join('');
+  return `<div class="bang">
+    <div class="tr th"><span>Phòng</span><span>Chờ bạn</span><span>Đang</span><span>Xong</span><span>Trễ</span></div>
+    ${dong}
+    <div class="tr tong"><span>Tổng ${S.tasks.length}</span>
+      <b>${choSep()}</b><b>${dangLam()}</b><b>${choGhi()+daGhi()}</b><b>${treHan()}</b></div>
+  </div>`;
+}
+const theHoi=()=>`<div class="qcard"><div class="qh">◆ Cần bạn duyệt · ${S.hoi.task_id}</div>
   <p>${S.hoi.cau_hoi}</p>
-  <div class="qopts">${S.hoi.pa.map(p=>`<button data-pa="${p}">${p}</button>`).join('')}</div></div>`;
+  <div class="qopts">${S.hoi.pa.map(x=>`<button data-pa="${x}">${x}</button>`).join('')}</div>
+  <div class="qtu"><input id="qTu" placeholder="Hoặc tự gõ câu trả lời của bạn…" value="${S.hoi.tuGo||''}">
+    <button data-patu="1">Gửi</button></div></div>`;
 
 function manPhong(){
   const k=S.locDe;
-  if(!k){
-    const cd=choDuyet();
-    return {back:'office',head:`<h1>Tất cả việc</h1><span class="sub">${cd?cd+' chờ duyệt':'đã duyệt hết'}</span>`,
-      body:`${S.hoi.tl===null?theHoi():''}${S.tasks.map(t=>theTask(t,true)).join('')}
-        ${cd?`<div class="btnrow" style="margin-top:auto;padding-top:6px">
-          <button class="btn pri" data-duyet="1">Duyệt tất cả · ${cd}</button></div>`:''}`};
-  }
   if(k==='food') return manFood();
-  const ds=byMang(k), cd=ds.filter(t=>t.tt==='draft').length;
-  const hienHoi=S.hoi.tl===null&&S.tasks.find(t=>t.id===S.hoi.task_id).mang===k;
-  const s1=(n,l,mau)=>`<div class="stat1"><div class="n" ${mau?`style="color:${mau}"`:''}>${n}</div>
-    <div class="l">${l}</div></div>`;
-  const labBtn=k==='lab'&&dem('lab','done')
-    ?`<div class="btnrow"><button class="btn gh" data-go="lab">Mở bản tóm tắt Lab</button></div>`:'';
+  const ton=viecTon();
+  // Câu hỏi chỉ hiện khi việc của nó còn chờ bạn.
+  const viecHoi=S.tasks.find(t=>t.id===S.hoi.task_id);
+  const hoiCho=S.hoi.tl===null&&!!NHAN[viecHoi?.tt]?.cho;
+  const khoi=(m)=>{
+    const l=byMang(m).filter(t=>!laTon(t)).sort((a,b)=>
+      (NHAN[b.tt]?.cho?1:0)-(NHAN[a.tt]?.cho?1:0));
+    if(!l.length) return '';
+    return `<div class="grp" id="kh-${m}" style="color:${NEON[m].c}">${TEN[m]}
+        <span>${choSep(m)?choSep(m)+' chờ bạn':'không cần bạn'}</span></div>
+      ${l.map(t=>theTask(t,true)).join('')}`;
+  };
+  const dsPhong=k?khoi(k):['lab','elearn','biz'].map(khoi).join('');
   return {back:'office',
-    head:`<h1 style="color:${NEON[k].c}">${TEN[k]}</h1>
-      <span class="sub">${cd?cd+' chờ duyệt':'đã duyệt hết'}</span>`,
-    body:`<div class="stats">${s1(cd,'chờ duyệt',cd?'var(--wait)':'')}
-        ${s1(dangLam(k),'đang làm')}${s1(dem(k,'done'),'xong',dem(k,'done')?'var(--ok)':'')}
-        ${s1(dem(k,'blocked'),'vướng',dem(k,'blocked')?'var(--bad)':'')}</div>
-      ${hienHoi?theHoi():''}${ds.map(t=>theTask(t,true)).join('')}${labBtn}
-      ${cd?`<div class="btnrow" style="margin-top:auto;padding-top:6px">
-        <button class="btn pri" data-duyet="1">Duyệt cả phòng · ${cd}</button></div>`:''}`};
+    head:`<h1>${k?TEN[k]:'Việc'}</h1><span class="sub">${choSep()?choSep()+' chờ bạn':'đã xử lý hết'}</span>`,
+    body:`${k?'':bangTinhTrang()}
+      ${hoiCho?theHoi():''}
+      ${!k&&ton.length?`<div class="grp" style="color:var(--bad)">Tồn từ hôm trước
+        <span>${ton.length} việc</span></div>${ton.map(t=>theTask(t,true)).join('')}`:''}
+      ${dsPhong}
+      ${chotDuoc()?`<div class="btnrow" style="margin-top:auto;padding-top:6px">
+        <button class="btn pri" data-chot="1">Chốt ngày · ghi ${choGhi()} việc vào file gốc</button></div>`
+        :choSep()?`<div class="fl" style="margin-top:auto"><div class="tx" style="font-size:13.5px;color:var(--mut)">
+          Còn ${choSep()} việc chờ bạn. Duyệt hết mới chốt ngày được.</div></div>`:''}`};
 }
 function manTask(){
   const t=S.tasks.find(x=>x.id===S.taskId); if(!t) return manPhong();
-  const xong=['done','blocked'].includes(t.tt);
+  const n=NHAN[t.tt]||{ten:t.tt,cls:'lam'};
+  const soat=`<div class="fld okb"><div class="lb">Soát tự động</div><div class="soat">
+      <div><span class="y">✓</span>Báo cáo đủ mục, đúng kiểu</div>
+      <div><span class="y">✓</span>File khai khớp bản nháp</div>
+      <div><span class="x">!</span>1 thay đổi ngoài phạm vi, không chép về</div></div></div>`;
+  const nut=
+    t.tt==='cho_sep_chot' ? `<div class="btnrow" style="margin-top:auto;padding-top:4px">
+        <button class="btn pri" data-act="da_chot">Chốt việc này</button>
+        <button class="btn no" data-act="bo">Bỏ</button></div>`
+  : t.tt==='cho_duyet_kq' ? `<div class="btnrow" style="margin-top:auto;padding-top:4px">
+        <button class="btn pri" data-act="da_duyet_kq">Duyệt kết quả</button></div>
+      <div class="btnrow"><button class="btn no" data-act="lam_lai">Yêu cầu làm lại${t.lan?` · lần ${t.lan+1}/${TRAN_LAM_LAI}`:''}</button></div>`
+  : t.tt==='can_sep_sua' ? `<div class="fld" style="border-color:var(--bad)"><div class="lb" style="color:var(--bad)">Đã trả lại ${t.lan} lần</div>
+        <div class="tx" style="font-size:13.5px">Agent không chạm vào việc này nữa. Sửa lại yêu cầu bên trên rồi giao lại.</div></div>
+      <div class="btnrow" style="margin-top:auto"><button class="btn pri" data-act="da_chot">Giao lại cho agent</button>
+        <button class="btn no" data-act="bo">Bỏ việc</button></div>`
+  : t.tt==='can_sep_duyet' ? `<div class="btnrow" style="margin-top:auto"><button class="btn gh" data-go="phieu">Xem câu hỏi ở tab Việc</button></div>`
+  : '';
   return {back:'phong',
     head:`<h1>${t.id}</h1><span class="sub" style="color:${NEON[t.mang].c}">${TEN[t.mang]}</span>`,
-    body:`<div class="fld"><div class="lb">Tiêu đề · sửa được</div>
+    body:`<div class="fld"><div class="lb">Trạng thái · hạn ${t.han}</div>
+        <div class="tx"><span class="st ${n.cls}">${n.ten}</span>${t.lan?` · đã làm lại ${t.lan}/${TRAN_LAM_LAI} lần`:''}</div></div>
+      <div class="fld"><div class="lb">Tên việc · sửa được</div>
         <input id="fTitle" value="${t.tieu_de.replace(/"/g,'&quot;')}"></div>
       <div class="fld"><div class="lb">Agent định làm</div><div class="tx">${t.chi_tiet}</div></div>
       <div class="fld"><div class="lb">Xong khi nào</div><div class="tx">${t.tieu_chi}</div></div>
+      ${t.link?`<button class="plink" data-toast="Bản thật: mở link sản phẩm trong bản nháp">
+        <span><b>Mở sản phẩm để tự kiểm</b><span>${t.link}</span></span><span class="go">›</span></button>`:''}
       ${t.ket?`<div class="fld"><div class="lb">Agent báo lại · tin cậy ${t.tin||'—'}/5</div>
         <div class="tx">${t.ket}</div></div>`:''}
+      ${t.tu_kiem?`<div class="fld"><div class="lb">Agent đã tự kiểm</div>
+        <div class="tx" style="font-size:13.5px">${t.tu_kiem}</div></div>`:''}
+      ${t.tt==='cho_duyet_kq'?soat:''}
       <div class="fld"><div class="lb">Nhật ký</div>
         <div class="tx" style="font-size:13.5px;color:var(--mut)">${t.nk.join('<br>')}</div></div>
-      <div class="fld hi"><div class="lb">◆ Dặn thêm cho agent</div>
-        <textarea id="fNote" rows="3" placeholder="Gõ ở đây… agent đọc trước khi bắt tay làm">${t.phan_hoi}</textarea></div>
-      ${xong?'':`<div class="btnrow" style="margin-top:auto;padding-top:4px">
-        <button class="btn pri" data-act="approved">Duyệt</button>
-        <button class="btn no" data-act="rejected">Từ chối</button></div>
-      <div class="btnrow"><button class="btn gh" data-act="redo">Yêu cầu làm lại</button></div>`}`};
+      <div class="fld hi"><div class="lb">◆ Nhận xét cho agent</div>
+        <textarea id="fNote" rows="3" placeholder="Gõ ở đây… agent đọc trước khi làm lại">${t.phan_hoi}</textarea></div>
+      ${nut}`};
 }
 function vong(val,max,mau,nhan,don){
   const R=42,C=2*Math.PI*R,p=Math.min(1,val/max);
@@ -833,7 +967,7 @@ function manFood(){
       </svg>`};
 }
 function manLab(){
-  const t=S.tasks.find(x=>x.id==='t-0150'), co=t&&t.tt==='done';
+  const t=S.tasks.find(x=>x.id==='t-0150'), co=t&&['cho_duyet_kq','da_duyet_kq','da_ghi'].includes(t.tt);
   return {back:'phong',head:`<h1 style="color:var(--lab)">Lab chiều</h1>
       <span class="sub">RAG pipeline</span>`,
     body: co?`<div class="labsec"><b>Mục tiêu bài</b>
@@ -855,24 +989,24 @@ function manLab(){
         Duyệt việc <b>t-0150</b> rồi chạy ca trưa để thử.</p></div>`};
 }
 function manKetQua(){
-  const xong=S.tasks.filter(t=>['done','blocked','doing'].includes(t.tt));
+  const xong=S.tasks.filter(t=>['cho_duyet_kq','da_duyet_kq','da_ghi','doing'].includes(t.tt));
   if(!xong.length) return {back:'office',head:`<h1>Kết quả</h1><span class="sub">chưa có</span>`,
-    body:`<div class="empty"><div class="e">🌙</div><p>Ca trưa chưa chạy.<br><br>
-      Duyệt việc rồi bấm nút tròn bên phải thanh dưới.</p></div>`};
+    body:`<div class="empty"><div class="e">🌙</div><p>Agent chưa làm việc nào hôm nay.<br><br>
+      Chốt việc ở tab Việc rồi bấm nút tròn để chạy lệnh lam.</p></div>`};
   const c=xong.filter(t=>t.tin), tb=c.reduce((a,t)=>a+t.tin,0)/(c.length||1);
+  const daGhiDs=S.tasks.filter(t=>t.tt==='da_ghi');
   return {back:'office',
-    head:`<h1>Ca trưa xong</h1><span class="sub">${xong.length} việc · TB ${tb.toFixed(1)}/5</span>`,
+    head:`<h1>Kết quả</h1><span class="sub">${xong.length} việc · TB ${tb.toFixed(1)}/5</span>`,
     body:`${xong.map(t=>theTask(t,true)).join('')}
-      <div class="fld"><div class="lb">Nháp cho ngày mai</div><div class="tx">3 việc ·
-        thử gói SCORM trên LMS, rà Module 5, viết lại bài đăng theo giọng bạn chốt.</div></div>
+      ${daGhiDs.length?`<div class="fld okb"><div class="lb">Đã ghi vào file gốc · ${daGhiDs.length} việc</div>
+        <div class="tx" style="font-size:13.5px">Kiểm mã băm sau khi ghi: đạt. Phiên ngày đã đóng.</div></div>`:''}
       <div class="fld"><div class="lb">Agent ghi lại để phiên sau tốt hơn</div>
         <div class="tx" style="font-size:13.5px;color:var(--mut)">
         · Chỉ sửa trong module-04, không đồng bộ sang templates<br>
         · Mọi fix phải log vào file bug theo ngày<br>
-        · Cần link repo Lab trước phiên sáng</div></div>
-      <div class="btnrow" style="margin-top:auto">
-        <button class="btn pri" data-toast="Đã duyệt kết quả ca trưa">Duyệt kết quả</button>
-        <button class="btn gh sm" data-toast="Đã yêu cầu agent làm lại">Làm lại</button></div>`};
+        · Mục ba chỗ hay vướng của tóm tắt Lab cần ghi rõ từng chỗ</div></div>
+      ${chotDuoc()?`<div class="btnrow" style="margin-top:auto">
+        <button class="btn pri" data-chot="1">Chốt ngày · ghi ${choGhi()} việc vào file gốc</button></div>`:''}`};
 }
 
 /* ══════════ GIỌNG NÓI ══════════ */
@@ -1000,7 +1134,7 @@ function thanhDuoi(){
   if(cur==='task') cur='phong';
   if(cur==='lab')  cur='phong';
   const i=Math.max(0,TAB.indexOf(cur));
-  const cd=choDuyet(), sanSang=S.tasks.some(t=>t.tt==='approved');
+  const cd=choSep(), sanSang=S.tasks.some(t=>['da_chot','lam_lai'].includes(t.tt));
 
   const tab=(k,ico,ten,n)=>`<button class="tab ${TAB[i]===k?'on':''}" data-go="${k==='phong'?'phieu':k}">
     ${sv(ico)}<span>${ten}</span>${n?`<i class="noti">${n}</i>`:''}</button>`;
@@ -1075,10 +1209,18 @@ document.getElementById('dev').addEventListener('click',e=>{
     if(k==='food') go('food',{loc:'food',meal:null}); else go('phong',{loc:k}); return;}
   const t=e.target.closest('[data-task]'); if(t){go('task',{task:t.dataset.task}); return;}
   const pa=e.target.closest('[data-pa]'); if(pa){traLoi(pa.dataset.pa); return;}
+  if(e.target.closest('[data-patu]')){
+    const o=document.getElementById('qTu'), v=(o?.value||'').trim();
+    if(!v){ o?.focus(); toast('Gõ câu trả lời của bạn vào ô này',true); return; }
+    traLoi(v,v); return;}
+  const cu=e.target.closest('[data-cuon]');
+  if(cu){ const el=document.getElementById('kh-'+cu.dataset.cuon), b=document.querySelector('.body');
+    if(el&&b) b.scrollTop=el.offsetTop-b.offsetTop-8; return;}
+  if(e.target.closest('[data-chot]')){ chotNgay(); return;}
   const act=e.target.closest('[data-act]');
   if(act){luu();
-    const NH={approved:'Đã duyệt · agent sẽ làm ở ca trưa',rejected:'Đã từ chối · agent bỏ việc này',
-      redo:'Đã yêu cầu làm lại kèm dặn dò của bạn'};
+    const NH={da_chot:'Đã chốt · agent làm ở lệnh lam',bo:'Đã bỏ việc này',
+      da_duyet_kq:'Đã duyệt kết quả · chờ chốt ngày để ghi vào file gốc'};
     duyetTask(S.taskId,act.dataset.act,NH[act.dataset.act]); return;}
   if(e.target.closest('[data-duyet]')){duyetPhong(); return;}
   const g=e.target.closest('[data-gram]'); if(g){doiGram(+g.dataset.gram); return;}
@@ -1121,7 +1263,7 @@ document.getElementById('dev').addEventListener('click',e=>{
   const nav=e.target.closest('[data-go]'); if(!nav) return;
   const v=nav.dataset.go;
   if(S.man==='task') luu();
-  if(v==='run'){chayCaTrua(); return;}
+  if(v==='run'){chayLenhLam(); return;}
   if(v==='phieu'){go('phong',{loc:null}); return;}
   if(v==='phong'){go('phong',{loc:S.locDe}); return;}
   if(v==='food'){go('food',{loc:'food',meal:null}); return;}
