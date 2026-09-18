@@ -1,0 +1,50 @@
+// Ba phòng: nguồn để đọc, và thư mục GỐC mà bản nháp nhân bản từ đó.
+// Đường dẫn thật lấy từ agent/.env, không viết cứng ở đây.
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const dựÁn = resolve(here, '..');
+
+// .env đọc trực tiếp: các script khác nạp qua lib.mjs, nhưng phong.mjs phải
+// dùng được cả khi chưa có khoá Supabase (lúc chạy thử).
+function env(tên) {
+  if (process.env[tên]) return process.env[tên];
+  try {
+    for (const dòng of readFileSync(join(here, '.env'), 'utf8').split('\n')) {
+      const m = dòng.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/);
+      if (m && m[1] === tên) return m[2];
+    }
+  } catch { /* chưa có .env */ }
+  return null;
+}
+
+export const PHÒNG = {
+  lab: {
+    tên: 'Lab Coach',
+    // Tài liệu Lab chỉ đọc, không nằm trong bản nháp.
+    nguồn: () => env('DIR_LAB'),
+    // Nơi ghi bản tóm tắt, cũng là gốc của bản nháp.
+    // VP_GOC_LAB chỉ dùng khi chạy thử; bình thường ghi vào agent-app/san-pham/lab.
+    gốc: () => env('VP_GOC_LAB') || join(dựÁn, 'san-pham', 'lab'),
+    tự_tạo_gốc: true,
+  },
+  elearn: { tên: 'E-learning', gốc: () => env('DIR_ELEARNING') },
+  biz:    { tên: 'Kinh doanh', gốc: () => env('DIR_BIZ'), tắt: true },
+};
+
+export const THƯ_MỤC_NHÁP = join(dựÁn, '_nhap');
+
+export function gốcCủaPhòng(mảng) {
+  const p = PHÒNG[mảng];
+  if (!p) throw new Error(`Không có phòng "${mảng}". Chỉ có: ${Object.keys(PHÒNG).join(', ')}`);
+  if (p.tắt) throw new Error(`Phòng ${p.tên} đang tắt. Xem khối đầu .claude/skills/phong-${mảng}/SKILL.md`);
+  const g = p.gốc();
+  if (!g) throw new Error(`Thiếu đường dẫn phòng ${p.tên} trong agent/.env`);
+  if (!existsSync(g)) {
+    if (!p.tự_tạo_gốc) throw new Error(`Không thấy thư mục phòng ${p.tên}: ${g}`);
+    mkdirSync(g, { recursive: true });
+  }
+  return g;
+}

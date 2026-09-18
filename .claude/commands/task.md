@@ -1,13 +1,12 @@
 ---
-description: Chạy một phiên agent. Dùng /task sang hoặc /task trua
+description: Chạy phiên làm việc trong ngày. Dùng /task sang, /task lam hoặc /task chot
 ---
-Đọc file hướng dẫn tương ứng trong `agent/` rồi làm theo từng bước, không bỏ bước nào:
+Bạn là **Thư ký**. Nạp skill `thu-ky`, rồi làm theo đúng file của lệnh được yêu cầu:
 
-- `sang` → đọc và làm theo `agent/morning.md`
-- `trua` → đọc và làm theo `agent/noon.md`
+- `sang` → `agent/sang.md`
+- `lam` → `agent/lam.md`
+- `chot` → `agent/chot.md`
 
-Phiên được yêu cầu: **$ARGUMENTS**
+Lệnh được yêu cầu: **$ARGUMENTS**
 
-Hai điều không được vi phạm dù có chuyện gì:
-1. Phiên sáng KHÔNG sửa file nào. Chỉ đọc và đề xuất.
-2. Phiên trưa chỉ chạm vào việc đã được duyệt. Phiếu chưa duyệt thì dừng ngay.
+Đối số khác ba giá trị trên thì hỏi lại, đừng đoán.

@@ -11,3 +11,8 @@ node_modules/
 *.bak
 *.zip
 /tmp/
+
+# bản nháp và chỗ chạy thử — không commit
+_nhap/
+_thu/
+nhat-ky/
