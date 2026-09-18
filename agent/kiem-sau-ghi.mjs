@@ -15,15 +15,20 @@ import { dirname } from 'node:path';
 const in_ = (x) => console.log(JSON.stringify(x, null, 2));
 const t0 = performance.now();
 
-const việc = existsSync(THƯ_MỤC_NHÁP)
-  ? readdirSync(THƯ_MỤC_NHÁP, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name) : [];
-
-const cần = [];   // biên nhận của những việc vừa ghi
-for (const id of việc) {
-  const f = join(THƯ_MỤC_NHÁP, id, 'bien-nhan-ghi.json');
-  if (existsSync(f)) cần.push({ id, bn: JSON.parse(readFileSync(f, 'utf8')) });
+// Chỉ xét đúng loạt ghi vừa xong, không quét cả _nhap.
+const fileLoạt = join(THƯ_MỤC_NHÁP, 'loat-ghi.json');
+if (!existsSync(fileLoạt)) {
+  console.error('Không thấy loat-ghi.json. Chạy `node agent/ban-nhap.mjs ghi-het` trước.');
+  process.exit(1);
 }
-if (!cần.length) { console.error('Không có biên nhận ghi nào. Chạy ban-nhap.mjs ghi-het trước.'); process.exit(1); }
+const loạt = JSON.parse(readFileSync(fileLoạt, 'utf8'));
+const cần = [];
+for (const id of loạt.ids ?? []) {
+  const f = join(THƯ_MỤC_NHÁP, id, 'bien-nhan-ghi.json');
+  if (!existsSync(f)) { console.error(`Việc ${id} trong loạt ghi mà không có biên nhận.`); process.exit(1); }
+  cần.push({ id, bn: JSON.parse(readFileSync(f, 'utf8')) });
+}
+if (!cần.length) { console.error('Loạt ghi trống.'); process.exit(1); }
 
 const sai = [];
 for (const { id, bn } of cần) {
@@ -63,8 +68,12 @@ try {
     sai.length ? 'truot' : 'qua', sai[0]?.lý_do ?? `${cần.length} việc ghi đúng`], { stdio: 'ignore' });
 } catch {}
 
+// Đạt thì bỏ dấu loạt ghi, để không ai kiểm lại một loạt đã xong.
+if (!sai.length) { try { rmSync(fileLoạt); } catch {} }
+
 in_({
   so_viec: cần.length,
+  loat_luc: loạt.luc,
   so_file_da_ghi: cần.reduce((a, c) => a + c.bn.da_chep.length, 0),
   dat: sai.length === 0,
   sai,

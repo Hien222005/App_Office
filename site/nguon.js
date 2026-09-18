@@ -62,10 +62,15 @@
 
   /* ── đăng nhập bằng magic link ────────────────────────────────────────── */
   NG.guiLink = async (email) => {
-    await fetch(`${C.url}/auth/v1/otp`, {
+    // Nói rõ muốn quay về đúng trang đang mở. Không có tham số này thì Supabase
+    // dùng Site URL trong dashboard, và link trong email sẽ nhảy sai chỗ.
+    const về = encodeURIComponent(location.origin + location.pathname);
+    await fetch(`${C.url}/auth/v1/otp?redirect_to=${về}`, {
       method: 'POST',
       headers: { apikey: C.anon, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, create_user: false, gotrue_meta_security: {} }),
+      // create_user: true để lần đăng nhập đầu tạo luôn người dùng.
+      // An toàn không đổi: RLS chỉ cho đúng email chủ nhân đọc ghi, email khác vào cũng thấy trống.
+      body: JSON.stringify({ email, create_user: true, gotrue_meta_security: {} }),
     }).then(async (r) => { if (!r.ok) throw new Error((await r.text()).slice(0, 200)); });
   };
 
@@ -120,6 +125,7 @@
       han: t.han_chot ? gioNgan(t.han_chot) : 'chưa có hạn',
       tre: !!t.han_chot && new Date(t.han_chot) < new Date() && !['da_ghi', 'bo'].includes(t.trang_thai),
       lan: t.so_lan_lam_lai || 0,
+      brief: t.brief || null,
       nk: Array.isArray(t.cac_buoc) ? t.cac_buoc : [],
     };
   }

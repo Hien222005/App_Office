@@ -126,6 +126,11 @@ if (lệnh === 'ghi-het') {
   const kq = [];
   for (const idViệc of ds.da_duyet) kq.push(chépVề(idViệc));
   const xungĐột = kq.flatMap(k => k.xung_dot_khong_chep);
+  // Ghi rõ loạt này gồm việc nào. kiem-sau-ghi.mjs CHỈ xét đúng danh sách này,
+  // không quét cả _nhap — biên nhận cũ của việc thử từng làm nó hoàn tác oan việc thật.
+  writeFileSync(join(THƯ_MỤC_NHÁP, 'loat-ghi.json'), JSON.stringify({
+    luc: new Date().toISOString(), ids: ds.da_duyet,
+  }, null, 2));
   nhậtKý('G7', '-', xungĐột.length ? 'truot' : 'qua', `${kq.length} việc, ${xungĐột.length} xung đột`);
   in_({ lenh: 'ghi-het', so_viec: kq.length, ket_qua: kq,
         co_xung_dot: xungĐột.length > 0, ms: ms() });

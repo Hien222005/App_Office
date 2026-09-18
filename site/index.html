@@ -105,6 +105,20 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
   text-transform:uppercase; margin:8px 2px 0}
 .grp span{margin-left:auto; font-size:11.5px; font-weight:700; color:var(--mut); text-transform:none; letter-spacing:0}
 .tcard .crit .ma{font-family:ui-monospace,Menlo,monospace; font-size:11.5px; color:var(--dim)}
+.tl{display:grid; gap:0}
+.st-b{display:grid; grid-template-columns:26px minmax(0,1fr); gap:11px; position:relative; padding-bottom:12px}
+.st-b:not(:last-child)::before{content:""; position:absolute; left:12px; top:27px; bottom:0; width:2px; background:var(--line)}
+.st-b .dot{width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:900; background:var(--panel2); border:2px solid var(--line2); color:var(--mut); z-index:1}
+.st-b.xongb .dot{background:var(--okbg); border-color:var(--ok); color:var(--ok)}
+.st-b.nay .dot{background:var(--waitbg); border-color:var(--wait); color:var(--wait)}
+.st-b.xongb:not(:last-child)::before{background:#2FE39B55}
+.st-b .hd{font-size:14.5px; font-weight:800; line-height:26px}
+.st-b .hd small{font-size:11.5px; color:var(--mut); font-weight:700; margin-left:5px}
+.st-b .bd{display:grid; gap:7px; margin-top:4px}
+.st-b.cho .bd{opacity:.45}
+.fchip{display:inline-block; font-family:ui-monospace,Menlo,monospace; font-size:11.5px; padding:2px 7px;
+  border-radius:6px; background:var(--bg2); border:1px solid var(--line); margin:2px 3px 2px 0; word-break:break-all}
 .plink{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; width:100%;
   border:1px solid var(--info); background:var(--infobg); border-radius:16px; padding:12px 14px}
 .plink b{display:block; font-size:14.5px; font-weight:800; color:var(--tx)}
@@ -416,6 +430,10 @@ const SEED=()=>({
      tieu_chi:'Câu 4 và Câu 5 cách nhau 32px và có đường kẻ phân tách.',
      tt:'cho_duyet_kq',tin:4,phan_hoi:'',ket:'Mở unit-8-quiz ở chế độ xem lại, hai câu cách nhau 32px.',
      link:'192.168.1.12:8890/nhap/t-0147/unit-8-quiz.html',
+     brief:{nhiem_vu:'Tăng khoảng cách hai câu hỏi ở chế độ xem lại lên 32px, thêm đường kẻ.',
+       file_duoc_sua:['module-04/**','bugs-con-lai-can-fix-*.md'],
+       viec_khong_lam:['Không đồng bộ sang templates','Không sửa courses/Module 4/'],
+       xong_khi:'Câu 4 và Câu 5 cách nhau 32px và có đường kẻ phân tách.'},
      tu_kiem:'Mở lại unit-8-quiz trong bản nháp, đo được 32px và thấy đường kẻ.',
      nk:['11:42 · mở bản nháp','11:44 · bị chặn: định sửa templates/accordion.css','11:49 · xong, sinh link']},
     {id:'t-0150',mang:'lab',ngay:'2026-09-18',han:'13:00 hôm nay',lan:1,
@@ -425,6 +443,10 @@ const SEED=()=>({
      tt:'cho_duyet_kq',tin:4,phan_hoi:'Mục ba chỗ hay vướng viết chung quá, ghi rõ hơn.',
      ket:'Mở bản tóm tắt trong app, mục 3 đã ghi rõ từng chỗ.',
      link:'courageous-sprite-17c1ff.netlify.app/#lab/2026-09-18',
+     brief:{nhiem_vu:'Viết tóm tắt 4 mục cho buổi Lab chiều, tối đa 700 chữ.',
+       file_duoc_sua:['san-pham/lab/2026-09-18.md'],
+       viec_khong_lam:['Không chép nguyên văn tài liệu nội bộ'],
+       xong_khi:'Đủ 4 mục: mục tiêu, các bước, ba chỗ hay vướng, hai câu sẽ bị hỏi.'},
      tu_kiem:'Đọc lại bản tóm tắt, đếm 412 chữ, đủ 4 mục.',
      nk:['11:31 · mở bản nháp','11:38 · xong lần 1','12:10 · sếp trả lại: mục 3 chưa rõ','12:20 · viết lại mục 3']},
     {id:'t-0155',mang:'elearn',ngay:'2026-09-18',han:'T5 19/09',lan:0,
@@ -502,7 +524,7 @@ const NHAN={
   da_ghi:{ten:'Đã ghi vào file',cls:'xong',het:1},
 };
 const TRAN_LAM_LAI=3;
-const HOM_NAY='2026-09-18';
+const HOM_NAY=new Date().toLocaleDateString('sv-SE');   // ngày theo máy, không viết cứng
 const choSep=k=>(k?byMang(k):S.tasks).filter(t=>NHAN[t.tt]?.cho).length;
 const choDuyet=choSep;                       // thanh dưới dùng tên cũ
 const dangLam=k=>dem(k,['da_chot','doing','lam_lai']);
@@ -887,6 +909,9 @@ function manPhong(){
       ${l.map(t=>theTask(t,true)).join('')}`;
   };
   const dsPhong=k?khoi(k):['lab','elearn','biz'].map(khoi).join('');
+  // Skill báo cáo chốt: việc cần sếp sửa ghi riêng, kèm lý do chạm trần.
+  const canSua=S.tasks.filter(t=>t.tt==='can_sep_sua'&&!laTon(t));
+  const daGhiDs=S.tasks.filter(t=>t.tt==='da_ghi');
   return {back:'office',
     head:`<h1>${k?TEN[k]:'Việc'}</h1><span class="sub">${S.dangTai?'đang tải…':choSep()?choSep()+' chờ bạn':'đã xử lý hết'}</span>
       ${S.nguon==='that'?`<button class="kh" data-tailai="1" aria-label="Tải lại">${sv('chay')}</button>`:''}`,
@@ -894,51 +919,83 @@ function manPhong(){
       ${hoiCho?theHoi():''}
       ${!k&&ton.length?`<div class="grp" style="color:var(--bad)">Tồn từ hôm trước
         <span>${ton.length} việc</span></div>${ton.map(t=>theTask(t,true)).join('')}`:''}
+      ${!k&&canSua.length?`<div class="grp" style="color:var(--bad)">Cần bạn sửa
+        <span>đã trả lại ${TRAN_LAM_LAI} lần</span></div>${canSua.map(t=>theTask(t,true)).join('')}`:''}
       ${dsPhong}
+      ${!k&&daGhiDs.length?`<div class="fld okb"><div class="lb">Đã ghi vào file gốc · ${daGhiDs.length} việc</div>
+        <div class="tx" style="font-size:13px">${daGhiDs.map(t=>'· '+t.tieu_de).join('<br>')}</div></div>`:''}
       ${chotDuoc()?`<div class="btnrow" style="margin-top:auto;padding-top:6px">
         <button class="btn pri" data-chot="1">Chốt ngày · ghi ${choGhi()} việc vào file gốc</button></div>`
         :choSep()?`<div class="fld" style="margin-top:auto"><div class="tx" style="font-size:13.5px;color:var(--mut)">
           Còn ${choSep()} việc chờ bạn. Duyệt hết mới chốt ngày được.</div></div>`:''}`};
 }
+/* Màn chi tiết một việc = dòng thời gian bốn bước, đúng bản đã chốt:
+   ① kế hoạch → ② làm trong bản nháp → ③ kết quả → ④ bạn duyệt. */
 function manTask(){
   const t=S.tasks.find(x=>x.id===S.taskId); if(!t) return manPhong();
   const n=NHAN[t.tt]||{ten:t.tt,cls:'lam'};
-  const soat=`<div class="fld okb"><div class="lb">Soát tự động</div><div class="soat">
-      <div><span class="y">✓</span>Báo cáo đủ mục, đúng kiểu</div>
-      <div><span class="y">✓</span>File khai khớp bản nháp</div>
-      <div><span class="x">!</span>1 thay đổi ngoài phạm vi, không chép về</div></div></div>`;
-  const nut=
-    t.tt==='cho_sep_chot' ? `<div class="btnrow" style="margin-top:auto;padding-top:4px">
-        <button class="btn pri" data-act="da_chot">Chốt việc này</button>
-        <button class="btn no" data-act="bo">Bỏ</button></div>`
-  : t.tt==='cho_duyet_kq' ? `<div class="btnrow" style="margin-top:auto;padding-top:4px">
-        <button class="btn pri" data-act="da_duyet_kq">Duyệt kết quả</button></div>
-      <div class="btnrow"><button class="btn no" data-act="lam_lai">Yêu cầu làm lại${t.lan?` · lần ${t.lan+1}/${TRAN_LAM_LAI}`:''}</button></div>`
+  const b=t.brief||{};
+  const daChot=t.tt!=='cho_sep_chot';
+  const daLam=['cho_duyet_kq','da_duyet_kq','da_ghi','lam_lai','can_sep_sua'].includes(t.tt);
+  const coKQ=['cho_duyet_kq','da_duyet_kq','da_ghi'].includes(t.tt);
+  const daDuyet=['da_duyet_kq','da_ghi'].includes(t.tt);
+  const chip=(ds)=>(ds||[]).map(x=>`<span class="fchip">${x}</span>`).join('')||'<span class="fchip">chưa khai</span>';
+  const buoc=(cls,so,hd,sm,bd)=>`<div class="st-b ${cls}"><div class="dot">${cls==='xongb'?'✓':so}</div>
+    <div><div class="hd">${hd}${sm?`<small>${sm}</small>`:''}</div><div class="bd">${bd||''}</div></div></div>`;
+
+  const b1=`<div class="fld"><div class="lb">Agent định làm</div><div class="tx">${b.nhiem_vu||t.chi_tiet||'—'}</div></div>
+    <div class="fld"><div class="lb">Chỉ được đụng vào</div><div class="tx">${chip(b.file_duoc_sua)}</div></div>
+    ${b.viec_khong_lam?.length?`<div class="fld"><div class="lb">Việc không được làm</div>
+      <div class="tx" style="font-size:13px">${b.viec_khong_lam.map(x=>'· '+x).join('<br>')}</div></div>`:''}
+    <div class="fld"><div class="lb">Xong khi · hạn ${t.han}</div><div class="tx">${b.xong_khi||t.tieu_chi||'—'}</div></div>
+    ${t.tt==='cho_sep_chot'?`<div class="btnrow"><button class="btn pri" data-act="da_chot">Chốt việc này</button>
+      <button class="btn no" data-act="bo">Bỏ</button></div>`:''}`;
+
+  const b2=daLam?`<div class="fld"><div class="lb">Các bước agent tự thuật</div>
+      <div class="tx" style="font-size:13px;color:var(--mut)">${(t.nk&&t.nk.length)?t.nk.map(x=>'· '+x).join('<br>'):'chưa có bước nào'}</div></div>`:'';
+
+  const b3=coKQ?`${t.link?`<button class="plink" data-toast="Mở link này trên trình duyệt để tự kiểm">
+      <span><b>Mở sản phẩm để tự kiểm</b><span>${t.link}</span></span><span class="go">›</span></button>`:''}
+    <div class="fld"><div class="lb">Đã làm · tin cậy ${t.tin||'—'}/5</div><div class="tx">${t.ket||'—'}</div></div>
+    ${t.tu_kiem?`<div class="fld"><div class="lb">Agent đã tự kiểm</div>
+      <div class="tx" style="font-size:13px">${t.tu_kiem}</div></div>`:''}
+    <div class="fld okb"><div class="lb">Soát tự động đã qua</div><div class="soat">
+      <div><span class="y">✓</span>Báo cáo đủ mục, đúng kiểu dữ liệu</div>
+      <div><span class="y">✓</span>File khai khớp bản nháp, không giấu, không lấn</div>
+      <div><span class="y">✓</span>Có link sản phẩm và mục đã tự kiểm</div></div></div>`:'';
+
+  const b4=
+    t.tt==='cho_duyet_kq' ? `<div class="fld hi"><div class="lb">◆ Nhận xét nếu trả lại</div>
+        <textarea id="fNote" rows="3" placeholder="Sai ở đâu, muốn thế nào… agent đọc khi làm lại">${t.phan_hoi}</textarea></div>`
+  : t.tt==='da_ghi' ? `<div class="fld okb"><div class="tx">Đã chép từ bản nháp về file gốc, kiểm mã băm đạt.</div></div>`
+  : t.tt==='da_duyet_kq' ? `<div class="fld okb"><div class="tx">Bạn đã duyệt. Chờ chốt ngày để ghi cả loạt vào file gốc.</div></div>`
   : t.tt==='can_sep_sua' ? `<div class="fld" style="border-color:var(--bad)"><div class="lb" style="color:var(--bad)">Đã trả lại ${t.lan} lần</div>
-        <div class="tx" style="font-size:13.5px">Agent không chạm vào việc này nữa. Sửa lại yêu cầu bên trên rồi giao lại.</div></div>
-      <div class="btnrow" style="margin-top:auto"><button class="btn pri" data-act="da_chot">Giao lại cho agent</button>
+        <div class="tx" style="font-size:13.5px">Agent không chạm vào việc này nữa. Sửa tên việc hoặc nhận xét bên trên rồi giao lại.</div></div>
+      <div class="fld hi"><div class="lb">◆ Nhận xét của bạn</div>
+        <textarea id="fNote" rows="3">${t.phan_hoi}</textarea></div>`
+  : '';
+
+  const nut=
+    t.tt==='cho_duyet_kq' ? `<div class="btnrow" style="margin-top:auto;padding-top:4px">
+        <button class="btn pri" data-act="da_duyet_kq">Duyệt kết quả</button></div>
+      <div class="btnrow"><button class="btn no" data-act="lam_lai">Yêu cầu làm lại · lần ${(t.lan||0)+1}/${TRAN_LAM_LAI}</button></div>`
+  : t.tt==='can_sep_sua' ? `<div class="btnrow" style="margin-top:auto"><button class="btn pri" data-act="da_chot">Giao lại cho agent</button>
         <button class="btn no" data-act="bo">Bỏ việc</button></div>`
   : t.tt==='can_sep_duyet' ? `<div class="btnrow" style="margin-top:auto"><button class="btn gh" data-go="phieu">Xem câu hỏi ở tab Việc</button></div>`
   : '';
+
   return {back:'phong',
     head:`<h1>${t.id}</h1><span class="sub" style="color:${NEON[t.mang].c}">${TEN[t.mang]}</span>`,
-    body:`<div class="fld"><div class="lb">Trạng thái · hạn ${t.han}</div>
-        <div class="tx"><span class="st ${n.cls}">${n.ten}</span>${t.lan?` · đã làm lại ${t.lan}/${TRAN_LAM_LAI} lần`:''}</div></div>
-      <div class="fld"><div class="lb">Tên việc · sửa được</div>
+    body:`<div class="fld"><div class="lb">Tên việc · sửa được</div>
         <input id="fTitle" value="${t.tieu_de.replace(/"/g,'&quot;')}"></div>
-      <div class="fld"><div class="lb">Agent định làm</div><div class="tx">${t.chi_tiet}</div></div>
-      <div class="fld"><div class="lb">Xong khi nào</div><div class="tx">${t.tieu_chi}</div></div>
-      ${t.link?`<button class="plink" data-toast="Bản thật: mở link sản phẩm trong bản nháp">
-        <span><b>Mở sản phẩm để tự kiểm</b><span>${t.link}</span></span><span class="go">›</span></button>`:''}
-      ${t.ket?`<div class="fld"><div class="lb">Agent báo lại · tin cậy ${t.tin||'—'}/5</div>
-        <div class="tx">${t.ket}</div></div>`:''}
-      ${t.tu_kiem?`<div class="fld"><div class="lb">Agent đã tự kiểm</div>
-        <div class="tx" style="font-size:13.5px">${t.tu_kiem}</div></div>`:''}
-      ${t.tt==='cho_duyet_kq'?soat:''}
-      <div class="fld"><div class="lb">Nhật ký</div>
-        <div class="tx" style="font-size:13.5px;color:var(--mut)">${t.nk.join('<br>')}</div></div>
-      <div class="fld hi"><div class="lb">◆ Nhận xét cho agent</div>
-        <textarea id="fNote" rows="3" placeholder="Gõ ở đây… agent đọc trước khi làm lại">${t.phan_hoi}</textarea></div>
+      <div class="fld"><div class="lb">Trạng thái</div><div class="tx">
+        <span class="st ${n.cls}">${n.ten}</span>${t.lan?` · đã làm lại ${t.lan}/${TRAN_LAM_LAI} lần`:''}</div></div>
+      <div class="tl">
+        ${buoc(daChot?'xongb':'nay',1,'Kế hoạch',daChot?'bạn đã chốt':'chờ bạn chốt',b1)}
+        ${buoc(coKQ?'xongb':daLam?'nay':'cho',2,'Làm trong bản nháp',daLam?'':'sau khi bạn chốt',b2)}
+        ${buoc(daDuyet?'xongb':coKQ?'nay':'cho',3,'Kết quả',coKQ?(daDuyet?'':'chờ bạn xem'):'',b3)}
+        ${buoc(t.tt==='da_ghi'?'xongb':coKQ?'nay':'cho',4,'Bạn duyệt',t.tt==='da_ghi'?'đã ghi vào file gốc':'',b4)}
+      </div>
       ${nut}`};
 }
 function vong(val,max,mau,nhan,don){

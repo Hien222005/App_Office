@@ -6,6 +6,7 @@
 //
 // CHỐT AN TOÀN: "cho_duyet_kq" bắt buộc có chấm tin cậy VÀ link sản phẩm để sếp tự kiểm.
 // Chuyển sang done/approved/rejected/redo là việc của sếp trên app, script này từ chối.
+import { readFileSync } from 'node:fs';
 import { db } from './lib.mjs';
 import { NHÃN, CHUYỂN, đượcChuyển, làNhãn, chạmTrần, TRẦN_LÀM_LẠI } from './nhan.mjs';
 
@@ -40,7 +41,16 @@ if (!đượcChuyển(việc.trang_thai, nhãn, 'agent')) {
 const sửa = { trang_thai: nhãn, cap_nhat_luc: new Date().toISOString() };
 
 if (nhãn === 'cho_duyet_kq') {
-  const [tinCậy, cănCứ, link, files, đãTựKiểm] = còn;
+  // Lấy thẳng từ báo cáo đã qua soát: đỡ gõ tay và đỡ sai lệch so với bản agent nộp.
+  let [tinCậy, cănCứ, link, files, đãTựKiểm] = còn;
+  let cácBước = null;
+  if (còn[0] === '--bao-cao') {
+    const bc = JSON.parse(readFileSync(còn[1], 'utf8'));
+    tinCậy = bc.tin_cay; cănCứ = bc.ket_qua; link = bc.link_san_pham;
+    files = (bc.file_da_doi ?? []).join(',');
+    đãTựKiểm = Array.isArray(bc.da_tu_kiem) ? bc.da_tu_kiem.join(' · ') : bc.da_tu_kiem;
+    cácBước = Array.isArray(bc.cac_buoc) ? bc.cac_buoc : null;
+  }
   const tin = Number(tinCậy);
   if (!Number.isInteger(tin) || tin < 1 || tin > 5) { console.error('Phải chấm tin cậy 1–5.'); process.exit(1); }
   if (!link?.trim()) { console.error('Phải có link sản phẩm để sếp tự kiểm. Xem mục "Link sản phẩm" trong Skill phòng.'); process.exit(1); }
@@ -51,6 +61,7 @@ if (nhãn === 'cho_duyet_kq') {
   sửa.tin_cay = tin;
   sửa.link_san_pham = link.trim();
   sửa.da_tu_kiem = (đãTựKiểm ?? '').trim() || null;
+  if (cácBước) sửa.cac_buoc = cácBước;   // nhật ký và dòng thời gian trong app đọc cột này
   sửa.ghi_chu_agent = cănCứ ?? null;
   sửa.file_da_doi = files ? files.split(',').map(s => s.trim()).filter(Boolean) : null;
 } else if (nhãn === 'can_sep_duyet') {

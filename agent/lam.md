@@ -9,7 +9,7 @@ Gõ lại lệnh này mỗi khi sếp trả việc về.
 3. Gọi song song trưởng phòng của các phòng có việc, chế độ LÀM, kèm brief và đường dẫn bản nháp.
    Đợi đủ tất cả trả lời.
 4. Mỗi báo cáo: `node agent/soat-bao-cao.mjs <id> bao-cao.json`.
-   - qua → `node agent/ghi-ket-qua.mjs <id> cho_duyet_kq <tin_cậy> "căn cứ" "<link sản phẩm>"`
+   - qua → `node agent/ghi-ket-qua.mjs <id> cho_duyet_kq --bao-cao bao-cao.json`
    - thiếu mục → trả trưởng phòng bổ sung **một lần**, soát lại
    - khai man · giấu file · sửa lấn → ghi cần sếp duyệt kèm lỗi soát nguyên văn, không cho làm lại
 5. Việc chạm trần 3 lần làm lại: script chuyển sang **cần sếp sửa**. Không chạm vào việc đó nữa.

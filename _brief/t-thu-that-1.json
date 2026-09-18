@@ -1,0 +1,30 @@
+{
+  "id": "t-thu-that-1",
+  "mang": "elearn",
+  "ten": "VIỆC THỬ · Fix khoảng cách câu hỏi khi xem lại quiz",
+  "nhiem_vu": "Đổi khoảng cách giữa hai câu hỏi ở chế độ xem lại lên 32px và thêm đường kẻ phân tách.",
+  "boi_canh": "Việc thử để kiểm hệ thống chạy đủ 9 cổng với dữ liệu thật. Làm trên thư mục giả lập trong _thu, không đụng Elearning.",
+  "file_can_doc": [
+    "bugs-con-lai-can-fix-2026-09-17.md",
+    "courses/Test_Module 4_Coding/module-04/02_html/unit-8-quiz.html"
+  ],
+  "file_duoc_sua": [
+    "courses/Test_Module 4_Coding/module-04/**",
+    "bugs-con-lai-can-fix-*.md"
+  ],
+  "file_phai_doi": [
+    "courses/Test_Module 4_Coding/module-04/**",
+    "bugs-con-lai-can-fix-*.md"
+  ],
+  "viec_khong_lam": [
+    "Không đồng bộ sang .claude/skills/**/templates/",
+    "Không sửa courses/Module 4/"
+  ],
+  "xong_khi": "Hai thẻ .question liền nhau cách nhau 32px và có đường kẻ phân tách.",
+  "diem_dung": [
+    "Không tìm được chỗ đặt khoảng cách",
+    "Phải sửa file ngoài file_duoc_sua mới xong được"
+  ],
+  "link_san_pham": "http://192.168.1.4:8890/nhap/t-thu-that-1/courses/Test_Module 4_Coding/module-04/02_html/unit-8-quiz.html",
+  "han_chot": "2026-09-19T14:00:00+07:00"
+}
