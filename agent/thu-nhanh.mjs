@@ -26,6 +26,7 @@ ghi('.claude/skills/elearning-md-to-html/templates/interactive/accordion.css', '
 ghi('courses/Module 4/02_html/shared/core.css', '.quiz-review .question + .question{margin-top:12px}\n');
 ghi(`${M4}/02_html/shared/core.css`, '.quiz-review .question + .question {\n  margin-top: 12px;\n}\n');
 ghi(`${M4}/02_html/unit-8-quiz.html`, '<section class="quiz-review"></section>\n');
+ghi(`${M4}/01_md/unit-8-quiz.md`, '# Unit 8 · Quiz\n');
 
 const brief = {
   id: ID, mang: 'elearn', ten: 'Fix bug #13 — câu hỏi sát nhau khi xem lại quiz',
@@ -184,14 +185,27 @@ const kiểmGhi = JSON.parse(rk.ra);
 kiểm('kiem-sau-ghi: đạt khi ghi đúng', rk.ma === 0 && kiểmGhi.dat === true,
   `${kiểmGhi.so_file_da_ghi} file · ${(kiểmGhi.sai[0]?.lý_do) ?? 'không lỗi'}`);
 
-// giả trường hợp sai: đổi nội dung file gốc sau khi ghi rồi kiểm lại → phải hoàn tác
-writeFileSync(join(gốc, M4, '02_html/unit-8-quiz.html'), 'ai đó sửa tay sau khi ghi\n');
+// Đạt rồi thì dấu loạt ghi phải mất, để không ai kiểm lại một loạt đã xong.
+const rk0 = chạyCóLỗi('kiem-sau-ghi.mjs');
+kiểm('kiem-sau-ghi: loạt đã xong thì không kiểm lại được',
+  rk0.ma === 1 && /loat-ghi/.test(rk0.loi + rk0.ra), (rk0.loi || '').trim().slice(0, 48));
+
+// ── chặng 4 · ghi xong mà file gốc bị sửa tay → hoàn tác cả loạt ──────────
+const ID3 = 't-thu-3', MD = `${M4}/01_md/unit-8-quiz.md`;
+rmSync(join(resolve(agent, '..', '_nhap'), ID3), { recursive: true, force: true });
+const brief3 = { ...brief, id: ID3, file_duoc_sua: [`${M4}/**`], file_phai_doi: [`${M4}/**`] };
+writeFileSync(join(thử, 'brief3.json'), JSON.stringify(brief3, null, 2));
+const mở3 = JSON.parse(chạy('ban-nhap.mjs', 'mo', join(thử, 'brief3.json')));
+writeFileSync(join(mở3.ban_nhap, MD), '# Unit 8 · Quiz\n\nĐã sửa ở bản nháp.\n');
+writeFileSync(dsFile, JSON.stringify({ ngay: '2026-09-18', da_duyet: [ID3], con_cho: [] }));
+chạy('ban-nhap.mjs', 'ghi-het');
+writeFileSync(join(gốc, MD), 'ai đó sửa tay sau khi ghi\n');      // giả trường hợp sai
 const r2 = chạyCóLỗi('kiem-sau-ghi.mjs');
 const kq2 = JSON.parse(r2.ra);
 kiểm('kiem-sau-ghi: bắt được nội dung khác bản nháp', r2.ma === 1 && kq2.sai.length > 0,
   kq2.sai[0]?.lý_do ?? '');
 kiểm('kiem-sau-ghi: đã hoàn tác về bản trước khi ghi',
-  readFileSync(join(gốc, M4, '02_html/unit-8-quiz.html'), 'utf8').includes('<section class="quiz-review">'));
+  readFileSync(join(gốc, MD), 'utf8').trim() === '# Unit 8 · Quiz');
 
 const bỏ = JSON.parse(chạy('ban-nhap.mjs', 'bo', ID));
 kiểm('Bỏ bản nháp', bỏ.da_bo_ban_nhap && !existsSync(nháp));
