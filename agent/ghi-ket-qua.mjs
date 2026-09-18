@@ -40,13 +40,18 @@ if (!đượcChuyển(việc.trang_thai, nhãn, 'agent')) {
 const sửa = { trang_thai: nhãn, cap_nhat_luc: new Date().toISOString() };
 
 if (nhãn === 'cho_duyet_kq') {
-  const [tinCậy, cănCứ, link, files] = còn;
+  const [tinCậy, cănCứ, link, files, đãTựKiểm] = còn;
   const tin = Number(tinCậy);
   if (!Number.isInteger(tin) || tin < 1 || tin > 5) { console.error('Phải chấm tin cậy 1–5.'); process.exit(1); }
   if (!link?.trim()) { console.error('Phải có link sản phẩm để sếp tự kiểm. Xem mục "Link sản phẩm" trong Skill phòng.'); process.exit(1); }
+  if ((đãTựKiểm ?? '').trim().length <= 10 && tin > 4) {
+    console.error('Chấm 5/5 thì phải nói đã tự mở lại cái gì để kiểm. Chưa kiểm thì trần là 4.');
+    process.exit(1);
+  }
   sửa.tin_cay = tin;
-  // Chờ cột link_san_pham ở giai đoạn B; tạm ghép vào ghi chú để app và sếp vẫn thấy.
-  sửa.ghi_chu_agent = `LINK: ${link.trim()}\n${cănCứ ?? ''}`.trim();
+  sửa.link_san_pham = link.trim();
+  sửa.da_tu_kiem = (đãTựKiểm ?? '').trim() || null;
+  sửa.ghi_chu_agent = cănCứ ?? null;
   sửa.file_da_doi = files ? files.split(',').map(s => s.trim()).filter(Boolean) : null;
 } else if (nhãn === 'can_sep_duyet') {
   sửa.ghi_chu_agent = còn[0] ?? null;

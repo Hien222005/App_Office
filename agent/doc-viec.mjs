@@ -43,7 +43,7 @@ const [việc, hỏi, ghiChú] = await Promise.all([
 
 const thiếuBrief = [];
 const raViệc = việc.map(t => {
-  const brief = đọcBrief(t.id);
+  const brief = t.brief ?? đọcBrief(t.id);   // cột brief là nguồn chính, file là dự phòng
   if (!brief) thiếuBrief.push(t.id);
   return {
     id: t.id, mảng: t.mang, tên: t.tieu_de,
