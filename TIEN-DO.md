@@ -56,7 +56,7 @@ Việc chưa duyệt hết ngày thì phiên để mở, việc thành **tồn**
 
 | Bài thử | Kết quả |
 |---|---|
-| `node agent/thu-nhanh.mjs` (không gọi Claude, 5 giây) | **46/46 ca đạt** |
+| `node agent/thu-nhanh.mjs` (không gọi Claude, 5 giây) | **47/47 ca đạt** (đo lại 19/09) |
 | `node agent/thu-truong-phong.mjs --model opus` | **9/9 luật được theo**, 2/2 việc qua soát, 38s và 32s |
 | Cùng bài thử với Haiku | 8/9 rồi 7/9; **bỏ quên ghi log bug 2/2 lần** |
 

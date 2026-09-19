@@ -24,17 +24,32 @@ select * from v_van_phong;
 
 ## Khoá API
 
-Sau khi tạo project, lấy khoá ở Settings → API và dán **thẳng vào
-`.env.local`** trên máy. Đừng gửi qua khung chat.
+Lấy khoá ở Settings → API rồi dán **thẳng vào `agent/.env`** trên máy.
+Đừng gửi qua khung chat.
 
-```
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-SUPABASE_SERVICE_ROLE_KEY=...      # chỉ dùng phía máy chủ + script agent
+```bash
+cp agent/.env.example agent/.env    # từ thư mục gốc dự án
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` đi vòng qua mọi chính sách RLS.
+```
+SUPABASE_URL=https://xxxxxxxx.supabase.co
+SUPABASE_SERVICE_KEY=eyJ...        # service_role — script agent dùng
+SUPABASE_ANON_KEY=eyJ...           # anon — app trên điện thoại dùng
+```
+
+| Tên biến | Ai đọc |
+|---|---|
+| `SUPABASE_URL` | `agent/lib.mjs` và `tao-cau-hinh.mjs` |
+| `SUPABASE_SERVICE_KEY` | chỉ `agent/lib.mjs` — các script chạy trên Mac |
+| `SUPABASE_ANON_KEY` | `tao-cau-hinh.mjs`, để sinh ra `site/cau-hinh.js` cho app |
+
+`SUPABASE_SERVICE_KEY` đi vòng qua mọi chính sách RLS.
 Không bao giờ để nó vào code chạy ở trình duyệt, không bao giờ commit.
+`.gitignore` đã chặn `agent/.env` và `site/cau-hinh.js`.
+
+Khi deploy lên Netlify thì không dùng file `.env`: đặt `SUPABASE_URL` và
+`SUPABASE_ANON_KEY` ở Project configuration → Environment. Netlify chạy
+`node tao-cau-hinh.mjs` lúc build để sinh `site/cau-hinh.js` từ hai biến đó.
 
 ## Trạng thái hiện tại
 

@@ -256,10 +256,11 @@ Chỉ thư mục `site/` được publish. `agent/` và `supabase/` nằm ngoài
 
 ---
 
-## Chạy tự động — chưa dùng được
+## Chạy tự động — để sau
 
-`agent/com.chihien.agent.plist` còn trỏ vào `agent/morning.md`, file đã bị xoá khi đổi
-sang workflow ba lệnh. **Phải sửa file plist trước** rồi mới cài được:
+`agent/com.chihien.agent.plist` hẹn giờ 6h30 chạy `claude -p "/task sang"`.
+Chỉ hẹn giờ lệnh `sang` vì nó chỉ đọc; `lam` và `chot` phải gõ tay, do cần bạn
+chốt việc và duyệt kết quả ở giữa.
 
 ```bash
 sudo pmset repeat wakeorpoweron MTWRFSU 06:25:00     # Mac tự thức

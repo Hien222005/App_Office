@@ -9,13 +9,17 @@
          sudo pmset repeat wakeorpoweron MTWRFSU 06:25:00
 
   launchd KHÔNG đọc ~/.zshrc nên phải dùng /bin/zsh -lc để nạp PATH.
+
+  Chỉ hẹn giờ lệnh `sang` (chỉ đọc, không sửa file). Hai lệnh `lam` và `chot`
+  phải gõ tay, vì chúng cần sếp chốt việc và duyệt kết quả ở giữa.
+  Nhật ký chạy: /tmp/agent-sang.log
 -->
 <plist version="1.0"><dict>
   <key>Label</key><string>com.chihien.agent.sang</string>
   <key>ProgramArguments</key>
   <array>
     <string>/bin/zsh</string><string>-lc</string>
-    <string>cd ~/Documents/Công\ việc/agent-app &amp;&amp; caffeinate -i claude -p "$(cat agent/morning.md)" &gt;&gt; /tmp/agent-sang.log 2&gt;&amp;1</string>
+    <string>cd ~/Documents/Công\ việc/agent-app &amp;&amp; caffeinate -i claude -p "/task sang" &gt;&gt; /tmp/agent-sang.log 2&gt;&amp;1</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>30</integer></dict>
