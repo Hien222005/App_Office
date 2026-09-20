@@ -88,7 +88,7 @@
   NG.daDangNhap = () => !!phiên()?.access_token;
 
   /* ── đọc ── */
-  const COT_MOI = ['han_chot', 'brief', 'link_san_pham', 'da_tu_kiem', 'so_lan_lam_lai'];
+  const COT_MOI = ['han_chot', 'brief', 'link_san_pham', 'cac_buoc', 'so_lan_lam_lai'];
 
   NG.tai = async () => {
     if (!C.url || !C.anon) { NG.cheDo = 'mau'; return null; }
@@ -120,8 +120,10 @@
     return {
       id: t.id, mang: t.mang, ngay: t.ngay, tieu_de: t.tieu_de,
       chi_tiet: t.chi_tiet || '', tieu_chi: t.tieu_chi_xong || '',
-      tt: t.trang_thai, tin: t.tin_cay || 0, phan_hoi: t.phan_hoi_cua_toi || '',
-      ket: t.ghi_chu_agent || '', link: t.link_san_pham || '', tu_kiem: t.da_tu_kiem || '',
+      tt: t.trang_thai, phan_hoi: t.phan_hoi_cua_toi || '',
+      ket: t.ghi_chu_agent || '',            // kỳ vọng kết quả — thứ duy nhất agent tự khai
+      link: t.link_san_pham || '',
+      files: Array.isArray(t.file_da_doi) ? t.file_da_doi : [],   // máy lấy từ bản nháp
       han: t.han_chot ? gioNgan(t.han_chot) : 'chưa có hạn',
       tre: !!t.han_chot && new Date(t.han_chot) < new Date() && !['da_ghi', 'bo'].includes(t.trang_thai),
       lan: t.so_lan_lam_lai || 0,

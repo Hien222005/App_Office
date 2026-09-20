@@ -235,7 +235,9 @@ async function lamHoacXong(nhãnMới) {
 
   // 3 · ghi. Chỉ `ket_qua` là lời agent; còn lại máy lấy từ ổ đĩa và nhật ký.
   Object.assign(sửa, {
-    ket_qua: kỳVọng.trim(),
+    // Bảng tasks không có cột `ket_qua`. `ghi_chu_agent` đúng nghĩa: thứ DUY NHẤT
+    // agent tự khai. Mọi cột khác dưới đây máy lấy từ ổ đĩa và nhật ký.
+    ghi_chu_agent: kỳVọng.trim(),
     link_san_pham: lên.link,
     file_da_doi: soát.file_da_doi,
     cac_buoc: soát.cac_buoc,
@@ -244,7 +246,7 @@ async function lamHoacXong(nhãnMới) {
 
   console.log(JSON.stringify({
     id, nhan: nhãnMới, nhan_doc: NHÃN[nhãnMới].tên,
-    ky_vong: sửa.ket_qua,
+    ky_vong: sửa.ghi_chu_agent,
     so_file_da_doi: soát.file_da_doi.length,
     so_buoc_trong_nhat_ky: soát.cac_buoc.length,
     da_tu_kiem: soát.da_tu_kiem,

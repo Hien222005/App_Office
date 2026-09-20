@@ -74,9 +74,8 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
   border:1px solid var(--line); border-radius:18px; background:var(--panel); padding:14px; width:100%}
 .tcard:active{transform:scale(.99)}
 .tcard.gone{opacity:.5}
-.stripe{display:flex; flex-direction:column; gap:3px; padding-top:4px}
-.stripe i{display:block; height:5px; border-radius:2px; background:var(--line)}
-.stripe i.f{background:var(--ok)} .stripe i.w{background:var(--wait)}
+.stripe{padding-top:3px}
+.stripe i{display:block; width:4px; height:100%; min-height:34px; border-radius:3px; background:var(--line)}
 .chip{display:inline-block; font-size:12px; font-weight:800; padding:3px 9px; border-radius:8px;
   background:var(--panel2); border:1px solid var(--line); margin-bottom:7px}
 .tcard .ti{display:block; font-size:15.5px; font-weight:700; line-height:1.4; letter-spacing:-.01em}
@@ -124,6 +123,13 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
 .plink b{display:block; font-size:14.5px; font-weight:800; color:var(--tx)}
 .plink span span{font-family:ui-monospace,Menlo,monospace; font-size:11px; color:var(--info); word-break:break-all}
 .plink .go{color:var(--info); font-weight:900; font-size:19px}
+.lb.lbm{color:var(--lab)}
+.log{font-family:ui-monospace,Menlo,monospace; font-size:12.5px; line-height:1.85; color:var(--mut)}
+.log b{color:var(--tx); font-weight:700}
+.log .gio{color:var(--lab); font-weight:700}
+.fl{font-family:ui-monospace,Menlo,monospace; font-size:12px; line-height:1.8; color:var(--mut);
+  word-break:break-all}
+.fl .y{color:var(--ok); font-weight:800}
 .soat{display:grid; gap:4px; font-size:13.5px; font-weight:700}
 .soat div{display:flex; gap:7px} .soat .y{color:var(--ok)} .soat .x{color:var(--wait)}
 .fld.okb{border-color:#2FE39B66} .fld.okb .lb{color:var(--ok)}
@@ -428,59 +434,53 @@ const SEED=()=>({
      tieu_de:'Fix bug #13 — khoảng cách câu hỏi khi xem lại quiz',
      chi_tiet:'Đổi khoảng cách giữa hai câu hỏi ở chế độ xem lại lên 32px, thêm đường kẻ. Chỉ sửa trong module-04.',
      tieu_chi:'Câu 4 và Câu 5 cách nhau 32px và có đường kẻ phân tách.',
-     tt:'cho_duyet',tin:4,phan_hoi:'',ket:'Mở unit-8-quiz ở chế độ xem lại, hai câu cách nhau 32px.',
-     link:'192.168.1.12:8890/nhap/t-0147/unit-8-quiz.html',
+     tt:'cho_duyet',phan_hoi:'',ket:'Mở unit-8-quiz ở chế độ xem lại, hai câu cách nhau 32px.',
+     link:'courageous-sprite-17c1ff.netlify.app/xem/e7f3a91c/courses/…/unit-8-quiz.html',
      brief:{nhiem_vu:'Tăng khoảng cách hai câu hỏi ở chế độ xem lại lên 32px, thêm đường kẻ.',
        file_duoc_sua:['module-04/**','bugs-con-lai-can-fix-*.md'],
        viec_khong_lam:['Không đồng bộ sang templates','Không sửa courses/Module 4/'],
        xong_khi:'Câu 4 và Câu 5 cách nhau 32px và có đường kẻ phân tách.'},
-     tu_kiem:'Mở lại unit-8-quiz trong bản nháp, đo được 32px và thấy đường kẻ.',
      nk:['11:42 · mở bản nháp','11:44 · bị chặn: định sửa templates/accordion.css','11:49 · xong, sinh link']},
     {id:'t-0150',mang:'lab',ngay:'2026-09-18',han:'13:00 hôm nay',lan:1,
      tieu_de:'Tóm tắt bài Lab chiều — RAG pipeline',
      chi_tiet:'Viết tóm tắt 4 mục, đọc hết trong 5 phút, tối đa 700 chữ.',
      tieu_chi:'Đủ 4 mục: mục tiêu, các bước, ba chỗ hay vướng, hai câu sẽ bị hỏi.',
-     tt:'cho_duyet',tin:4,phan_hoi:'Mục ba chỗ hay vướng viết chung quá, ghi rõ hơn.',
+     tt:'cho_duyet',phan_hoi:'Mục ba chỗ hay vướng viết chung quá, ghi rõ hơn.',
      ket:'Mở bản tóm tắt trong app, mục 3 đã ghi rõ từng chỗ.',
      link:'courageous-sprite-17c1ff.netlify.app/#lab/2026-09-18',
      brief:{nhiem_vu:'Viết tóm tắt 4 mục cho buổi Lab chiều, tối đa 700 chữ.',
        file_duoc_sua:['san-pham/lab/2026-09-18.md'],
        viec_khong_lam:['Không chép nguyên văn tài liệu nội bộ'],
        xong_khi:'Đủ 4 mục: mục tiêu, các bước, ba chỗ hay vướng, hai câu sẽ bị hỏi.'},
-     tu_kiem:'Đọc lại bản tóm tắt, đếm 412 chữ, đủ 4 mục.',
      nk:['11:31 · mở bản nháp','11:38 · xong lần 1','12:10 · sếp trả lại: mục 3 chưa rõ','12:20 · viết lại mục 3']},
     {id:'t-0155',mang:'elearn',ngay:'2026-09-18',han:'T5 19/09',lan:0,
      tieu_de:'Rà Module 5 theo checklist định dạng',
      chi_tiet:'Đối chiếu 9 unit của Module 5 với checklist Stage A, chỉ liệt kê chỗ lệch, không sửa.',
      tieu_chi:'Danh sách chỗ lệch, mỗi mục có unit và dòng.',
-     tt:'cho_chot',tin:0,phan_hoi:'',ket:'',link:'',tu_kiem:'',
-     nk:['07:05 · đề xuất từ checklist định dạng']},
+     tt:'cho_chot',phan_hoi:'',ket:'',link:'',nk:['07:05 · đề xuất từ checklist định dạng']},
     {id:'t-0149',mang:'elearn',ngay:'2026-09-18',han:'Hôm nay',lan:0,
      tieu_de:'Đóng gói lại module-04-scorm.zip sau khi fix',
      chi_tiet:'Nén lại module-04 thành gói SCORM, đặt tên theo ngày.',
      tieu_chi:'File zip mở được trên LMS thử, không lỗi manifest.',
-     tt:'dang_lam',tin:0,phan_hoi:'',ket:'',link:'',tu_kiem:'',
-     nk:['11:52 · vướng: có hai bản đã đóng gói']},
+     tt:'dang_lam',phan_hoi:'',ket:'',link:'',nk:['11:52 · vướng: có hai bản đã đóng gói']},
     {id:'t-0151',mang:'lab',ngay:'2026-09-18',han:'14:00 hôm nay',lan:0,
      tieu_de:'Chuẩn bị hai câu học viên sẽ hỏi',
      chi_tiet:'Dựa trên ba chỗ hay vướng, soạn sẵn câu trả lời ngắn.',
      tieu_chi:'Hai câu kèm trả lời dưới 100 chữ mỗi câu.',
-     tt:'dang_lam',tin:0,phan_hoi:'',ket:'',link:'',tu_kiem:'',nk:['12:05 · đang soạn']},
+     tt:'dang_lam',phan_hoi:'',ket:'',link:'',nk:['12:05 · đang soạn']},
     {id:'t-0148',mang:'elearn',ngay:'2026-09-18',han:'Hôm nay',lan:0,
      tieu_de:'Ghi log fix bug #13 vào file theo ngày',
      chi_tiet:'Ghi tên bug, triệu chứng, đã kiểm gì, đã sửa gì.',
      tieu_chi:'File log có mục đánh số tiếp theo.',
-     tt:'da_duyet',tin:5,phan_hoi:'',ket:'Mở file log, thấy mục 13.',
-     link:'192.168.1.12:8890/nhap/t-0148/bugs-con-lai-can-fix-2026-09-18.md',
-     tu_kiem:'Mở lại file log trong bản nháp, thấy đủ 4 dòng.',
+     tt:'da_duyet',phan_hoi:'',ket:'Mở file log, thấy mục 13.',
+     link:'courageous-sprite-17c1ff.netlify.app/xem/e7f3a91c/bugs-con-lai-can-fix-2026-09-18.md',
      nk:['11:50 · xong','12:30 · sếp duyệt kết quả']},
     {id:'t-0153',mang:'biz',ngay:'2026-09-17',han:'trễ 1 ngày',lan:3,tre:true,
      tieu_de:'Rà lại bảng giá ba gói tập',
      chi_tiet:'Đối chiếu bảng giá trên trang với file gốc, đánh dấu chỗ lệch.',
      tieu_chi:'Danh sách chỗ lệch, không tự sửa gì.',
-     tt:'da_chot',tin:0,phan_hoi:'Vẫn chưa đúng cột giá, làm lại lần 3 cũng lệch.',
-     ket:'',link:'',tu_kiem:'',
-     nk:['17/09 11:20 · làm lần 1','17/09 15:40 · sếp trả lại','17/09 16:30 · làm lần 2',
+     tt:'da_chot',phan_hoi:'Vẫn chưa đúng cột giá, làm lại lần 3 cũng lệch.',
+     ket:'',link:'',nk:['17/09 11:20 · làm lần 1','17/09 15:40 · sếp trả lại','17/09 16:30 · làm lần 2',
          '18/09 09:10 · sếp trả lại lần 3 · chạm trần, chuyển cần sếp sửa']},
   ],
   hoi:{id:'q-31',task_id:'t-0149',
@@ -619,7 +619,7 @@ function chotNgay(){
   const n=S.tasks.filter(t=>t.tt==='da_duyet');
   if(S.nguon==='that'){
     // App chỉ đánh dấu đã duyệt. Việc chép vào file gốc do lệnh `chot` trên Mac làm.
-    toast(`${n.length} việc đã duyệt · gõ /task chot trên Mac để ghi vào file gốc`);
+    toast(`${n.length} việc đã duyệt · gõ /chot trên Mac để ghi vào file gốc`);
     return;
   }
   n.forEach(t=>{t.tt='da_ghi'; t.nk.push('12:58 · ghi vào file gốc · kiểm mã băm đạt');});
@@ -650,9 +650,7 @@ function chayLenhLam(){
       setTimeout(()=>go('phong'),700); return;}
     const t=ds[i++];
     t.tt='cho_duyet';
-    t.tin=t.phan_hoi?4:3;
-    t.link=t.link||`192.168.1.12:8890/nhap/${t.id}/xem-thu.html`;
-    t.tu_kiem='Mở lại sản phẩm trong bản nháp, đối chiếu tiêu chí xong khi.';
+    t.link=t.link||`courageous-sprite-17c1ff.netlify.app/xem/e7f3a91c/${t.id}.html`;
     t.ket=t.phan_hoi?'Đã làm theo nhận xét của bạn. Đối chiếu đủ tiêu chí.'
                     :'Đối chiếu đủ tiêu chí xong. Không có chỗ nào phải đoán.';
     t.nk.push(`${new Date().toTimeString().slice(0,5)} · làm xong, chờ bạn duyệt kết quả`);
@@ -877,7 +875,8 @@ function manOffice(){
 function theTask(t,click){
   const n=NHAN[t.tt]||{ten:t.tt,cls:'lam'};
   const N=NEON[t.mang];
-  const vach=[1,2,3,4,5].map(i=>`<i class="${t.tin>=i?(t.tin>=3?'f':'w'):''}"></i>`).join('');
+  // Vạch màu theo phòng — nhìn danh sách trộn là biết việc của mảng nào.
+  const vach=`<i style="background:${N}"></i>`;
   const meta=[`<span class="ma">${t.id}</span>`,
     t.tre?`<span style="color:var(--bad)">${t.han}</span>`:`<span>hạn ${t.han}</span>`,
     t.lan?`<span style="color:var(--wait)">làm lại lần ${t.lan}/${TRAN_LAM_LAI}</span>`:''
@@ -931,7 +930,7 @@ function manPhong(){
   const daGhiDs=S.tasks.filter(t=>t.tt==='da_ghi');
   return {back:'office',
     head:`<h1>${k?TEN[k]:'Việc'}</h1><span class="sub">${S.dangTai?'đang tải…':choSep()?choSep()+' chờ bạn':'đã xử lý hết'}</span>
-      ${S.nguon==='that'?`<button class="kh" data-tailai="1" aria-label="Tải lại">${sv('chay')}</button>`:''}`,
+      ${S.nguon==='that'?`<button class="kh lam-moi" data-tailai="1" aria-label="Cập nhật">${sv('chay')}<span>Cập nhật</span></button>`:''}`,
     body:`${k?'':bangChoNguon()}${k?'':bangTinhTrang()}
       ${hoiCho?theHoi():''}
       ${!k&&ton.length?`<div class="grp" style="color:var(--bad)">Tồn từ hôm trước
@@ -968,18 +967,22 @@ function manTask(){
     ${t.tt==='cho_chot'?`<div class="btnrow"><button class="btn pri" data-act="da_chot">Chốt việc này</button>
       <button class="btn no" data-act="bo">Bỏ</button></div>`:''}`;
 
-  const b2=daLam?`<div class="fld"><div class="lb">Các bước agent tự thuật</div>
-      <div class="tx" style="font-size:13px;color:var(--mut)">${(t.nk&&t.nk.length)?t.nk.map(x=>'· '+x).join('<br>'):'chưa có bước nào'}</div></div>`:'';
+  // Nhật ký do hook ghi, agent không viết — nên không quên được.
+  const b2=daLam?`<div class="fld"><div class="lb lbm">Agent đã làm gì</div>
+      <div class="log">${(t.nk&&t.nk.length)
+        ? t.nk.map(x=>{const m=String(x).match(/^(\d{1,2}:\d{2}(?::\d{2})?)\s*·\s*(\S+)\s*·\s*(.*)$/);
+            return m ? `<span class="gio">${m[1]}</span> ${m[2].toLowerCase()} <b>${m[3]}</b>`
+                     : `<span class="gio">·</span> ${x}`;}).join('<br>')
+        : 'nhật ký chưa ghi bước nào'}</div></div>`:'';
+
+  // File máy tự lấy bằng cách so bản nháp với bản gốc — không có lời khai nào để man.
+  const bFile=(coKQ&&t.files?.length)?`<div class="fld"><div class="lb lbm">${t.files.length} file đã đụng
+      <span style="color:var(--ok);font-weight:700">· khớp bản nháp, không lấn</span></div>
+      <div class="fl">${t.files.map(f=>`<span class="y">✓</span> ${f}`).join('<br>')}</div></div>`:'';
 
   const b3=coKQ?`${t.link?`<button class="plink" data-toast="Mở link này trên trình duyệt để tự kiểm">
       <span><b>Mở sản phẩm để tự kiểm</b><span>${t.link}</span></span><span class="go">›</span></button>`:''}
-    <div class="fld"><div class="lb">Đã làm · tin cậy ${t.tin||'—'}/5</div><div class="tx">${t.ket||'—'}</div></div>
-    ${t.tu_kiem?`<div class="fld"><div class="lb">Agent đã tự kiểm</div>
-      <div class="tx" style="font-size:13px">${t.tu_kiem}</div></div>`:''}
-    <div class="fld okb"><div class="lb">Soát tự động đã qua</div><div class="soat">
-      <div><span class="y">✓</span>Báo cáo đủ mục, đúng kiểu dữ liệu</div>
-      <div><span class="y">✓</span>File khai khớp bản nháp, không giấu, không lấn</div>
-      <div><span class="y">✓</span>Có link sản phẩm và mục đã tự kiểm</div></div></div>`:'';
+    <div class="fld"><div class="lb lbm">Kỳ vọng kết quả</div><div class="tx">${t.ket||'—'}</div></div>`:'';
 
   const b4=
     t.tt==='cho_duyet' ? `<div class="fld hi"><div class="lb">◆ Nhận xét nếu trả lại</div>
@@ -1009,7 +1012,7 @@ function manTask(){
         <span class="st ${n.cls}">${n.ten}</span>${t.lan?` · đã làm lại ${t.lan}/${TRAN_LAM_LAI} lần`:''}</div></div>
       <div class="tl">
         ${buoc(daChot?'xongb':'nay',1,'Kế hoạch',daChot?'bạn đã chốt':'chờ bạn chốt',b1)}
-        ${buoc(coKQ?'xongb':daLam?'nay':'cho',2,'Làm trong bản nháp',daLam?'':'sau khi bạn chốt',b2)}
+        ${buoc(coKQ?'xongb':daLam?'nay':'cho',2,'Làm trong bản nháp',daLam?'':'sau khi bạn chốt',b2+bFile)}
         ${buoc(daDuyet?'xongb':coKQ?'nay':'cho',3,'Kết quả',coKQ?(daDuyet?'':'chờ bạn xem'):'',b3)}
         ${buoc(t.tt==='da_ghi'?'xongb':coKQ?'nay':'cho',4,'Bạn duyệt',t.tt==='da_ghi'?'đã ghi vào file gốc':'',b4)}
       </div>
@@ -1094,10 +1097,9 @@ function manKetQua(){
   if(!xong.length) return {back:'office',head:`<h1>Kết quả</h1><span class="sub">chưa có</span>`,
     body:`<div class="empty"><div class="e">🌙</div><p>Agent chưa làm việc nào hôm nay.<br><br>
       Chốt việc ở tab Việc rồi bấm nút tròn để chạy lệnh lam.</p></div>`};
-  const c=xong.filter(t=>t.tin), tb=c.reduce((a,t)=>a+t.tin,0)/(c.length||1);
   const daGhiDs=S.tasks.filter(t=>t.tt==='da_ghi');
   return {back:'office',
-    head:`<h1>Kết quả</h1><span class="sub">${xong.length} việc · TB ${tb.toFixed(1)}/5</span>`,
+    head:`<h1>Kết quả</h1><span class="sub">${xong.length} việc · ${daGhiDs.length} đã vào file gốc</span>`,
     body:`${xong.map(t=>theTask(t,true)).join('')}
       ${daGhiDs.length?`<div class="fld okb"><div class="lb">Đã ghi vào file gốc · ${daGhiDs.length} việc</div>
         <div class="tx" style="font-size:13.5px">Kiểm mã băm sau khi ghi: đạt. Phiên ngày đã đóng.</div></div>`:''}
@@ -1165,7 +1167,7 @@ const GOI_Y = ['Hôm nay có việc gì?','Tôi ăn bao nhiêu calo rồi?',
 // gói trạng thái hiện tại thành bối cảnh — Gemini không tự biết gì về app
 function boiCanh(){
   const v = t => ({id:t.id, mang:TEN[t.mang], tieu_de:t.tieu_de, trang_thai:t.tt,
-    tin_cay:t.tin||null, xong_khi:t.tieu_chi, ket_qua:t.ket||null,
+    xong_khi:t.tieu_chi, ky_vong_ket_qua:t.ket||null,
     dan_do_cua_sep:t.phan_hoi||null});
   return {
     ngay: new Date().toLocaleDateString('vi-VN'),
