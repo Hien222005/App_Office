@@ -132,6 +132,11 @@ kiểm('Câu hỏi chưa trả lời = đang vướng',
 kiểm('Việc đang treo câu hỏi thì KHÔNG giao cho agent',
   !agentNhậnĐược({ trang_thai: 'da_chot', so_lan_lam_lai: 0 }, [{ tra_loi: null }]) &&
   agentNhậnĐược({ trang_thai: 'da_chot', so_lan_lam_lai: 0 }, [{ tra_loi: 'xong' }]));
+kiểm('Việc ĐANG LÀM DỞ vẫn nhặt lại được (không kẹt vĩnh viễn)',
+  agentNhậnĐược({ trang_thai: 'dang_lam', so_lan_lam_lai: 0 }, []));
+kiểm('Việc chưa chốt thì KHÔNG giao',
+  !agentNhậnĐược({ trang_thai: 'cho_chot', so_lan_lam_lai: 0 }, []) &&
+  !agentNhậnĐược({ trang_thai: 'cho_duyet', so_lan_lam_lai: 0 }, []));
 kiểm('Việc chạm trần thì KHÔNG giao cho agent',
   !agentNhậnĐược({ trang_thai: 'da_chot', so_lan_lam_lai: 3 }, []));
 kiểm('Không giao thì phải nói rõ lý do',

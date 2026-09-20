@@ -204,6 +204,11 @@ async function lamHoacXong(nhãnMới) {
                 + `Việc này thuộc về sếp: sếp tự sửa rồi giao lại. Bỏ việc này, làm việc khác.`);
     process.exit(1);
   }
+  // Gõ `lam` lại trên việc đang làm dở là chuyện thường — đừng báo lỗi, cứ đi tiếp.
+  if (nhãnMới === 'dang_lam' && việc.trang_thai === 'dang_lam') {
+    console.log(`${id} đang làm dở từ trước — làm tiếp.`);
+    process.exit(0);
+  }
   if (!đượcChuyển(việc.trang_thai, nhãnMới, 'agent')) {
     console.error(
       `Không được chuyển ${id} từ "${việc.trang_thai}" sang "${nhãnMới}".\n` +

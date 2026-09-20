@@ -45,7 +45,10 @@ export const CHUYỂN = {
 };
 
 export const TRẦN_LÀM_LẠI = 3;          // lần thứ 4 thì sếp tự sửa, agent không chạm
-export const PHIÊN_NHẬN = ['da_chot'];  // lệnh `lam` chỉ nhận nhãn này
+// Lệnh `lam` nhận cả hai nhãn. Phải có `dang_lam`, kẻo việc làm dở bị KẸT VĨNH VIỄN:
+// phiên chết giữa chừng, cổng chặn, hay sếp trả việc về — việc nằm ở `dang_lam` mà
+// không ai nhặt lại được. `lam` vốn là lệnh gõ lại nhiều lần, nên phải nhặt được việc dở.
+export const PHIÊN_NHẬN = ['da_chot', 'dang_lam'];
 export const CHỜ_SẾP = Object.entries(NHÃN).filter(([, n]) => n.chờ_sếp).map(([m]) => m);
 export const SỐ_PHƯƠNG_ÁN = 3;          // đúng 3 gợi ý; app thêm ô cho sếp tự gõ
 
@@ -74,7 +77,9 @@ export function agentNhậnĐược(việc, câuHỏiCủaViệc = []) {
 
 // Lý do vì sao một việc không được giao — để script in ra cho người đọc hiểu.
 export function vìSaoKhôngNhận(việc, câuHỏiCủaViệc = []) {
-  if (!PHIÊN_NHẬN.includes(việc.trang_thai)) return `nhãn "${việc.trang_thai}", chỉ nhận "da_chot"`;
+  if (!PHIÊN_NHẬN.includes(việc.trang_thai)) {
+    return `nhãn "${việc.trang_thai}", lệnh lam chỉ nhận ${PHIÊN_NHẬN.join(' hoặc ')}`;
+  }
   if (cầnSếpSửa(việc)) return `đã trả lại ${việc.so_lan_lam_lai} lần — sếp tự sửa, agent không chạm`;
   if (đangVướng(câuHỏiCủaViệc)) return 'đang có câu hỏi chưa được trả lời';
   return null;
