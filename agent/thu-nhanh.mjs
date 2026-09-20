@@ -9,6 +9,7 @@ import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync, appendFileS
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { băm } from './anh-chup.mjs';
+import { gốcCủaPhòng } from './phong.mjs';
 import { đượcChuyển, trễHạn, NHÃN, chạmTrần, làViệcTồn, SỐ_PHƯƠNG_ÁN, CHỜ_SẾP, CHUYỂN,
          cầnSếpSửa, đangVướng, agentNhậnĐược, vìSaoKhôngNhận } from './nhan.mjs';
 
@@ -167,6 +168,27 @@ const xem = JSON.parse(chạy('nhap.mjs', 'xem', ID));
 kiểm('xem: đúng 2 file sẽ chép về', xem.se_chep_ve.length === 2);
 kiểm('Thư mục thật chưa bị đụng trước khi duyệt',
   băm(join(gốc, M4, '02_html/shared/core.css')) === bămTrước.css);
+
+// ── mẫu trong Skill phải khớp GỐC PHÒNG, không phải thư mục tưởng tượng ──
+// Lỗi agent tìm ra: gốc phòng Lab là .../san-pham/lab, mà Skill khai mẫu
+// "san-pham/lab/*.html" — tính từ gốc thì thành san-pham/lab/san-pham/lab/*.html,
+// không bao giờ khớp. Bài đã viết xong vẫn không nộp được.
+{
+  const ánh = { lab: 'soan-bai-lab', elearn: 'sua-bug-elearn' };
+  const lệch = [];
+  for (const [mã, tênSkill] of Object.entries(ánh)) {
+    let gốc; try { gốc = gốcCủaPhòng(mã); } catch { continue; }   // phòng chưa khai .env
+    if (!existsSync(gốc)) continue;
+    const pv = { goc: gốc, duoc_sua: phạmViTừSkill(tênSkill).duoc_sua };
+    // Mỗi mẫu phải khớp ÍT NHẤT một đường dẫn dựng từ chính nó — tức mẫu nói về
+    // thư mục có thật dưới gốc, không phải lặp lại tên gốc.
+    for (const mẫu of pv.duoc_sua) {
+      const thử = join(gốc, mẫu.replace(/\*\*/g, 'x').replace(/\*/g, 'x'));
+      if (!xétFile(pv, thử).được) lệch.push(`${tênSkill}: mẫu "${mẫu}" không khớp gốc ${gốc}`);
+    }
+  }
+  kiểm('Mẫu trong Skill khớp gốc phòng thật', !lệch.length, lệch[0] ?? 'khớp hết');
+}
 
 // ── app phải khớp mô hình nhãn: sếp làm gì được thì app phải có nút ──────
 // Lỗi: việc ở 'dang_lam' không có nút nào trên thẻ, dù CHUYỂN.sếp cho phép bỏ.

@@ -52,7 +52,14 @@ Một file `san-pham/lab/<ngày>.html` — trang đọc được trên điện t
 Cộng `kỳ vọng kết quả` — một hai câu sếp mở link ra sẽ thấy gì.
 
 ## Tham chiếu
-Gốc phòng: `DIR_LAB` trong `agent/.env`, chứa `repo/` và `san-pham/`.
+**Mọi mẫu đường dẫn trên đây tính từ GỐC PHÒNG**, tức `DIR_LAB` trong `agent/.env`.
+Gốc đó chứa hai thư mục:
+
+```
+<DIR_LAB>/
+├── repo/        bản sao repo bài học · chỉ đọc · thay mỗi buổi
+└── san-pham/    chỗ DUY NHẤT được ghi
+```
 
 Repo bài học thường có sẵn các chỗ sau — đọc đúng chỗ thì đỡ đoán:
 

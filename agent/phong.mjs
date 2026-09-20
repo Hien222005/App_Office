@@ -21,13 +21,13 @@ function env(tên) {
 }
 
 export const PHÒNG = {
+  // MỘT gốc cho mỗi phòng. Trước đây phòng Lab có hai: `nguồn` để đọc và `gốc` để
+  // ghi, trỏ vào hai thư mục khác hẳn nhau — nên mẫu đường dẫn trong Skill (tính từ
+  // gốc) không bao giờ khớp chỗ thật sự đọc. `nguồn` lại không script nào dùng.
+  // Nay DIR_LAB trỏ vào thư mục chứa CẢ HAI: repo/ để đọc, san-pham/ để ghi.
   lab: {
     tên: 'Lab Coach',
-    // Tài liệu Lab chỉ đọc, không nằm trong bản nháp.
-    nguồn: () => env('DIR_LAB'),
-    // Nơi ghi bản tóm tắt, cũng là gốc của bản nháp.
-    // VP_GOC_LAB chỉ dùng khi chạy thử; bình thường ghi vào agent-app/san-pham/lab.
-    gốc: () => env('VP_GOC_LAB') || join(dựÁn, 'san-pham', 'lab'),
+    gốc: () => env('DIR_LAB'),
     tự_tạo_gốc: true,
   },
   elearn: { tên: 'E-learning', gốc: () => env('DIR_ELEARNING') },
