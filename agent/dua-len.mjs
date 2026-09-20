@@ -17,7 +17,7 @@ import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
-import { THƯ_MỤC_NHÁP } from './phong.mjs';
+import { THƯ_MỤC_NHÁP, kiểmGốc } from './phong.mjs';
 import { soSánh } from './anh-chup.mjs';
 import { xétFile } from './pham-vi.mjs';
 
@@ -92,6 +92,9 @@ const mãHoá = (p) => p.split('/').map(encodeURIComponent).join('/');
 export async function đưaLên(id) {
   if (!URL_SB || !KHOÁ) throw new Error('Thiếu SUPABASE_URL hoặc SUPABASE_SERVICE_KEY trong agent/.env');
   const sổ = JSON.parse(readFileSync(join(THƯ_MỤC_NHÁP, id, 'so.json'), 'utf8'));
+  // Cùng cổng với nhap.mjs: bản nháp mở từ thư mục gốc khác thư mục hiện hành thì
+  // mọi kết luận sau đó đều nói về nhầm chỗ.
+  kiểmGốc(sổ, id);
   const nháp = join(THƯ_MỤC_NHÁP, id, 'nhap');
   const pv = { goc: sổ.goc, duoc_sua: sổ.duoc_sua, chi_sua: sổ.chi_sua };
 

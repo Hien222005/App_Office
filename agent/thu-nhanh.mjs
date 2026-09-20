@@ -168,6 +168,22 @@ kiểm('xem: đúng 2 file sẽ chép về', xem.se_chep_ve.length === 2);
 kiểm('Thư mục thật chưa bị đụng trước khi duyệt',
   băm(join(gốc, M4, '02_html/shared/core.css')) === bămTrước.css);
 
+// ── bản nháp trỏ sai thư mục gốc thì phải bị chặn ────────────────────────
+// Lỗi này agent tự tìm ra khi chạy thật: so.json chụp `goc` lúc MỞ và không đọc
+// lại .env. Đổi DIR_* sau đó thì bản nháp cũ trỏ chỗ khác, chép về sẽ vào nhầm.
+{
+  const sổFile = join(resolve(agent, '..', '_nhap'), ID, 'so.json');
+  const sổ = JSON.parse(readFileSync(sổFile, 'utf8'));
+  const gốcThật = sổ.goc;
+  writeFileSync(sổFile, JSON.stringify({ ...sổ, goc: join(thử, 'cho-khac') }));
+  const r = chạyCóLỗi('nhap.mjs', 'xem', ID);
+  kiểm('Bản nháp trỏ sai thư mục gốc → chặn, không cho làm gì',
+    r.ma === 1 && /TRỎ SAI CHỖ/.test(r.loi + r.ra), (r.loi || '').split('\n')[0].slice(0, 46));
+  writeFileSync(sổFile, JSON.stringify({ ...sổ, goc: gốcThật }));   // trả lại như cũ
+  kiểm('Trả lại gốc đúng thì làm tiếp được bình thường',
+    chạyCóLỗi('nhap.mjs', 'xem', ID).ma === 0);
+}
+
 // ── soát: máy đọc bản nháp + nhật ký, agent không khai gì ─────────────────
 // Bài thử tự ghi nhật ký giả vào thư mục riêng (VP_NHAT_KY) thay cho hook.
 const thưNhậtKý = join(thử, 'nhat-ky');

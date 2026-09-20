@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { xétFile, khớpMẫu } from './pham-vi.mjs';
 import { soSánh } from './anh-chup.mjs';
-import { THƯ_MỤC_NHÁP } from './phong.mjs';
+import { THƯ_MỤC_NHÁP, kiểmGốc } from './phong.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 // VP_NHAT_KY: bài thử trỏ sang thư mục riêng để không làm bẩn nhật ký thật.
@@ -31,6 +31,9 @@ if (!id) { console.error('Dùng: node soat-bao-cao.mjs <id-việc>'); process.ex
 const sổFile = join(THƯ_MỤC_NHÁP, id, 'so.json');
 if (!existsSync(sổFile)) { console.error(`Chưa mở bản nháp cho ${id}.`); process.exit(1); }
 const sổ = JSON.parse(readFileSync(sổFile, 'utf8'));
+// Cùng cổng với nhap.mjs: bản nháp mở từ thư mục gốc khác thư mục hiện hành thì
+// mọi kết luận sau đó đều nói về nhầm chỗ.
+kiểmGốc(sổ, id);
 const nháp = join(THƯ_MỤC_NHÁP, id, 'nhap');
 const pv = { goc: sổ.goc, duoc_sua: sổ.duoc_sua, chi_sua: sổ.chi_sua };
 

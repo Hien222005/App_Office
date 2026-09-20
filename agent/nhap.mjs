@@ -20,7 +20,7 @@ import { join, dirname } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { phạmViTừSkill, xétFile } from './pham-vi.mjs';
 import { nhânBản, chépMột, kêKhai, soSánh, băm } from './anh-chup.mjs';
-import { gốcCủaPhòng, THƯ_MỤC_NHÁP } from './phong.mjs';
+import { gốcCủaPhòng, THƯ_MỤC_NHÁP, kiểmGốc } from './phong.mjs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -46,7 +46,10 @@ function đọcSổ(id) {
     console.error(`Chưa mở bản nháp cho ${id}. Chạy: node nhap.mjs mo <brief.json>`);
     process.exit(1);
   }
-  return JSON.parse(readFileSync(fileSổ(id), 'utf8'));
+  const sổ = JSON.parse(readFileSync(fileSổ(id), 'utf8'));
+
+  kiểmGốc(sổ, id);   // bản nháp trỏ sai thư mục gốc thì chặn ngay, xem phong.mjs
+  return sổ;
 }
 
 // ── mo ────────────────────────────────────────────────────────────────────

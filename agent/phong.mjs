@@ -1,6 +1,6 @@
 // Ba phòng: nguồn để đọc, và thư mục GỐC mà bản nháp nhân bản từ đó.
 // Đường dẫn thật lấy từ agent/.env, không viết cứng ở đây.
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -47,4 +47,21 @@ export function gốcCủaPhòng(mảng) {
     mkdirSync(g, { recursive: true });
   }
   return g;
+}
+
+// Bản nháp chụp `goc` lúc MỞ và không đọc lại .env. Đổi DIR_* sau đó (hoặc mở bằng
+// biến môi trường tạm) thì bản nháp cũ trỏ vào thư mục khác — chép về sẽ vào nhầm chỗ.
+// Ba script đọc so.json đều gọi hàm này, nên không nơi nào sót.
+export function kiểmGốc(sổ, id) {
+  let hiệnHành;
+  try { hiệnHành = gốcCủaPhòng(sổ.mang); } catch { return; }   // phòng chưa khai đường dẫn
+  const thật = (p) => { try { return realpathSync(p); } catch { return p; } };
+  if (thật(hiệnHành) === thật(sổ.goc)) return;
+  console.error(
+    `BẢN NHÁP TRỎ SAI CHỖ — ${id} mở từ một thư mục gốc khác thư mục hiện hành.\n` +
+    `  bản nháp mở từ : ${sổ.goc}\n` +
+    `  .env hiện trỏ  : ${hiệnHành}\n` +
+    `Chép về sẽ vào nhầm thư mục. Bỏ rồi mở lại:\n` +
+    `  node agent/nhap.mjs bo ${id} && node agent/nhap.mjs mo _brief/${id}.json`);
+  process.exit(1);
 }
