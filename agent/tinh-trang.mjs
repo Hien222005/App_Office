@@ -6,7 +6,7 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { db, hômNay, in_ } from './lib.mjs';
-import { NHÃN, CHỜ_SẾP, trễHạn, làViệcTồn, TRẦN_LÀM_LẠI } from './nhan.mjs';
+import { NHÃN, CHỜ_SẾP, trễHạn, làViệcTồn, TRẦN_LÀM_LẠI, chạmTrần } from './nhan.mjs';
 import { PHÒNG, THƯ_MỤC_NHÁP } from './phong.mjs';
 
 const ngày = hômNay();
@@ -18,8 +18,8 @@ const dòngPhòng = Object.keys(PHÒNG).map(m => {
   return {
     phòng: PHÒNG[m].tên, mã: m, tắt: !!PHÒNG[m].tắt,
     chờ_sếp: l.filter(t => CHỜ_SẾP.includes(t.trang_thai)).length,
-    đang_làm: l.filter(t => t.trang_thai === 'doing').length,
-    đã_duyệt_chờ_ghi: l.filter(t => t.trang_thai === 'da_duyet_kq').length,
+    đang_làm: l.filter(t => t.trang_thai === 'dang_lam').length,
+    đã_duyệt_chờ_ghi: l.filter(t => t.trang_thai === 'da_duyet').length,
     đã_ghi: l.filter(t => t.trang_thai === 'da_ghi').length,
     trễ_hạn: l.filter(t => trễHạn(t)).length,
     tổng: l.length,
@@ -37,11 +37,11 @@ const đangLàmLại = sống.filter(t => (t.so_lan_lam_lai ?? 0) > 0 && !NHÃN[
   nhận_xét_lần_trước: t.phan_hoi_cua_toi || null,
 }));
 
-const cầnSếpSửa = sống.filter(t => t.trang_thai === 'can_sep_sua')
+const cầnSếpSửa = sống.filter(t => chạmTrần(t.so_lan_lam_lai))
   .map(t => ({ id: t.id, tên: t.tieu_de, lý_do: `đã bị trả lại ${t.so_lan_lam_lai ?? TRẦN_LÀM_LẠI} lần` }));
 
 const hômNayLàm = sống.filter(t => t.ngay === ngày || làViệcTồn(t, ngày));
-const đãDuyệt = hômNayLàm.filter(t => t.trang_thai === 'da_duyet_kq').map(t => t.id);
+const đãDuyệt = hômNayLàm.filter(t => t.trang_thai === 'da_duyet').map(t => t.id);
 const cònChờ = hômNayLàm.filter(t => CHỜ_SẾP.includes(t.trang_thai)).map(t => t.id);
 
 // Lệnh `chot` đọc file này. Còn việc chờ sếp thì ban-nhap.mjs ghi-het sẽ từ chối.

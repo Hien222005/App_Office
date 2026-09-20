@@ -9,7 +9,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { db, hômNay, in_ } from './lib.mjs';
-import { PHIÊN_NHẬN, NHÃN, trễHạn, làViệcTồn, TRẦN_LÀM_LẠI } from './nhan.mjs';
+import { PHIÊN_NHẬN, NHÃN, trễHạn, làViệcTồn, TRẦN_LÀM_LẠI,
+         agentNhậnĐược, vìSaoKhôngNhận } from './nhan.mjs';
 
 const THƯ_MỤC_BRIEF = resolve(dirname(fileURLToPath(import.meta.url)), '..', '_brief');
 // Brief tạm nằm ở file cho tới khi bảng tasks có cột `brief` (giai đoạn B).
@@ -37,18 +38,25 @@ const chưaChốt = phiếu.trang_thai !== 'approved';
 
 const [việc, hỏi, ghiChú] = await Promise.all([
   db.đọc('tasks', `trang_thai=in.(${PHIÊN_NHẬN.join(',')})&order=ngay.asc,thu_tu.asc`),
-  db.đọc('questions', `ngay=eq.${ngày}`),
+  db.đọc('questions', 'order=ngay.desc&limit=200'),
   db.đọc('agent_notes', 'order=ngay.desc&limit=40'),
 ]);
 
+// Cổng: việc đã chốt VẪN có thể không giao được — chạm trần làm lại, hoặc đang treo câu hỏi.
+// Hai điều đó tính từ số liệu, không phải từ nhãn, nên agent không thể quên đánh dấu.
+const hỏiCủa = (id) => hỏi.filter(h => h.task_id === id);
+const khôngGiao = việc.filter(t => !agentNhậnĐược(t, hỏiCủa(t.id)))
+  .map(t => ({ id: t.id, tên: t.tieu_de, lý_do: vìSaoKhôngNhận(t, hỏiCủa(t.id)) }));
+const giaoĐược = việc.filter(t => agentNhậnĐược(t, hỏiCủa(t.id)));
+
 const thiếuBrief = [];
-const raViệc = việc.map(t => {
+const raViệc = giaoĐược.map(t => {
   const brief = t.brief ?? đọcBrief(t.id);   // cột brief là nguồn chính, file là dự phòng
   if (!brief) thiếuBrief.push(t.id);
   return {
     id: t.id, mảng: t.mang, tên: t.tieu_de,
     nhãn: t.trang_thai, nhãn_đọc: NHÃN[t.trang_thai]?.tên ?? t.trang_thai,
-    làm_lại: t.trang_thai === 'lam_lai',
+    làm_lại: (t.so_lan_lam_lai ?? 0) > 0,
     lần_làm_lại: t.so_lan_lam_lai ?? 0,
     còn_được_làm_lại: TRẦN_LÀM_LẠI - (t.so_lan_lam_lai ?? 0),
     tồn_từ_ngày: làViệcTồn(t, ngày) ? t.ngay : null,
@@ -73,6 +81,8 @@ in_({
   câu_hỏi_đã_trả_lời: hỏi.filter(h => h.tra_loi).map(h => ({ hỏi: h.cau_hoi, đáp: h.tra_loi })),
   câu_hỏi_còn_treo: hỏi.filter(h => !h.tra_loi).map(h => ({ id: h.id, task: h.task_id, hỏi: h.cau_hoi })),
   việc: raViệc,
+  // Việc đã chốt nhưng KHÔNG giao cho agent, kèm lý do. Đừng tự ý làm những việc này.
+  việc_không_giao: khôngGiao,
   // Không có brief thì không mở được bản nháp: đừng đoán, hỏi sếp hoặc bỏ việc đó.
   việc_thiếu_brief: thiếuBrief,
 });

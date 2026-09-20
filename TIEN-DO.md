@@ -32,7 +32,7 @@
 | G2 | Sếp chốt hôm nay làm việc nào |
 | G3 | Chỉ việc đã chốt, có brief, mọi đường dẫn trong brief tồn tại thật |
 | G4 · G5 | Báo cáo đủ mục và đúng kiểu; soát lời khai với bản nháp |
-| G6 | Sếp duyệt hoặc trả lại. Trả lại lần 4 → nhãn `can_sep_sua`, sếp tự sửa |
+| G6 | Sếp duyệt hoặc trả lại. Trả lại lần thứ 4 bị chặn: việc thuộc về sếp, sếp tự sửa |
 | G7 | Chỉ ghi vào file gốc khi **mọi việc trong ngày đã được duyệt** |
 | G8 | So mã băm sau khi ghi; sai thì hoàn tác cả loạt |
 | G9 | Chỉ đóng phiên khi mọi việc đã ghi hoặc bị bỏ |
@@ -44,7 +44,7 @@ Việc chưa duyệt hết ngày thì phiên để mở, việc thành **tồn**
 - **5 Skill** (`thu-ky` 194 chữ · `bao-cao` 190 · `phong-lab` 197 · `phong-elearn` 181 · `phong-biz` 166, đang tắt)
   và **3 vai** trưởng phòng. Trước khi rút: 356–426 chữ mỗi file.
 - **3 file lệnh**: `agent/sang.md` · `lam.md` · `chot.md`. Đã bỏ `morning.md`, `noon.md` và 3 file khuôn.
-- **10 nhãn** trong `agent/nhan.mjs`, bốn nhãn chờ sếp. Agent không có đường nào tự duyệt hay tự ghi file gốc.
+- **7 nhãn** trong `agent/nhan.mjs`, hai nhãn chờ sếp (20/09: rút từ 10 xuống 7). Agent không có đường nào tự duyệt hay tự ghi file gốc.
 - **Bản nháp**: `ban-nhap.mjs` (mở · xem · duyệt · ghi-het · bỏ). Mở bản nháp 15–28ms, tốn 0 MB ổ đĩa.
 - **Soát báo cáo**: `soat-bao-cao.mjs` bắt khai man · giấu file · sửa lấn · thiếu đầu ra · sai kiểu dữ liệu · chấm 5/5 mà chưa tự kiểm.
 - **Cuối ngày**: `kiem-sau-ghi.mjs` so mã băm, sai thì hoàn tác cả loạt. `tinh-trang.mjs` đếm theo phòng và quét việc tồn.

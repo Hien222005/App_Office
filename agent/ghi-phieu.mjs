@@ -50,7 +50,7 @@ if (hợpLệ.length) {
     chi_tiet: v.nhiem_vu, tieu_chi_xong: v.xong_khi,
     han_chot: v.han_chot,        // G2 bắt buộc có hạn chót
     brief: v,                    // brief đầy đủ, nguồn của phạm vi file_duoc_sua
-    trang_thai: 'cho_sep_chot',  // KHÔNG việc nào được chốt sẵn
+    trang_thai: 'cho_chot',  // KHÔNG việc nào được chốt sẵn
     thu_tu: i,
   })));
 }

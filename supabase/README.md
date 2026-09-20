@@ -8,6 +8,24 @@ Chạy ba file theo **đúng thứ tự** trong Supabase → SQL Editor → New 
 | 2 | `rls.sql` | Thay `YOUR_EMAIL_HERE` bằng email đăng nhập của bạn. |
 | 3 | `seed_food.sql` | Bỏ comment 5 dòng cuối, điền mục tiêu kcal/protein thật. |
 
+## Các file đổi · chạy theo đúng thứ tự sau ba file trên
+
+| # | File | Làm gì |
+|---|------|--------|
+| 4 | `doi-2-workflow.sql` | Bộ nhãn mới + cột `han_chot` `brief` `link_san_pham` `so_lan_lam_lai` |
+| 5 | `doi-3-gio-vn.sql` | Hàm `hom_nay_vn()` — ngày tính theo giờ Việt Nam |
+| 6 | `doi-4-dem-dung.sql` | Sửa cột `dang_lam` trong `v_tinh_trang` |
+| 7 | `doi-5-nhan-gon.sql` | **Rút bộ nhãn 10 → 7.** Ba nhãn cũ thành điều kiện tính từ số liệu |
+
+Đã chạy tới file nào thì kiểm bằng:
+
+```sql
+select pg_get_constraintdef(oid) from pg_constraint where conname = 'tasks_trang_thai_check';
+```
+
+Ra đúng 7 nhãn `cho_chot · da_chot · bo · dang_lam · cho_duyet · da_duyet · da_ghi`
+là đã chạy tới `doi-5`.
+
 ## Kiểm tra sau khi chạy
 
 ```sql

@@ -13,5 +13,7 @@ if (!taskId || !câuHỏi || phươngÁn.length !== SỐ_PHƯƠNG_ÁN) {
 
 const id = 'q-' + Date.now().toString(36);
 await db.thêm('questions', { id, task_id: taskId, ngay: hômNay(), cau_hoi: câuHỏi, phuong_an: phươngÁn });
-await db.sửa('tasks', `id=eq.${taskId}`, { trang_thai: 'can_sep_duyet', cap_nhat_luc: new Date().toISOString() });
-console.log(`Đã hỏi (${id}) · ${taskId} → cần sếp duyệt. Đi tiếp việc khác, đừng đoán.`);
+// KHÔNG đổi nhãn. Việc vẫn "đang làm"; "đang vướng" tính từ câu hỏi chưa ai trả lời,
+// nên agent không thể quên đánh dấu — câu hỏi tồn tại là đủ để doc-viec.mjs không giao lại.
+await db.sửa('tasks', `id=eq.${taskId}`, { cap_nhat_luc: new Date().toISOString() });
+console.log(`Đã hỏi (${id}) · ${taskId} đang chờ sếp trả lời. Đi tiếp việc khác, đừng đoán.`);

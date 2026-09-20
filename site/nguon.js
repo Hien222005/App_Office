@@ -132,7 +132,7 @@
   const doiHoi = (h) => ({ id: h.id, task_id: h.task_id, cau_hoi: h.cau_hoi, pa: h.phuong_an || [], tl: h.tra_loi ?? null, tuGo: '' });
 
   /* ── ghi · chỉ những nhãn của sếp ─────────────────────────────────────── */
-  const NHAN_SEP = ['da_chot', 'bo', 'da_duyet_kq', 'lam_lai', 'can_sep_sua'];
+  const NHAN_SEP = ['da_chot', 'bo', 'da_duyet'];
 
   NG.doiNhan = async (id, nhãn, thêm = {}) => {
     if (!NHAN_SEP.includes(nhãn)) throw new Error(`Nhãn "${nhãn}" không phải của sếp`);
@@ -149,7 +149,7 @@
   });
 
   // Chốt ngày: đánh dấu mọi việc đã duyệt là chờ ghi — phần ghi vào file gốc do lệnh `chot` trên Mac làm.
-  NG.chotNgay = async (ids) => Promise.all(ids.map((id) => NG.doiNhan(id, 'da_duyet_kq')));
+  NG.chotNgay = async (ids) => Promise.all(ids.map((id) => NG.doiNhan(id, 'da_duyet')));
 
   window.NGUON = NG;
 })();

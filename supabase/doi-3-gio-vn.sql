@@ -14,6 +14,8 @@ create or replace function hom_nay_vn() returns date
 language sql stable
 as $$ select (now() at time zone 'Asia/Ho_Chi_Minh')::date $$;
 
+-- LƯU Ý: view này đã bị doi-5-nhan-gon.sql thay thế (bộ nhãn rút còn 7).
+-- Giữ lại để đọc lịch sử; chạy doi-5 sau là đúng.
 create or replace view v_tinh_trang as
 select m.mang,
   count(t.id) filter (where t.trang_thai in

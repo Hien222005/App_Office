@@ -9,7 +9,8 @@ import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync, appendFileS
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { băm } from './anh-chup.mjs';
-import { đượcChuyển, trễHạn, NHÃN, chạmTrần, làViệcTồn, SỐ_PHƯƠNG_ÁN, CHỜ_SẾP } from './nhan.mjs';
+import { đượcChuyển, trễHạn, NHÃN, chạmTrần, làViệcTồn, SỐ_PHƯƠNG_ÁN, CHỜ_SẾP,
+         cầnSếpSửa, đangVướng, agentNhậnĐược, vìSaoKhôngNhận } from './nhan.mjs';
 
 const agent = dirname(fileURLToPath(import.meta.url));
 const thử = resolve(agent, '..', '_thu');
@@ -56,20 +57,34 @@ const ca = [];
 const kiểm = (tên, điều_kiện, ghi_chú = '') => ca.push({ ca: tên, đạt: !!điều_kiện, ghi_chú });
 
 // ── nhãn ──────────────────────────────────────────────────────────────────
-kiểm('Agent không tự chốt kế hoạch được', !đượcChuyển('cho_sep_chot', 'da_chot', 'agent'));
-kiểm('Agent không tự duyệt kết quả được', !đượcChuyển('cho_duyet_kq', 'da_duyet_kq', 'agent'));
-kiểm('Agent không tự ghi vào file gốc được', !đượcChuyển('da_duyet_kq', 'da_ghi', 'agent'));
-kiểm('Chỉ script cuối ngày được ghi vào file gốc', đượcChuyển('da_duyet_kq', 'da_ghi', 'script'));
-kiểm('Sếp duyệt kết quả được', đượcChuyển('cho_duyet_kq', 'da_duyet_kq', 'sếp'));
-kiểm('Sếp trả lại được', đượcChuyển('cho_duyet_kq', 'lam_lai', 'sếp'));
+kiểm('Agent không tự chốt kế hoạch được', !đượcChuyển('cho_chot', 'da_chot', 'agent'));
+kiểm('Agent không tự duyệt kết quả được', !đượcChuyển('cho_duyet', 'da_duyet', 'agent'));
+kiểm('Agent không tự ghi vào file gốc được', !đượcChuyển('da_duyet', 'da_ghi', 'agent'));
+kiểm('Chỉ script cuối ngày được ghi vào file gốc', đượcChuyển('da_duyet', 'da_ghi', 'script'));
+kiểm('Sếp duyệt kết quả được', đượcChuyển('cho_duyet', 'da_duyet', 'sếp'));
+kiểm('Sếp trả lại được (về lại đã chốt)', đượcChuyển('cho_duyet', 'da_chot', 'sếp'));
 kiểm('Việc đã ghi không tính trễ hạn', !trễHạn({ han_chot: '2026-09-01', trang_thai: 'da_ghi' }));
 kiểm('Trần làm lại: 2 lần chưa chạm, 3 lần là chạm', !chạmTrần(2) && chạmTrần(3));
-kiểm('Chạm trần thì chỉ script chuyển sang cần sếp sửa',
-  đượcChuyển('lam_lai', 'can_sep_sua', 'script') && !đượcChuyển('lam_lai', 'can_sep_sua', 'agent'));
+kiểm('Chạm trần: việc thành của sếp, agent không nhận nữa',
+  cầnSếpSửa({ trang_thai: 'da_chot', so_lan_lam_lai: 3 }) &&
+  !cầnSếpSửa({ trang_thai: 'da_chot', so_lan_lam_lai: 2 }));
+kiểm('Chạm trần thì đã kết thúc không tính là cần sếp sửa',
+  !cầnSếpSửa({ trang_thai: 'da_ghi', so_lan_lam_lai: 3 }));
+kiểm('Câu hỏi chưa trả lời = đang vướng',
+  đangVướng([{ tra_loi: null }]) && !đangVướng([{ tra_loi: 'bản v2' }]) && !đangVướng([]));
+kiểm('Việc đang treo câu hỏi thì KHÔNG giao cho agent',
+  !agentNhậnĐược({ trang_thai: 'da_chot', so_lan_lam_lai: 0 }, [{ tra_loi: null }]) &&
+  agentNhậnĐược({ trang_thai: 'da_chot', so_lan_lam_lai: 0 }, [{ tra_loi: 'xong' }]));
+kiểm('Việc chạm trần thì KHÔNG giao cho agent',
+  !agentNhậnĐược({ trang_thai: 'da_chot', so_lan_lam_lai: 3 }, []));
+kiểm('Không giao thì phải nói rõ lý do',
+  /trả lại/.test(vìSaoKhôngNhận({ trang_thai: 'da_chot', so_lan_lam_lai: 3 }, []) ?? '') &&
+  /câu hỏi/.test(vìSaoKhôngNhận({ trang_thai: 'da_chot', so_lan_lam_lai: 0 }, [{ tra_loi: null }]) ?? '') &&
+  vìSaoKhôngNhận({ trang_thai: 'da_chot', so_lan_lam_lai: 0 }, []) === null);
 kiểm('Việc ngày trước chưa xong là việc tồn',
-  làViệcTồn({ ngay: '2026-09-17', trang_thai: 'cho_duyet_kq' }, '2026-09-18') &&
+  làViệcTồn({ ngay: '2026-09-17', trang_thai: 'cho_duyet' }, '2026-09-18') &&
   !làViệcTồn({ ngay: '2026-09-17', trang_thai: 'da_ghi' }, '2026-09-18'));
-kiểm('Đủ 10 nhãn, 4 nhãn chờ sếp', Object.keys(NHÃN).length === 10 && CHỜ_SẾP.length === 4);
+kiểm('Đủ 7 nhãn, 2 nhãn chờ sếp', Object.keys(NHÃN).length === 7 && CHỜ_SẾP.length === 2);
 kiểm('Câu hỏi cho sếp: đúng 3 gợi ý', SỐ_PHƯƠNG_ÁN === 3);
 
 // ── mở bản nháp ───────────────────────────────────────────────────────────

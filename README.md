@@ -12,7 +12,7 @@ kèm link để bạn tự mở ra xem; bạn bấm duyệt thì cuối ngày sc
 | Tiến độ · còn gì phải làm | [`TIEN-DO.md`](TIEN-DO.md) |
 | Database | Supabase — xem [`supabase/README.md`](supabase/README.md) |
 
-**Mục lục** · [Một ngày](#một-ngày-làm-việc) · [Thư mục](#bản-đồ-thư-mục) · [9 cổng](#9-cổng--thứ-giữ-cho-hệ-thống-an-toàn) · [10 nhãn](#10-nhãn-trạng-thái) · [Cài đặt](#cài-đặt--làm-một-lần) · [Lệnh](#bảng-lệnh) · [Chạy thử](#chạy-thử) · [Netlify](#lưu-ý-netlify)
+**Mục lục** · [Một ngày](#một-ngày-làm-việc) · [Thư mục](#bản-đồ-thư-mục) · [9 cổng](#9-cổng--thứ-giữ-cho-hệ-thống-an-toàn) · [7 nhãn](#7-nhãn-trạng-thái) · [Cài đặt](#cài-đặt--làm-một-lần) · [Lệnh](#bảng-lệnh) · [Chạy thử](#chạy-thử) · [Netlify](#lưu-ý-netlify)
 
 ---
 
@@ -87,7 +87,7 @@ thể quên, còn script thì không.
 | **G2** | Bạn chốt hôm nay làm việc nào | **bạn**, trên app |
 | **G3** | Chỉ việc đã chốt, có brief, mọi đường dẫn trong brief tồn tại thật | `doc-viec.mjs` |
 | **G4·G5** | Báo cáo đủ mục, đúng kiểu; soát lời khai với bản nháp | `soat-bao-cao.mjs` |
-| **G6** | Bạn duyệt hoặc trả lại. Trả lại lần 4 → nhãn *cần sếp sửa* | **bạn**, trên app |
+| **G6** | Bạn duyệt hoặc trả lại. Trả lại lần thứ 4 bị chặn, việc thuộc về bạn | **bạn**, trên app |
 | **G7** | Chỉ ghi vào file gốc khi **mọi việc trong ngày** đã được duyệt | `ban-nhap.mjs ghi-het` |
 | **G8** | So mã băm sau khi ghi; sai một file thì hoàn tác cả loạt | `kiem-sau-ghi.mjs` |
 | **G9** | Chỉ đóng phiên khi mọi việc đã ghi hoặc bị bỏ | `dong-phien.mjs` |
@@ -109,18 +109,21 @@ thì bạn để đó, và một tuần sau cả hệ thống đứng vì một 
 
 ---
 
-## 10 nhãn trạng thái
+## 7 nhãn trạng thái
 
 Nguồn duy nhất: [`agent/nhan.mjs`](agent/nhan.mjs). Skill, script, database và app đều đọc
 từ đây — không nơi nào tự đặt nhãn riêng.
 
 ```
-cho_sep_chot ──bạn──▶ da_chot ──agent──▶ doing ──agent──▶ cho_duyet_kq
-     └───bạn──▶ bo                                 ├──bạn──▶ da_duyet_kq ──cuối ngày──▶ da_ghi
-                                                    └──bạn──▶ lam_lai ──agent──▶ doing
+cho_chot ──bạn──▶ da_chot ──agent──▶ dang_lam ──agent──▶ cho_duyet
+    └──bạn──▶ bo                                   ├──bạn──▶ da_duyet ──cuối ngày──▶ da_ghi
+                                                    └──bạn──▶ da_chot   (trả lại, đếm +1)
 
-doing ──agent──▶ can_sep_duyet          (vướng — hỏi kèm 3 phương án)
-lam_lai lần thứ 4 ──script──▶ can_sep_sua  (bạn tự sửa, agent không chạm nữa)
+Ba thứ KHÔNG phải nhãn — tính từ số liệu nên agent không thể quên đánh dấu:
+
+  đang làm lại   so_lan_lam_lai > 0
+  cần bạn sửa    so_lan_lam_lai >= 3      → agent không nhận việc này nữa
+  đang vướng     có câu hỏi chưa trả lời  → agent không nhận việc này nữa
 ```
 
 Bảng `CHUYỂN` trong `nhan.mjs` ghi rõ **ai** được đổi nhãn nào sang nhãn nào. "Agent không
@@ -200,7 +203,7 @@ Lệnh trong phiên — phần lớn do Thư ký gõ theo kịch bản, không p
 | `node agent/ban-nhap.mjs xem <id>` | File nào đổi, cái nào sẽ được chép về |
 | `node agent/soat-bao-cao.mjs <id> <bao-cao.json>` | Soát lời khai với bản nháp *(G4·G5)* |
 | `node agent/ghi-ket-qua.mjs <id> doing` | Đánh dấu đang làm |
-| `node agent/ghi-ket-qua.mjs <id> cho_duyet_kq <1-5> "căn cứ" "<link sản phẩm>" "file1,file2"` | Nộp kết quả — bắt buộc có chấm tin cậy **và** link để bạn tự kiểm |
+| `node agent/ghi-ket-qua.mjs <id> cho_duyet <1-5> "căn cứ" "<link sản phẩm>" "file1,file2"` | Nộp kết quả — bắt buộc có chấm tin cậy **và** link để bạn tự kiểm |
 | `node agent/hoi-sep.mjs <id> "câu hỏi" "gợi ý 1" "gợi ý 2" "gợi ý 3"` | Hỏi khi mơ hồ — đúng 3 gợi ý |
 | `node agent/tinh-trang.mjs` | Bảng theo phòng + việc tồn. **Nguồn số liệu duy nhất** cho skill `bao-cao` |
 | `node agent/ban-nhap.mjs ghi-het` | Cuối ngày: chép cả loạt về file gốc *(G7)* |

@@ -127,8 +127,8 @@ if (!đãTựKiểm) {
 // ── kết luận ───────────────────────────────────────────────────────────────
 const qua = lỗi.length === 0 && thiếu.length === 0;
 const đềNghị = qua
-  ? (bc.xong ? 'cho_duyet_kq' : 'can_sep_duyet')   // chưa xong (vướng/điểm dừng) → cần sếp quyết
-  : (lỗi.length ? 'can_sep_duyet' : 'bo_sung_mot_lan');
+  ? (bc.xong ? 'cho_duyet' : 'hoi_sep')        // chưa xong (vướng/điểm dừng) → hỏi sếp kèm 3 gợi ý
+  : (lỗi.length ? 'hoi_sep' : 'bo_sung_mot_lan');
 
 try {
   execFileSync('node', [join(dirname(fileURLToPath(import.meta.url)), 'nhat-ky.mjs'), 'cong',

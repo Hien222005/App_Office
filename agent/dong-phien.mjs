@@ -11,8 +11,8 @@ const ngày = hômNay();
 const việc = await db.đọc('tasks', 'order=ngay.asc,thu_tu.asc');
 const sống = việc.filter(t => !NHÃN[t.trang_thai]?.kết_thúc);
 const chờSếp = sống.filter(t => CHỜ_SẾP.includes(t.trang_thai));
-const chờGhi = sống.filter(t => t.trang_thai === 'da_duyet_kq');
-const đangLàm = sống.filter(t => ['da_chot', 'doing', 'lam_lai'].includes(t.trang_thai));
+const chờGhi = sống.filter(t => t.trang_thai === 'da_duyet');
+const đangLàm = sống.filter(t => ['da_chot', 'dang_lam'].includes(t.trang_thai));
 
 if (chờSếp.length || chờGhi.length || đangLàm.length) {
   in_({
