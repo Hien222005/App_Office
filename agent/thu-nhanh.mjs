@@ -46,7 +46,8 @@ const fileBrief = join(thử, 'brief.json');
 mkdirSync(thử, { recursive: true });
 writeFileSync(fileBrief, JSON.stringify(brief, null, 2));
 
-const môi = { ...process.env, DIR_ELEARNING: gốc };
+// VP_NHAT_KY: script con ghi và đọc nhật ký trong thư mục thử, không đụng nhật ký thật.
+const môi = { ...process.env, DIR_ELEARNING: gốc, VP_NHAT_KY: join(thử, 'nhat-ky') };
 const chạy = (tệp, ...args) => execFileSync('node', [join(agent, tệp), ...args], { encoding: 'utf8', env: môi });
 const chạyCóLỗi = (tệp, ...args) => {
   try { return { ma: 0, ra: chạy(tệp, ...args), loi: '' }; }
@@ -106,45 +107,69 @@ kiểm('xem: đúng 2 file sẽ chép về', xem.se_chep_ve.length === 2);
 kiểm('Thư mục thật chưa bị đụng trước khi duyệt',
   băm(join(gốc, M4, '02_html/shared/core.css')) === bămTrước.css);
 
-// ── soát các kiểu báo cáo ─────────────────────────────────────────────────
-const bcThật = {
-  id: ID, vi_tri: M4, xong: true,
-  da_lam: 'Tăng khoảng cách 12px → 32px, thêm đường kẻ. Ghi log mục 13.',
-  cac_buoc: ['đọc file bug → thấy mục 13 → xác định chỗ sửa là core.css',
-             'định đổi margin-top → đã đổi 12px thành 32px → mở lại thấy đã cách nhau'],
-  da_tu_kiem: 'Mở unit-8-quiz trong bản nháp ở chế độ xem lại, đo được 32px và thấy đường kẻ.',
-  vuong: null,
-  file_da_doi: [`${M4}/02_html/shared/core.css`, 'bugs-con-lai-can-fix-2026-09-18.md'],
-  ket_qua: 'Mở unit-8-quiz ở chế độ xem lại, hai câu cách nhau 32px.',
-  tin_cay: 4, link_san_pham: `http://192.168.1.12:8890/nhap/${ID}/${M4}/02_html/unit-8-quiz.html`,
-  diem_dung_da_gap: null,
-};
-const soát = (tên, bc, mongQua, chứa) => {
-  const f = join(thử, 'bc.json');
-  writeFileSync(f, JSON.stringify(bc));
-  const r = chạyCóLỗi('soat-bao-cao.mjs', ID, f);
-  const kq = JSON.parse(r.ra);
-  const đúng = kq.qua === mongQua && (!chứa || [...kq.loi, ...kq.thieu].some(x => x.includes(chứa)));
-  ca.push({ ca: tên, đạt: đúng, ghi_chú: kq.qua ? 'qua · ' + kq.nhan_de_nghi : [...kq.loi, ...kq.thieu][0]?.slice(0, 64) });
+// ── soát: máy đọc bản nháp + nhật ký, agent không khai gì ─────────────────
+// Bài thử tự ghi nhật ký giả vào thư mục riêng (VP_NHAT_KY) thay cho hook.
+const thưNhậtKý = join(thử, 'nhat-ky');
+mkdirSync(thưNhậtKý, { recursive: true });
+const fileNhậtKý = join(thưNhậtKý, new Date().toLocaleDateString('sv-SE') + '.jsonl');
+const gốcNháp = `${resolve(agent, '..', '_nhap')}/${ID}/nhap/`;
+const xoáNhậtKý = () => writeFileSync(fileNhậtKý, '');
+const ghiNhậtKý = (côngCụ, file, giờ) =>
+  appendFileSync(fileNhậtKý, JSON.stringify(
+    { luc: giờ, loai: 'lam', ai: 'agent', cong_cu: côngCụ, dich: gốcNháp + file }) + '\n');
+
+const CSS = `${M4}/02_html/shared/core.css`;
+const LOG = 'bugs-con-lai-can-fix-2026-09-18.md';
+
+const soát = (tên, mongQua, chứa) => {
+  const r = chạyCóLỗi('soat-bao-cao.mjs', ID);
+  let kq; try { kq = JSON.parse(r.ra); } catch { kq = { qua: false, loi: ['không ra JSON: ' + r.ra.slice(0, 80)] }; }
+  const đúng = kq.qua === mongQua && (!chứa || kq.loi.some(x => x.includes(chứa)));
+  ca.push({ ca: tên, đạt: đúng, ghi_chú: kq.qua ? 'qua' : (kq.loi[0] ?? '').slice(0, 70) });
   return kq;
 };
-soát('Báo cáo trung thực → qua', bcThật, true);
-soát('Khai man: nói sửa file không đổi', { ...bcThật, file_da_doi: [...bcThật.file_da_doi, `${M4}/02_html/unit-8-quiz.html`] }, false, 'KHAI MAN');
-soát('Giấu: không khai file log', { ...bcThật, file_da_doi: [`${M4}/02_html/shared/core.css`] }, false, 'GIẤU');
-soát('Thiếu link sản phẩm → trượt', { ...bcThật, link_san_pham: '' }, false, 'link sản phẩm');
-soát('Thiếu mục điểm dừng → trượt', (({ diem_dung_da_gap, ...r }) => r)(bcThật), false, 'diem_dung_da_gap');
-soát('Vừa vướng vừa xong → trượt', { ...bcThật, vuong: { cau_hoi: 'Dùng bản nào?', phuong_an: ['a', 'b'] } }, false, 'vừa báo vướng');
-soát('Vướng mà chỉ có 2 gợi ý → trượt', { ...bcThật, xong: false, vuong: { cau_hoi: 'Dùng bản nào?', phuong_an: ['a', 'b'] } }, false, 'đúng 3 gợi ý');
-soát('Vướng đúng 3 gợi ý → qua', { ...bcThật, xong: false, vuong: { cau_hoi: 'Dùng bản nào?', phuong_an: ['a', 'b', 'để tôi xem'] } }, true);
-soát('Chấm 5/5 mà không tự kiểm → trượt', { ...bcThật, tin_cay: 5, da_tu_kiem: '' }, false, 'trần là 4/5');
-soát('Thiếu mục cac_buoc → trượt', (({ cac_buoc, ...r }) => r)(bcThật), false, 'cac_buoc');
-soát('Tin cậy 7/5 → trượt', { ...bcThật, tin_cay: 7 }, false, 'tin_cay');
-soát('tin_cay ghi thành câu văn → trượt', { ...bcThật, tin_cay: 'cao' }, false, 'số nguyên 1–5');
-soát('vuong ghi thành danh sách → trượt', { ...bcThật, xong: false, vuong: ['không đồng bộ được'] }, false, 'cau_hoi, phuong_an');
-soát('diem_dung_da_gap là [] thì coi như không gặp → qua', { ...bcThật, diem_dung_da_gap: [] }, true);
-soát('thiếu cac_buoc là danh sách → trượt', { ...bcThật, cac_buoc: 'làm xong rồi' }, false, 'danh sách');
-soát('Gặp điểm dừng, báo chưa xong → qua, đề nghị blocked',
-  { ...bcThật, xong: false, diem_dung_da_gap: 'Không tái hiện được bug' }, true);
+
+// ca 1 · sửa đúng phạm vi, CÓ mở lại file sau lần sửa cuối
+xoáNhậtKý();
+ghiNhậtKý('Read', LOG, '10:20');
+ghiNhậtKý('Edit', CSS, '10:24');
+ghiNhậtKý('Edit', LOG, '10:31');
+ghiNhậtKý('Read', CSS, '10:36');          // ← mở lại sau lần sửa cuối
+const qua1 = soát('Sửa đúng phạm vi, có mở lại file → qua', true);
+kiểm('Máy tự lấy đúng 2 file đã đổi, agent không khai', qua1.file_da_doi?.length === 2);
+kiểm('Máy tự lấy các bước kèm giờ từ nhật ký', (qua1.cac_buoc ?? []).length === 4
+  && qua1.cac_buoc[0].startsWith('10:20'));
+kiểm('Ghi rõ đã tự kiểm lúc nào, file nào',
+  qua1.da_tu_kiem?.luc === '10:36' && qua1.da_tu_kiem?.file === CSS);
+
+// ca 2 · LUẬT MỚI: sửa xong mà không mở lại → trượt
+xoáNhậtKý();
+ghiNhậtKý('Read', LOG, '10:20');
+ghiNhậtKý('Edit', CSS, '10:24');
+ghiNhậtKý('Edit', LOG, '10:31');          // sửa cuối, không đọc lại
+soát('Sửa xong mà không mở lại file → trượt', false, 'CHƯA TỰ KIỂM');
+
+// ca 3 · đọc lại TRƯỚC lần sửa cuối thì không tính
+xoáNhậtKý();
+ghiNhậtKý('Edit', CSS, '10:24');
+ghiNhậtKý('Read', CSS, '10:28');          // đọc lại, nhưng rồi còn sửa tiếp
+ghiNhậtKý('Edit', LOG, '10:31');
+soát('Mở lại rồi còn sửa tiếp → vẫn trượt', false, 'CHƯA TỰ KIỂM');
+
+// ca 4 · nhật ký trống
+xoáNhậtKý();
+soát('Nhật ký trống → trượt', false, 'không có hành động nào');
+
+// ca 5 · nhật ký chỉ có đọc, không có sửa
+xoáNhậtKý();
+ghiNhậtKý('Read', CSS, '10:20');
+soát('Nhật ký chỉ có đọc, không sửa → trượt', false, 'không thấy lần sửa nào');
+
+// đưa nhật ký về trạng thái hợp lệ cho các chặng sau
+xoáNhậtKý();
+ghiNhậtKý('Edit', CSS, '10:24');
+ghiNhậtKý('Edit', LOG, '10:31');
+ghiNhậtKý('Read', CSS, '10:36');
 
 // ── chặng 2 · trưởng phòng làm lấn ra ngoài phạm vi ───────────────────────
 writeFileSync(join(nháp, '.claude/skills/elearning-md-to-html/templates/interactive/accordion.css'), '.acc{gap:32px}\n');
@@ -156,8 +181,8 @@ kiểm('Sửa lấn: 2 file ngoài phạm vi bị bỏ lại trong nháp', xem2.
 kiểm('Sửa lấn: thư mục thật vẫn nguyên trạng',
   băm(join(gốc, '.claude/skills/elearning-md-to-html/templates/interactive/accordion.css')) === bămTrước.tpl &&
   băm(join(gốc, 'courses/Module 4/02_html/shared/core.css')) === bămTrước.m4);
-soát('Sửa lấn mà báo cáo im lặng → trượt', bcThật, false, 'SỬA LẤN (không khai)');
-soát('Sửa lấn có khai cũng trượt', { ...bcThật, file_da_doi: [...bcThật.file_da_doi, '.claude/skills/elearning-md-to-html/templates/interactive/accordion.css', 'courses/Module 4/02_html/shared/core.css'] }, false, 'SỬA LẤN:');
+const lấn = soát('Sửa lấn ra ngoài phạm vi → trượt', false, 'SỬA LẤN');
+kiểm('Chỉ ra đúng 2 file sửa lấn', (lấn.file_ngoai_pham_vi ?? []).length === 2);
 
 // ── sếp duyệt: chỉ phần trong phạm vi được chép về ────────────────────────
 // Sếp tự sửa file log trong lúc chờ duyệt → phải báo xung đột, không đè.

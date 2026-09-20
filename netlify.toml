@@ -13,3 +13,10 @@
   from = "/api/chat"
   to = "/.netlify/functions/chat"
   status = 200
+
+# Cầu xem bản nháp. Hàm tự khai đường dẫn bằng `export const config = { path: "/xem/*" }`,
+# redirect này là lưới an toàn cho bản Netlify chưa đọc khai báo đó.
+[[redirects]]
+  from = "/xem/*"
+  to = "/.netlify/functions/xem/:splat"
+  status = 200

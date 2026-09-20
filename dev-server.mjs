@@ -31,6 +31,8 @@ try { execFileSync('node', [join(GOC, 'tao-cau-hinh.mjs')], { stdio: 'ignore' })
 
 // Bản đồ đường dẫn, khớp [[redirects]] trong netlify.toml
 const HAM = { '/api/chat': './netlify/functions/chat.mjs' };
+// /xem/* là tiền tố, không phải đường dẫn cố định — khớp riêng.
+const HAM_TIEN_TO = [['/xem/', './netlify/functions/xem.mjs']];
 
 const KIEU = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -45,7 +47,8 @@ createServer(async (req, res) => {
   // iOS cache web app rất dai — ép tải mới mỗi lần cho khỏi thử nhầm bản cũ
   res.setHeader('Cache-Control', 'no-store');
 
-  const ham = HAM[url.pathname];
+  const ham = HAM[url.pathname]
+    ?? HAM_TIEN_TO.find(([t]) => url.pathname.startsWith(t))?.[1];
   if (ham) {
     try {
       const { default: xuLy } = await import(new URL(ham, import.meta.url));

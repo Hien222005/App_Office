@@ -12,7 +12,8 @@ import { appendFileSync, mkdirSync, existsSync, readFileSync, readdirSync } from
 import { dirname, join, resolve, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const THƯ_MỤC = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'nhat-ky');
+const THƯ_MỤC = process.env.VP_NHAT_KY
+  || resolve(dirname(fileURLToPath(import.meta.url)), '..', 'nhat-ky');
 const ngàyNay = () => new Date().toLocaleDateString('sv-SE');
 const giờ = () => new Date().toLocaleTimeString('vi-VN', { hour12: false });
 
