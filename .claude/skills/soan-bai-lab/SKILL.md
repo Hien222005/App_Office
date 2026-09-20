@@ -40,14 +40,24 @@ san-pham/lab/*.html
 - Chỗ nào tự suy ra thì phải ghi rõ là suy luận.
 
 ## Đầu ra
-Một file `san-pham/lab/<ngày>.html` — trang đọc được trên điện thoại, **dưới 700 chữ**,
-đúng năm mục theo thứ tự:
+Một file `san-pham/lab/<ngày>.html`, **dưới 700 chữ**.
 
-1. `Mục tiêu bài`
-2. `Flow toàn bộ của bài`
-3. `Các kỹ thuật cần áp dụng`
-4. `Nộp nhóm hay cá nhân`
-5. `Giải thích các thuật ngữ về code`
+**Chép [references/khuon-tom-tat.html](references/khuon-tom-tat.html) rồi điền vào.**
+Đừng tự viết HTML từ đầu — khuôn đã lo phần nhìn: đọc được trên điện thoại, sáng
+và tối, năm mục đánh số màu riêng, ô riêng cho các bước và cho thuật ngữ.
+
+Chỉ thay chỗ `{{…}}`. Giữ nguyên phần `<style>`.
+
+| Mục | Thẻ dùng trong khuôn |
+|---|---|
+| 1 · Mục tiêu bài | `<p>` |
+| 2 · Flow toàn bộ | `<ol class="flow">` — mỗi bước một `<li>` |
+| 3 · Kỹ thuật cần áp dụng | `<ul>`, tên kỹ thuật bọc `<b>` |
+| 4 · Nộp nhóm hay cá nhân | `<ul>`, hai dòng Nhóm / Cá nhân |
+| 5 · Giải thích thuật ngữ | `<dl>` — `<dt>` thuật ngữ, `<dd>` giải thích |
+
+Tên file, lệnh, đường dẫn bọc `<code>`. Chỗ tự suy ra thì mở đầu bằng
+`<span class="suy">suy luận</span>`.
 
 Cộng `kỳ vọng kết quả` — một hai câu sếp mở link ra sẽ thấy gì.
 

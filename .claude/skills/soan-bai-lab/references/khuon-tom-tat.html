@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="vi">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{TÊN BUỔI}} — tóm tắt cho người đứng lớp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root{
+  --bg:#F2F5F8; --card:#FFF; --ink:#16212B; --ink2:#51636F; --ink3:#8496A2;
+  --line:#DCE4EA; --accent:#0C7580; --accent-bg:#E2F0F1;
+  --m1:#0C7580; --m2:#7B4FBF; --m3:#B4691A; --m4:#1B6E47; --m5:#A3283C;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0E1417; --card:#171F23; --ink:#E8EFF2; --ink2:#9DAFB9; --ink3:#74868F;
+  --line:#27333A; --accent:#4BC8CF; --accent-bg:#10353A;
+  --m1:#4BC8CF; --m2:#B69CF0; --m3:#E8A857; --m4:#5CC48D; --m5:#F08098;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:Nunito,system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.62;
+  padding:max(16px,env(safe-area-inset-top)) 16px max(40px,env(safe-area-inset-bottom));
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:46rem;margin-inline:auto}
+
+header{margin-bottom:22px}
+.eyebrow{font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 8px}
+h1{font-size:clamp(23px,5.5vw,30px);font-weight:800;line-height:1.18;
+  letter-spacing:-.02em;margin:0 0 8px;text-wrap:balance}
+.meta{color:var(--ink3);font-size:13.5px;margin:0}
+
+section{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:18px 18px 16px;margin-bottom:14px}
+section>h2{display:flex;align-items:baseline;gap:10px;margin:0 0 12px;
+  font-size:17px;font-weight:800;letter-spacing:-.01em}
+section>h2 .n{flex:0 0 auto;width:26px;height:26px;border-radius:8px;display:grid;
+  place-items:center;font-family:"JetBrains Mono",monospace;font-size:12px;
+  font-weight:700;color:#fff;align-self:center}
+section:nth-of-type(1)>h2 .n{background:var(--m1)}
+section:nth-of-type(2)>h2 .n{background:var(--m2)}
+section:nth-of-type(3)>h2 .n{background:var(--m3)}
+section:nth-of-type(4)>h2 .n{background:var(--m4)}
+section:nth-of-type(5)>h2 .n{background:var(--m5)}
+
+p{margin:0 0 10px}
+p:last-child{margin-bottom:0}
+ol,ul{margin:0;padding-left:1.15rem}
+li{margin-bottom:7px}
+li:last-child{margin-bottom:0}
+li b{font-weight:700}
+
+code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--accent-bg);
+  color:var(--accent);padding:1px 6px;border-radius:5px;word-break:break-word}
+
+/* Các bước nối tiếp nhau — dùng cho mục "Flow toàn bộ" */
+.flow{list-style:none;padding:0;counter-reset:b}
+.flow li{counter-increment:b;position:relative;padding-left:32px;margin-bottom:10px}
+.flow li::before{content:counter(b);position:absolute;left:0;top:1px;
+  width:22px;height:22px;border-radius:7px;background:var(--accent-bg);color:var(--accent);
+  font-family:"JetBrains Mono",monospace;font-size:11.5px;font-weight:700;
+  display:grid;place-items:center}
+
+/* Thuật ngữ — mục 5 */
+dl{margin:0}
+dt{font-weight:800;margin-top:12px;font-size:15px}
+dt:first-child{margin-top:0}
+dd{margin:2px 0 0;color:var(--ink2);font-size:15px}
+
+/* Chỗ agent tự suy ra, không có trong tài liệu — phải đánh dấu */
+.suy{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:10.5px;
+  font-weight:700;letter-spacing:.06em;color:var(--m3);border:1px solid var(--m3);
+  border-radius:5px;padding:0 5px;margin-right:6px;vertical-align:1px}
+
+footer{margin-top:20px;color:var(--ink3);font-size:12.5px;text-align:center}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Tóm tắt cho người đứng lớp</p>
+  <h1>{{TÊN BUỔI}}</h1>
+  <p class="meta">Buổi {{NGÀY}} · nguồn <code>{{THƯ MỤC REPO}}</code> · {{SỐ}} chữ</p>
+</header>
+
+<section>
+  <h2><span class="n">1</span>Mục tiêu bài</h2>
+  <p>{{Học viên làm ra cái gì, trong một đoạn ngắn.}}</p>
+</section>
+
+<section>
+  <h2><span class="n">2</span>Flow toàn bộ của bài</h2>
+  <ol class="flow">
+    <li>{{Bước 1 — làm gì, ra cái gì}}</li>
+    <li>{{Bước 2}}</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="n">3</span>Các kỹ thuật cần áp dụng</h2>
+  <ul>
+    <li><b>{{Tên kỹ thuật}}</b> — {{một câu giải thích}}</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">4</span>Nộp nhóm hay cá nhân</h2>
+  <ul>
+    <li><b>Nhóm</b> — {{nộp gì, ở đâu}}</li>
+    <li><b>Cá nhân</b> — {{nộp gì, ở đâu}}</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">5</span>Giải thích các thuật ngữ về code</h2>
+  <dl>
+    <dt>{{Thuật ngữ}}</dt>
+    <dd>{{Giải thích bằng lời đời thường, không dùng thuật ngữ khác để giải thích.}}</dd>
+  </dl>
+</section>
+
+<footer>Agent soạn từ repo bài học · sếp duyệt trước khi dùng</footer>
+</div>
