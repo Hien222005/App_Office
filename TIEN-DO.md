@@ -1,7 +1,7 @@
 # Văn Phòng Agent — tiến độ
 
 > Đọc file này + `README.md` là nắm đủ để làm tiếp, kể cả sau khi `/clear`.
-> Cập nhật: 18/09/2026
+> Cập nhật: **20/09/2026**
 
 ## Link
 
@@ -10,82 +10,98 @@
 | App đang chạy | https://courageous-sprite-17c1ff.netlify.app |
 | Netlify | project `courageous-sprite-17c1ff`, tài khoản tranchihien0202 |
 | Supabase | `dwissbrcqrbknaxniwhz` (project Hien222005, gói Free) |
-| Bản dựng + plan | https://claude.ai/artifact/YQYN9XR14d5PygX3hqU2GT |
-| Trang sửa Skill | https://claude.ai/artifact/N9PjscXY2JckSXM22D9GaQ |
+| Báo cáo đơn giản hoá | https://claude.ai/artifact/A6TcYJr9uvzp4hfMdwBLv3 |
+| Workflow mới (sơ đồ) | https://claude.ai/artifact/4h5BkpmiwRG2AFt49ssg3i |
+| Giao diện mới (mockup) | https://claude.ai/artifact/ASaGrSfuJtXR7EaagnmHRZ |
 
-## Workflow · chốt 18/09
+---
 
-**Một phiên mỗi ngày, ba lệnh:**
+## Đợt đơn giản hoá 20/09 — đã xong
 
-```
-/task sang  → báo cáo tổng hợp (việc hôm nay + việc tồn hôm qua) → sếp chốt làm gì
-/task lam   → mở bản nháp · giao brief cho trưởng phòng · soát báo cáo · ghi kết quả
-              (gõ lại mỗi lần sếp trả việc về)
-/task chot  → sếp duyệt hết → ghi cả loạt vào file gốc → kiểm lại → đóng phiên ngày
-```
+Mục tiêu sếp đặt: *đơn giản, dễ dùng, dễ sửa, dễ cập nhật, dễ theo dõi.*
+Tham khảo repo `github.com/ngtiendong/Academic-Research-Agent-Skill` — 89 file, **0 subagent**, **1 script**.
 
-**9 cổng.** Hai cổng của sếp (G2 chốt việc, G6 duyệt kết quả), bảy cổng do script chặn:
+| | Trước | Sau |
+|---|---|---|
+| File chữ agent đọc | 13 · 2.539 chữ | **8 · ~2.000 chữ** |
+| Chữ đọc trong một phiên | 1.095 | **805** |
+| Tên lệnh agent phải nhớ | 10 | **2** (`viec.mjs` · `nhap.mjs`) |
+| Script `.mjs` trong `agent/` | 20 | **13** |
+| Nhãn trạng thái | 10 | **7** |
+| Mục trong brief | 13 | **5** |
+| Mục agent tự khai | 12 | **1** |
+| Subagent | 3 | **0** |
 
-| Cổng | Giữ điều gì |
+### Năm nước đi
+
+1. **Skill = việc.** Xoá `.claude/agents/`. 5 Skill + 3 vai + `task.md` + 3 file `agent/*.md`
+   → 4 Skill + 3 lệnh slash. `/task sang|lam|chot` → `/report` `/lam` `/chot`.
+2. **Máy điền báo cáo.** Báo cáo JSON 12 mục biến mất; agent chạy một lệnh kèm một câu.
+   `soat-bao-cao.mjs` không nhận file báo cáo nữa — tự đọc bản nháp và nhật ký.
+3. **Nhãn 10 → 7.** `lam_lai` · `can_sep_sua` · `can_sep_duyet` thành **điều kiện tính từ
+   số liệu**, không còn là nhãn. Agent không thể quên đánh dấu.
+4. **Gộp script 20 → 13.** `viec.mjs` gộp 7 file; `nhap.mjs` gộp 2; xoá `xem-thu.mjs`.
+5. **Link xem thử qua Storage.** `dua-len.mjs` + `netlify/functions/xem.mjs`.
+
+### Ba luật đổi từ chữ sang code
+
+| Luật cũ (chữ) | Luật mới (code giữ) |
 |---|---|
-| G1 | Một ngày một phiên; mở phiên là quét việc tồn của ngày trước |
-| G2 | Sếp chốt hôm nay làm việc nào |
-| G3 | Chỉ việc đã chốt, có brief, mọi đường dẫn trong brief tồn tại thật |
-| G4 · G5 | Báo cáo đủ mục và đúng kiểu; soát lời khai với bản nháp |
-| G6 | Sếp duyệt hoặc trả lại. Trả lại lần thứ 4 bị chặn: việc thuộc về sếp, sếp tự sửa |
-| G7 | Chỉ ghi vào file gốc khi **mọi việc trong ngày đã được duyệt** |
-| G8 | So mã băm sau khi ghi; sai thì hoàn tác cả loạt |
-| G9 | Chỉ đóng phiên khi mọi việc đã ghi hoặc bị bỏ |
+| "Chấm 5/5 phải có ô đã-tự-kiểm >10 chữ" — viết bừa 11 chữ là qua | Nhật ký **phải có lần đọc lại file sau lần sửa cuối** |
+| Khai `file_da_doi` rồi script so để bắt khai man | Máy tự lấy từ bản nháp — **không có lời khai nào để man** |
+| Phạm vi file khai lại trong từng brief | Phạm vi nằm trong Skill; brief chỉ **thu hẹp** được, không nới rộng |
 
-Việc chưa duyệt hết ngày thì phiên để mở, việc thành **tồn**, sáng sau báo cáo đưa lên đầu bảng.
+### Những chỗ hỏng phát hiện khi làm
 
-## Đã xong · giai đoạn A (agent trên Mac)
+- `references/nhan.md` đang mô tả bộ nhãn **tiếng Anh đầu tiên** (`draft`/`approved`/`done`) — sai từ trước cả đợt 10 nhãn.
+- View `v_van_phong` vẫn lọc theo `draft`/`done`, hỏng từ ba đời nhãn trước mà không ai biết **vì không ai gọi**. Đã bỏ cả hai view.
+- `com.chihien.agent.plist` gọi `agent/morning.md` đã xoá → cài vào là lỗi.
+- `supabase/README.md` hướng dẫn đặt khoá vào `.env.local` với tên `NEXT_PUBLIC_*` — sót từ thời định dùng Next.js.
+- Dữ liệu mẫu trong app ghi `lan:2` nhưng nhật ký của chính nó nói "trả lại lần 3".
+- Skill khai phạm vi **rộng hơn** điều nó tự cấm ở mục "Không làm".
+- `viec.mjs` ghi vào cột `ket_qua` — bảng `tasks` không có cột đó. Đổi sang `ghi_chu_agent`.
 
-- **5 Skill** (`thu-ky` 194 chữ · `bao-cao` 190 · `phong-lab` 197 · `phong-elearn` 181 · `phong-biz` 166, đang tắt)
-  và **3 vai** trưởng phòng. Trước khi rút: 356–426 chữ mỗi file.
-- **3 file lệnh**: `agent/sang.md` · `lam.md` · `chot.md`. Đã bỏ `morning.md`, `noon.md` và 3 file khuôn.
-- **7 nhãn** trong `agent/nhan.mjs`, hai nhãn chờ sếp (20/09: rút từ 10 xuống 7). Agent không có đường nào tự duyệt hay tự ghi file gốc.
-- **Bản nháp**: `ban-nhap.mjs` (mở · xem · duyệt · ghi-het · bỏ). Mở bản nháp 15–28ms, tốn 0 MB ổ đĩa.
-- **Soát báo cáo**: `soat-bao-cao.mjs` bắt khai man · giấu file · sửa lấn · thiếu đầu ra · sai kiểu dữ liệu · chấm 5/5 mà chưa tự kiểm.
-- **Cuối ngày**: `kiem-sau-ghi.mjs` so mã băm, sai thì hoàn tác cả loạt. `tinh-trang.mjs` đếm theo phòng và quét việc tồn.
-- **Nhật ký**: `nhat-ky.mjs` + hook `PostToolUse` trong `.claude/settings.json`.
-  Ghi hành động, verdict từng cổng, bước agent tự thuật.
-- **Máy chủ xem thử bản nháp**: `xem-thu.mjs`, cổng 8890 — nguồn của link sản phẩm.
+---
 
-### Số đo
+## Số đo
 
 | Bài thử | Kết quả |
 |---|---|
-| `node agent/thu-nhanh.mjs` (không gọi Claude, 5 giây) | **47/47 ca đạt** (đo lại 19/09) |
-| `node agent/thu-truong-phong.mjs --model opus` | **9/9 luật được theo**, 2/2 việc qua soát, 38s và 32s |
-| Cùng bài thử với Haiku | 8/9 rồi 7/9; **bỏ quên ghi log bug 2/2 lần** |
+| `node agent/thu-nhanh.mjs` · 5 giây, không gọi Claude | **50/50 ca đạt** |
+| Đẩy Storage + qua cầu `/xem`, đo bằng JS trong Chrome | trang vẽ ra, CSS tương đối tải được, 32px, kẻ 1px |
+| Database sau `doi-5`, thử thật từng nhãn | 6/6 nhãn mới nhận · 7/7 nhãn cũ từ chối |
+| App: 6 màn hình render | 0 lỗi JavaScript |
+| `thu-truong-phong.mjs --model opus` (đo 18/09, **chưa chạy lại**) | 9/9 luật được theo, 38s và 32s |
 
-Lỗi đã tìm ra khi chạy thật: Opus theo đúng luật nhưng điền sai kiểu dữ liệu (`tin_cay` thành câu văn)
-vì khuôn báo cáo bị rút quá tay. Đã thêm lại khuôn JSON 10 dòng vào file vai.
+---
 
 ## Còn lại
 
-- **Giai đoạn B · Supabase**: thêm 10 nhãn mới, cột `han_chot`, `brief`, `link_san_pham`, `so_lan_lam_lai`.
-  File `supabase/doi-2-workflow.sql`. **Phải sao lưu và có sếp duyệt trước khi chạy.**
-- **Giai đoạn C · App**: tab Việc có nhóm *Tồn từ hôm trước*, hiện vòng làm lại lần thứ mấy,
-  màn câu hỏi 3 gợi ý + ô tự gõ, nút *Chốt ngày*, nối Supabase thật.
-- **Chạy thật lần đầu**: một việc E-learning nhỏ do sếp chọn. Lần đầu script đụng thư mục Elearning.
-- **Chi tiết chờ chỉnh**: đường dẫn trong `phong-elearn` còn suy ra, chưa khớp thư mục thật.
-  Cổng G3 kiểm đường dẫn tồn tại nên sai sẽ lộ ngay, không âm thầm.
+- **Chạy thật lần đầu** — một việc E-learning nhỏ do sếp chọn. Lần đầu script đụng
+  thư mục Elearning thật. **Phải xin phép trước.**
+- **Ba Skill còn chỗ ✎ chờ sếp điền** — đường dẫn thật, quy ước đặt tên.
+  Phòng Kinh doanh đang **tắt**, chưa khai `## File được sửa` nên không mở bản nháp được.
+- **Chạy lại `thu-truong-phong.mjs`** với bộ Skill mới — số 9/9 là của bộ Skill cũ,
+  chưa đo lại sau đợt gộp.
+- **Deploy hàm `/xem` lên Netlify** — chưa deploy thì link bản nháp không mở được.
+  Tốn 15 credit cho một lần merge `main`.
 - `lab-repo` chưa clone · mục tiêu kcal/protein còn để tạm 2200/150.
+
+---
 
 ## Quy trình thử và deploy
 
-> **Credit Netlify**: gói Free 300 credit/tháng. Deploy production **tốn 15 credit**, preview và branch deploy **0 credit**.
-> Vì vậy: thử ở nhánh `dev`, chỉ merge `main` khi đã ưng.
+> Gói Netlify Free 300 credit/tháng. Deploy production **15 credit**, preview và branch
+> deploy **0**. Thử ở nhánh `dev`, chỉ merge `main` khi đã ưng.
 
 ```bash
 node agent/thu-nhanh.mjs                      # 5 giây, không tốn hạn mức
 node agent/thu-truong-phong.mjs --model opus  # gọi Claude thật, ~70 giây
 node dev-server.mjs                           # app tại chỗ, cổng 8888
-node agent/xem-thu.mjs                        # xem bản nháp, cổng 8890
 node agent/nhat-ky.mjs xem                    # nhật ký hôm nay
 ```
+
+---
 
 ## Quyết định đã chốt, đừng làm lại
 
@@ -93,7 +109,12 @@ node agent/nhat-ky.mjs xem                    # nhật ký hôm nay
 - App **tối duy nhất**, neon, font Nunito. Trang đầu **chỉ có phòng và tên**.
 - Vùng an toàn iOS: đo bằng JS ghi vào `--sab`, không dựa `env()` trực tiếp.
 - `body{position:fixed}` + `.device{height:100%}`, KHÔNG dùng `100dvh` cho container.
-- **Chữ cho người thì ngắn, chỗ chặn thì là code.** Skill dưới 200 chữ, chi tiết để `references/`.
+- **Chữ cho người thì ngắn, chỗ chặn thì là code.**
 - Luật viết thành **điều kiện Đạt / Trượt**, không viết thành câu răn.
 - Không dùng git worktree cho bản nháp: `courses/` trong Elearning nằm trong `.gitignore`.
-- Bỏ tầng "thợ": chỉ Thư ký + 3 trưởng phòng. Phòng Kinh doanh đang tắt.
+- **Không subagent.** Phiên chính tự làm, nạp Skill theo việc.
+- **Không điểm tự tin.** Agent chưa chắc thì hỏi kèm 3 gợi ý, không chấm điểm mình.
+- Link xem thử **không** chạy trên Mac: `pmset` đặt máy ngủ sau 1 phút, link chết khi
+  sếp rời máy — mà sếp duyệt lúc đang ở ngoài.
+- Đường dẫn link xem thử **bám theo file**, không bám theo mã việc: sửa lại cùng một
+  file thì ra đúng link cũ, bookmark được.

@@ -70,14 +70,19 @@ alter table tasks drop column if exists da_tu_kiem;
 commit;
 
 -- KIỂM SAU KHI CHẠY -------------------------------------------
--- Phải ra đúng 7 nhãn, không còn nhãn cũ nào:
---   select unnest(enum_range(null::text[]));   -- (không dùng enum, dùng check)
--- Cách kiểm thật:
---   select distinct trang_thai from tasks;             → chỉ nằm trong 7 nhãn
---   select pg_get_constraintdef(oid) from pg_constraint
---   where conname = 'tasks_trang_thai_check';          → liệt kê đúng 7 nhãn
---   select column_name from information_schema.columns
---   where table_name='tasks' and column_name in ('tin_cay','da_tu_kiem');
---                                                      → KHÔNG ra dòng nào
---   select table_name from information_schema.views where table_schema='public';
---                                                      → KHÔNG còn v_van_phong, v_tinh_trang
+-- Chạy câu này, phải ra đúng BỐN SỐ:  7 · 0 · 0 · 0
+-- (Đừng đọc pg_get_constraintdef bằng mắt — ô kết quả của Supabase hẹp, nó cắt
+--  mất đuôi và làm tưởng là thiếu nhãn.)
+--
+-- select
+--   (select count(*) from unnest(array['cho_chot','da_chot','bo','dang_lam',
+--                                      'cho_duyet','da_duyet','da_ghi']) n
+--      where pg_get_constraintdef(c.oid) like '%''' || n || '''%')            as nhan_moi_du_7,
+--   (select count(*) from unnest(array['cho_sep_chot','doing','cho_duyet_kq',
+--           'da_duyet_kq','lam_lai','can_sep_sua','can_sep_duyet']) n
+--      where pg_get_constraintdef(c.oid) like '%''' || n || '''%')            as nhan_cu_con_lai,
+--   (select count(*) from information_schema.columns
+--      where table_name='tasks' and column_name in ('tin_cay','da_tu_kiem'))  as cot_tin_cay_con,
+--   (select count(*) from information_schema.views where table_schema='public'
+--      and table_name in ('v_van_phong','v_tinh_trang'))                      as view_cu_con
+-- from pg_constraint c where c.conname = 'tasks_trang_thai_check';

@@ -215,6 +215,10 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
   justify-content:center; flex:0 0 auto; background:var(--panel); border:1px solid var(--line);
   color:var(--mut)}
 .head .kh.mo{background:var(--waitbg); border-color:var(--wait); color:var(--wait)}
+.head .kh.dangtai{border-color:var(--lab); color:var(--lab)}
+.head .kh.dangtai svg{animation:xoay .8s linear infinite}
+@keyframes xoay{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.head .kh.dangtai svg{animation:none; opacity:.6}}
 .head .kh svg{width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.9;
   stroke-linecap:round; stroke-linejoin:round}
 .bar.chinh{outline:2px dashed var(--wait); outline-offset:-3px; border-radius:14px}
@@ -418,7 +422,9 @@ const ICO={
   loa:'<path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4Z"/><path d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path d="M18 6.7a7.5 7.5 0 0 1 0 10.6"/>',
   loatat:'<path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4Z"/><path d="M16 10l4 4M20 10l-4 4"/>',
   khoa:'<rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
-  mokhoa:'<rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 7.5-1.8"/>'
+  mokhoa:'<rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 7.5-1.8"/>',
+  // Mũi tên tròn — nút tải lại dữ liệu từ Supabase.
+  taiLai:'<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.6h-4.6"/>'
 };
 const sv=(k,vb=24)=>`<svg viewBox="0 0 ${vb} ${vb}">${ICO[k]}</svg>`;
 /* thứ tự tab để glider biết trượt đi đâu */
@@ -930,7 +936,7 @@ function manPhong(){
   const daGhiDs=S.tasks.filter(t=>t.tt==='da_ghi');
   return {back:'office',
     head:`<h1>${k?TEN[k]:'Việc'}</h1><span class="sub">${S.dangTai?'đang tải…':choSep()?choSep()+' chờ bạn':'đã xử lý hết'}</span>
-      ${S.nguon==='that'?`<button class="kh lam-moi" data-tailai="1" aria-label="Cập nhật">${sv('chay')}<span>Cập nhật</span></button>`:''}`,
+      ${S.nguon==='that'?`<button class="kh" data-tailai="1" aria-label="Cập nhật dữ liệu" title="Cập nhật">${sv('taiLai')}</button>`:''}`,
     body:`${k?'':bangChoNguon()}${k?'':bangTinhTrang()}
       ${hoiCho?theHoi():''}
       ${!k&&ton.length?`<div class="grp" style="color:var(--bad)">Tồn từ hôm trước
@@ -1368,7 +1374,8 @@ document.getElementById('dev').addEventListener('click',e=>{
     NG()?.guiLink(v).then(()=>{ S.dangNhapXong=true; render(); toast('Đã gửi link vào email'); })
       .catch(err=>toast('Không gửi được: '+err.message,true));
     return;}
-  if(e.target.closest('[data-tailai]')){ taiTuNguon(); return;}
+  const tl=e.target.closest('[data-tailai]');
+  if(tl){ tl.classList.add('dangtai'); taiTuNguon().finally(()=>tl.classList.remove('dangtai')); return;}
   const act=e.target.closest('[data-act]');
   if(act){luu();
     const NH={da_chot:'Đã chốt · agent làm ở lệnh lam',bo:'Đã bỏ việc này',

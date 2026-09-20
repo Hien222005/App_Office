@@ -13,6 +13,7 @@ node_modules/
 /tmp/
 
 # bản nháp và chỗ chạy thử — không commit
+_brief/
 _nhap/
 _thu/
 nhat-ky/

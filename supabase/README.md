@@ -17,14 +17,25 @@ Chạy ba file theo **đúng thứ tự** trong Supabase → SQL Editor → New 
 | 6 | `doi-4-dem-dung.sql` | Sửa cột `dang_lam` trong `v_tinh_trang` (view này bị bỏ ở doi-5) |
 | 7 | `doi-5-nhan-gon.sql` | **Rút nhãn 10 → 7 · bỏ cột `tin_cay` · bỏ 2 view không ai dùng** |
 
-Đã chạy tới file nào thì kiểm bằng:
+Chạy xong `doi-5` thì kiểm bằng câu này — ra đúng **bốn số `7 · 0 · 0 · 0`**:
 
 ```sql
-select pg_get_constraintdef(oid) from pg_constraint where conname = 'tasks_trang_thai_check';
+select
+  (select count(*) from unnest(array['cho_chot','da_chot','bo','dang_lam',
+                                     'cho_duyet','da_duyet','da_ghi']) n
+     where pg_get_constraintdef(c.oid) like '%''' || n || '''%')            as nhan_moi_du_7,
+  (select count(*) from unnest(array['cho_sep_chot','doing','cho_duyet_kq',
+          'da_duyet_kq','lam_lai','can_sep_sua','can_sep_duyet']) n
+     where pg_get_constraintdef(c.oid) like '%''' || n || '''%')            as nhan_cu_con_lai,
+  (select count(*) from information_schema.columns
+     where table_name='tasks' and column_name in ('tin_cay','da_tu_kiem'))  as cot_tin_cay_con,
+  (select count(*) from information_schema.views where table_schema='public'
+     and table_name in ('v_van_phong','v_tinh_trang'))                      as view_cu_con
+from pg_constraint c where c.conname = 'tasks_trang_thai_check';
 ```
 
-Ra đúng 7 nhãn `cho_chot · da_chot · bo · dang_lam · cho_duyet · da_duyet · da_ghi`
-là đã chạy tới `doi-5`.
+> Đừng đọc `pg_get_constraintdef` bằng mắt: ô kết quả của Supabase hẹp nên nó cắt
+> mất đuôi, dễ tưởng là thiếu nhãn.
 
 ## Kiểm tra sau khi chạy
 
