@@ -18,6 +18,13 @@ mở ra xem, bạn bấm duyệt thì cuối ngày script mới chép về.
 
 ## Một ngày làm việc
 
+> **Phiên Claude Code phải mở ĐÚNG trong thư mục `agent-app`:**
+> ```bash
+> cd ~/Documents/Công\ việc/agent-app && claude
+> ```
+> Mở ở thư mục cha thì hook `PostToolUse` không nạp, nhật ký không ghi hành động nào,
+> và mọi lệnh `viec.mjs xong` đều bị từ chối vì không có bằng chứng tự kiểm.
+
 Một ngày **một phiên**, ba lệnh gõ trong Claude Code:
 
 ```
@@ -157,7 +164,20 @@ supabase.com → tạo project → SQL Editor → chạy **lần lượt** các 
 [`supabase/`](supabase/README.md): `schema` → `rls` → `seed_food` → `doi-2` → `doi-3`
 → `doi-4` → `doi-5`. File `supabase/README.md` ghi rõ file nào cần sửa gì trước khi chạy.
 
-Rồi Authentication → bật **Email magic link**, thêm email của bạn.
+Rồi **Authentication → Sign In / Providers** → bật **Email**, bật **Magic Link**.
+
+Và — **bước hay bị quên, thiếu là không đăng nhập được** — vào
+**Authentication → URL Configuration**:
+
+| Ô | Điền gì |
+|---|---|
+| **Site URL** | địa chỉ app đang dùng, ví dụ `https://dev--<tên>.netlify.app` |
+| **Redirect URLs** | thêm từng dòng, có `/**` ở cuối: bản dev · bản production · `http://localhost:8888/**` |
+
+App có gửi `redirect_to` khi xin magic link, nhưng **Supabase bỏ qua tham số đó nếu
+địa chỉ không nằm trong Redirect URLs** — rồi rơi về Site URL. Để mặc định
+`http://localhost:3000` thì bấm link trong email sẽ ra *"Safari can't open the page"*,
+kèm `otp_expired`.
 
 ### 2 · Khoá API và đường dẫn
 

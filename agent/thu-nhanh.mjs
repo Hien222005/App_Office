@@ -212,9 +212,15 @@ ghiNhậtKý('Read', CSS, '10:28');          // đọc lại, nhưng rồi còn 
 ghiNhậtKý('Edit', LOG, '10:31');
 soát('Mở lại rồi còn sửa tiếp → vẫn trượt', false, 'CHƯA TỰ KIỂM');
 
-// ca 4 · nhật ký trống
+// ca 4 · nhật ký trống hẳn → phải đoán được là HOOK CHẾT, không phải agent lười
 xoáNhậtKý();
-soát('Nhật ký trống → trượt', false, 'không có hành động nào');
+soát('Nhật ký trống hẳn → trượt, chỉ ra hook chưa chạy', false, 'HOOK CHƯA CHẠY');
+
+// ca 4b · hook CÓ chạy nhưng không đụng bản nháp này → thông báo phải khác hẳn
+xoáNhậtKý();
+appendFileSync(fileNhậtKý, JSON.stringify(
+  { luc: '09:00', loai: 'lam', ai: 'agent', cong_cu: 'Read', dich: '/cho/khac/file.md' }) + '\n');
+soát('Hook chạy nhưng sai bản nháp → trượt, thông báo khác', false, 'KHÔNG có hành động nào trong bản nháp');
 
 // ca 5 · nhật ký chỉ có đọc, không có sửa
 xoáNhậtKý();

@@ -8,6 +8,9 @@ description: Luật chung của Văn Phòng Agent. Nạp khi chạy /report, /la
 Một phiên mỗi ngày. `/report` trình bảng để sếp chốt · `/lam` làm việc đã chốt ·
 `/chot` ghi vào file gốc rồi đóng phiên.
 
+> Phiên phải mở trong thư mục `agent-app`, không phải thư mục cha — nếu không thì
+> hook không ghi nhật ký và không lệnh `xong` nào qua được.
+
 ## Đạt
 
 - Chỉ làm việc mà `viec.mjs doc` giao. Việc nằm trong `việc_không_giao` thì bỏ qua.

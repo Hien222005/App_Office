@@ -80,7 +80,10 @@ async function doc() {
     in_({ chặn: true, lý_do: 'Chưa có phiếu cho hôm nay. Chạy /report trước.' });
     return;
   }
-  const chưaChốt = phiếu.trang_thai !== 'approved';
+  // KHÔNG còn cổng cấp phiếu. Trước đây đòi daily_report.trang_thai === 'approved' —
+  // tàn dư của workflow cũ, hồi đó sếp duyệt CẢ PHIẾU một lần. Workflow mới sếp chốt
+  // TỪNG VIỆC, và không chỗ nào đặt phiếu thành 'approved' nữa → cổng thành khoá chết.
+  // Nhãn `da_chot` của từng việc CHÍNH LÀ sự chốt: bảng CHUYỂN chỉ cho sếp đặt nhãn đó.
 
   const [việc, hỏi] = await Promise.all([
     db.đọc('tasks', `trang_thai=in.(${PHIÊN_NHẬN.join(',')})&order=ngay.asc,thu_tu.asc`),
@@ -110,14 +113,19 @@ async function doc() {
   });
 
   const việcTồn = raViệc.filter(v => v.tồn_từ_ngày);
-  if (chưaChốt && !việcTồn.length) {
-    in_({ chặn: true, lý_do: 'Phiếu hôm nay sếp CHƯA CHỐT, và không có việc tồn. Dừng lại, không làm gì.' });
+  if (!raViệc.length) {
+    in_({
+      chặn: true,
+      lý_do: khôngGiao.length
+        ? 'Có việc đã chốt nhưng không giao được. Xem việc_không_giao.'
+        : 'Sếp chưa chốt việc nào. Mở app, bấm "Chốt việc này" rồi gõ lại /lam.',
+      việc_không_giao: khôngGiao,
+    });
     return;
   }
 
   in_({
     chặn: false, ngày,
-    phiếu_hôm_nay_đã_chốt: !chưaChốt,
     việc_tồn: việcTồn.map(v => ({ id: v.id, tồn_từ: v.tồn_từ_ngày, tên: v.tên })),
     kinh_nghiệm: ghiChú.map(g => g.bai_hoc),
     câu_hỏi_đã_trả_lời: hỏi.filter(h => h.tra_loi).map(h => ({ hỏi: h.cau_hoi, đáp: h.tra_loi })),

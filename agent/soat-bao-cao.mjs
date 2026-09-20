@@ -72,6 +72,16 @@ function việcNàyTrongNhậtKý() {
   return ra;
 }
 
+// Hôm nay nhật ký có bất kỳ hành động nào chưa? Dùng để phân biệt "hook chết"
+// với "agent không đụng bản nháp" — hai lỗi khác hẳn nhau.
+function cóDòngLàmHômNay() {
+  const f = join(THƯ_MỤC_NHẬT_KÝ, `${new Date().toLocaleDateString('sv-SE')}.jsonl`);
+  if (!existsSync(f)) return false;
+  return readFileSync(f, 'utf8').split('\n').some(d => {
+    try { return JSON.parse(d).loai === 'lam'; } catch { return false; }
+  });
+}
+
 const SỬA = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
 const hànhĐộng = việcNàyTrongNhậtKý();
 const iSửaCuối = hànhĐộng.findLastIndex(h => SỬA.has(h.cong_cu));
@@ -80,7 +90,16 @@ const đọcSauSửa = iSửaCuối >= 0
   : null;
 
 if (!hànhĐộng.length) {
-  lỗi.push('Nhật ký không có hành động nào trong bản nháp này — không kiểm được đã tự kiểm hay chưa.');
+  // Phân biệt hai chuyện rất khác nhau, kẻo mất hàng giờ đoán mò:
+  //   · hook KHÔNG chạy       → cả ngày không có dòng "lam" nào
+  //   · hook chạy, agent không đụng bản nháp → có dòng "lam" nhưng không của việc này
+  lỗi.push(cóDòngLàmHômNay()
+    ? 'Nhật ký có ghi hành động hôm nay, nhưng KHÔNG có hành động nào trong bản nháp '
+      + `${id}. Agent chưa sửa gì trong bản nháp, hoặc sửa nhầm chỗ khác.`
+    : 'HOOK CHƯA CHẠY — cả ngày nay nhật ký không có dòng hành động nào.\n'
+      + '     Hook PostToolUse khai trong agent-app/.claude/settings.json, Claude Code chỉ nạp\n'
+      + '     khi phiên mở ĐÚNG thư mục agent-app. Đóng phiên, mở lại bằng:\n'
+      + '       cd ~/Documents/Công\\ việc/agent-app && claude');
 } else if (iSửaCuối < 0) {
   lỗi.push('Nhật ký không thấy lần sửa nào trong bản nháp này.');
 } else if (!đọcSauSửa) {
