@@ -527,6 +527,11 @@ const NHAN={
   da_ghi:{ten:'Đã ghi vào file',cls:'xong',het:1},
 };
 const TRAN_LAM_LAI=3;
+/* Sếp được đổi nhãn nào sang nhãn nào — chép từ CHUYỂN.sếp trong agent/nhan.mjs.
+   Nút trên thẻ việc suy ra từ bảng này, không viết cứng từng trường hợp: trước đây
+   việc ở 'dang_lam' không có nút nào, dù mô hình cho phép bỏ. */
+const SEP_DUOC={ cho_chot:['da_chot','bo'], cho_duyet:['da_duyet','da_chot','bo'], dang_lam:['bo'] };
+const sepBoDuoc=t=>(SEP_DUOC[t.tt]||[]).includes('bo');
 /* Ba thứ trước đây là nhãn, nay tính từ dữ liệu — agent không thể quên đánh dấu. */
 const canBanSua=t=>(t.lan||0)>=TRAN_LAM_LAI&&!NHAN[t.tt]?.het;
 const dangVuong=t=>!!S.hoi&&S.hoi.task_id===t.id&&S.hoi.tl===null;  // câu hỏi chưa trả lời
@@ -1008,6 +1013,7 @@ function manTask(){
   : canBanSua(t) ? `<div class="btnrow" style="margin-top:auto"><button class="btn pri" data-act="giao_lai">Giao lại cho agent</button>
         <button class="btn no" data-act="bo">Bỏ việc</button></div>`
   : dangVuong(t) ? `<div class="btnrow" style="margin-top:auto"><button class="btn gh" data-go="phieu">Xem câu hỏi ở tab Việc</button></div>`
+  : sepBoDuoc(t) ? `<div class="btnrow" style="margin-top:auto"><button class="btn no" data-act="bo">Bỏ việc</button></div>`
   : '';
 
   return {back:'phong',

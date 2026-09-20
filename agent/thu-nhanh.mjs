@@ -9,7 +9,7 @@ import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync, appendFileS
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { băm } from './anh-chup.mjs';
-import { đượcChuyển, trễHạn, NHÃN, chạmTrần, làViệcTồn, SỐ_PHƯƠNG_ÁN, CHỜ_SẾP,
+import { đượcChuyển, trễHạn, NHÃN, chạmTrần, làViệcTồn, SỐ_PHƯƠNG_ÁN, CHỜ_SẾP, CHUYỂN,
          cầnSếpSửa, đangVướng, agentNhậnĐược, vìSaoKhôngNhận } from './nhan.mjs';
 
 const agent = dirname(fileURLToPath(import.meta.url));
@@ -167,6 +167,26 @@ const xem = JSON.parse(chạy('nhap.mjs', 'xem', ID));
 kiểm('xem: đúng 2 file sẽ chép về', xem.se_chep_ve.length === 2);
 kiểm('Thư mục thật chưa bị đụng trước khi duyệt',
   băm(join(gốc, M4, '02_html/shared/core.css')) === bămTrước.css);
+
+// ── app phải khớp mô hình nhãn: sếp làm gì được thì app phải có nút ──────
+// Lỗi: việc ở 'dang_lam' không có nút nào trên thẻ, dù CHUYỂN.sếp cho phép bỏ.
+// Sếp kẹt, không có đường nào xử lý việc đang làm dở.
+{
+  const html = readFileSync(join(agent, '..', 'site', 'index.html'), 'utf8');
+  const m = html.match(/const SEP_DUOC=\{([^}]*)\}/);
+  kiểm('App có chép bảng quyền của sếp', !!m);
+  if (m) {
+    const app = {};
+    for (const p of m[1].split(/,(?=\s*\w+\s*:)/)) {
+      const [k, v] = p.split(':');
+      app[k.trim()] = (v.match(/'[a-z_]+'/g) || []).map(x => x.replace(/'/g, ''));
+    }
+    const lệch = Object.entries(CHUYỂN.sếp)
+      .filter(([tu, den]) => JSON.stringify(den) !== JSON.stringify(app[tu]));
+    kiểm('App khớp CHUYỂN.sếp trong nhan.mjs', !lệch.length,
+      lệch[0] ? `lệch ở "${lệch[0][0]}"` : Object.keys(app).length + ' nhãn khớp');
+  }
+}
 
 // ── tinh-trang và dong-phien phải nói GIỐNG NHAU về "đóng được phiên" ────
 // Lỗi agent tìm ra: tinh-trang quên đếm da_chot và dang_lam nên báo đóng được,
