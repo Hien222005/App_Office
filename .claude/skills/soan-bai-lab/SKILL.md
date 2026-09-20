@@ -10,8 +10,9 @@ description: Viết bản tóm tắt tài liệu Lab cho buổi dạy hôm sau. 
 Mặc định viết **trước một ngày**. Tài liệu chỉ có sáng cùng ngày thì sáng viết.
 
 ## File được xem
+Mẫu tính từ gốc phòng Lab (`DIR_LAB` trong `agent/.env`), không viết lại đường dẫn tuyệt đối.
 ```
-$DIR_LAB/**
+**
 ```
 
 ## File được sửa

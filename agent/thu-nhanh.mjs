@@ -60,7 +60,7 @@ import { xétFile } from './pham-vi.mjs';
 {
   const pvSkill = phạmViTừSkill('sua-bug-elearn');
   kiểm('Phạm vi đọc được từ Skill, không từ brief',
-    pvSkill.duoc_sua.includes('courses/**/02_html/**') && pvSkill.phai_doi.length === 1);
+    pvSkill.duoc_sua.includes('courses/Test_*_Coding/**') && pvSkill.phai_doi.length === 1);
   kiểm('Skill chưa điền phạm vi thì từ chối mở bản nháp', (() => {
     try { phạmViTừSkill('cap-nhat-kinh-doanh'); return false; }
     catch (e) { return /chưa khai/.test(e.message); }
@@ -68,16 +68,49 @@ import { xétFile } from './pham-vi.mjs';
 
   const gốcThử = { goc: gốc, duoc_sua: pvSkill.duoc_sua };
   const f = (p) => join(gốc, p);
-  kiểm('Skill cho phép 02_html', xétFile(gốcThử, f(`${M4}/02_html/shared/core.css`)).được);
-  kiểm('Skill KHÔNG cho phép 01_md', !xétFile(gốcThử, f(`${M4}/01_md/unit-8-quiz.md`)).được);
+  kiểm('Skill cho sửa trong thư mục BUILD', xétFile(gốcThử, f(`${M4}/02_html/shared/core.css`)).được);
+  kiểm('Skill cho sửa cả 01_md trong thư mục build', xétFile(gốcThử, f(`${M4}/01_md/unit-8-quiz.md`)).được);
+  kiểm('Skill CHẶN thư mục NGUỒN (bản gốc của bài)',
+    !xétFile(gốcThử, f('courses/Module 4/02_html/shared/core.css')).được);
+  kiểm('Skill CHẶN templates của Elearning',
+    !xétFile(gốcThử, f('.claude/skills/elearning-md-to-html/templates/interactive/accordion.css')).được);
 
-  // brief thu hẹp: chỉ module-04, nên bản Module 4 khác bị loại dù Skill cho phép
+  // brief thu hẹp: việc này chỉ đụng module-04, khoá build khác bị loại dù Skill cho phép
+  const khácKhoá = 'courses/Test_CAR-L1_Module 1_Coding/module-01/02_html/unit-1.html';
   const hẹp = { ...gốcThử, chi_sua: [`${M4}/**`] };
   kiểm('Skill cho, nhưng brief thu hẹp thì vẫn bị chặn',
-    xétFile(gốcThử, f('courses/Module 4/02_html/shared/core.css')).được &&
-    !xétFile(hẹp,    f('courses/Module 4/02_html/shared/core.css')).được);
+    xétFile(gốcThử, f(khácKhoá)).được && !xétFile(hẹp, f(khácKhoá)).được);
   kiểm('Brief KHÔNG nới rộng được phạm vi Skill',
-    !xétFile({ ...gốcThử, chi_sua: [`${M4}/01_md/**`] }, f(`${M4}/01_md/unit-8-quiz.md`)).được);
+    !xétFile({ ...gốcThử, chi_sua: ['courses/Module 4/**'] }, f('courses/Module 4/module-04/unit-1.md')).được);
+}
+
+// ── ranh giới Skill trên thư mục Elearning THẬT ───────────────────────────
+// Bỏ qua nếu chưa có thư mục (máy khác, hoặc chưa cấu hình .env).
+// Bài này canh cái quan trọng nhất: sửa Skill mà làm thủng ranh giới thì lộ ngay.
+{
+  const EL = (() => {
+    try {
+      const m = readFileSync(join(agent, '.env'), 'utf8').match(/^DIR_ELEARNING\s*=\s*(.*)$/m);
+      return m && existsSync(m[1].trim()) ? m[1].trim() : null;
+    } catch { return null; }
+  })();
+  if (!EL) {
+    ca.push({ ca: 'Ranh giới Skill trên Elearning thật', đạt: true, ghi_chú: 'bỏ qua — chưa có thư mục' });
+  } else {
+    const pvEL = { goc: EL, duoc_sua: phạmViTừSkill('sua-bug-elearn').duoc_sua };
+    const CA = [
+      ['courses/Test_Module 4_Coding/module-04/02_html/questions/sequential-quiz.css', true],
+      ['courses/Test_Module 4_Coding/module-04/01_md/unit-8-quiz.md',                  true],
+      ['courses/Test_CAR-L1_Module 1_Coding/module-01/02_html/unit-1.html',            true],
+      ['bugs-con-lai-can-fix-2026-08-28.md',                                           true],
+      ['courses/Module 4/module-04/unit-1.md',                                         false],
+      ['.claude/skills/elearning-md-to-html/templates/interactive/accordion.css',      false],
+      ['courses/course.yml',                                                           false],
+      ['_exports/bat-ky.html',                                                         false],
+    ];
+    const sai = CA.filter(([f, mong]) => xétFile(pvEL, join(EL, f)).được !== mong).map(([f]) => f);
+    kiểm('Ranh giới Skill trên Elearning thật: 8 ca', !sai.length, sai[0] ?? '8/8');
+  }
 }
 
 // ── nhãn ──────────────────────────────────────────────────────────────────

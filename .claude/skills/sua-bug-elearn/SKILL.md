@@ -6,37 +6,65 @@ description: Sửa bug gói bài học trong thư mục Elearning rồi ghi lạ
 # Sửa bug E-learning
 
 ## Việc
-Đọc file log bug, tái hiện đúng lỗi được giao, sửa trong bản nháp, mở lại trang
-để tự kiểm, rồi ghi một dòng vào log bug.
+Đọc mục bug được giao trong file log, tái hiện lỗi, sửa trong bản nháp, mở lại trang
+để tự kiểm, rồi ghi một mục vào file log.
+
+Thư mục Elearning có **hai loại thư mục khoá học**:
+
+| Loại | Ví dụ | Vai trò |
+|---|---|---|
+| **Nguồn** | `courses/Module 4/` | nội dung gốc (`.md`, ảnh, video). **Chỉ đọc.** |
+| **Build** | `courses/Test_Module 4_Coding/` | `00_raw → 01_md → 02_html → 03_scorm`. **Chỗ sửa bug.** |
 
 ## File được xem
+Đọc không bị script chặn; danh sách này là chỉ đường.
 ```
 bugs-con-lai-can-fix-*.md
-courses/**/01_md/**
-courses/**/02_html/**
+xac-minh-bug-sheet-*.md
+courses/**
 ```
 
 ## File được sửa
+Chỉ thư mục build. Thư mục nguồn và `.claude/` của Elearning nằm ngoài.
 ```
-courses/**/02_html/**
+courses/Test_*_Coding/**
 bugs-con-lai-can-fix-*.md
 ```
 
 ## Phải đổi
-Làm xong mà không đụng file khớp mẫu này thì script từ chối.
+Sửa xong mà không ghi log thì script từ chối — đây là quy trình team đã chốt:
+*"mọi yêu cầu sửa đều được log vào file này — tên bug + đã sửa gì"*.
 ```
 bugs-con-lai-can-fix-*.md
 ```
 
 ## Không làm
-- Không đồng bộ sang `.claude/skills/**/templates/`.
-- Không sửa cùng một lỗi sang bản khác của bài (ví dụ `courses/Module 4/`).
+- **Không đồng bộ sang `.claude/skills/*/templates/`** của Elearning. Ba skill build
+  (`elearning-raw-to-md`, `elearning-md-to-html`, `elearning-html-to-scorm`) giữ khuôn
+  chung; sửa vào đó là đổi mọi khoá học cùng lúc.
+- **Không sửa sang module khác.** Mỗi file log tự khai `**Phạm vi sửa**` ở đầu — theo
+  đúng dòng đó. Brief dùng `chi_sua` để chặn bằng code.
+- **Không đụng thư mục nguồn** `courses/Module N/` — đó là bản gốc.
 - Không sửa khi chưa tái hiện được bug.
 
 ## Đầu ra
 - `kỳ vọng kết quả` — một hai câu: sếp mở link ra sẽ thấy gì.
-- Một dòng trong log bug: **số bug · triệu chứng · đã kiểm · đã sửa**.
+- Một mục mới trong file log, theo đúng khuôn đang dùng:
+
+```markdown
+## <số>. <tên bug ngắn>
+
+**Báo cáo của user**: ...
+**Điều tra**: file nào, rule nào, tái hiện ra sao
+**Kết luận**: đã sửa gì, ở file nào
+```
 
 ## Tham chiếu
-Thư mục gốc `$DIR_ELEARNING`. File bug lấy bản mới nhất theo ngày trong tên.
-✎ *(sếp bổ sung sau: đường dẫn module đang làm, quy ước đặt tên)*
+Gốc phòng: `DIR_ELEARNING` trong `agent/.env`.
+
+- File log lấy bản **mới nhất theo ngày trong tên**.
+- CSS và JS của từng tính năng nằm trong `02_html/` chia theo thư mục:
+  `questions/` (`sequential-quiz.css`, `radio-quiz.css`, `review-quiz.css`, `noi-tu.css`),
+  `shared/` (`core.css`, `core.js`, `gating.js`, `scorm-api.js`), `effects/`, `interactive/`,
+  `readings/`, `summary/`.
+- Trang bài học: `02_html/unit-N.html`, `unit-8-quiz.html`, `unit-9-summary.html`.
