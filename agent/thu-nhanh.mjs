@@ -168,6 +168,30 @@ kiểm('xem: đúng 2 file sẽ chép về', xem.se_chep_ve.length === 2);
 kiểm('Thư mục thật chưa bị đụng trước khi duyệt',
   băm(join(gốc, M4, '02_html/shared/core.css')) === bămTrước.css);
 
+// ── tinh-trang và dong-phien phải nói GIỐNG NHAU về "đóng được phiên" ────
+// Lỗi agent tìm ra: tinh-trang quên đếm da_chot và dang_lam nên báo đóng được,
+// trong khi dong-phien vẫn chặn. Hai nguồn thì sẽ lệch.
+{
+  const hỏiKhông = () => [];
+  const bộ = [
+    [[{ id: 'a', trang_thai: 'dang_lam', so_lan_lam_lai: 0 }], false, 'còn việc đang làm'],
+    [[{ id: 'a', trang_thai: 'da_chot',  so_lan_lam_lai: 0 }], false, 'còn việc đã chốt chưa làm'],
+    [[{ id: 'a', trang_thai: 'cho_duyet',so_lan_lam_lai: 0 }], false, 'còn việc chờ duyệt'],
+    [[{ id: 'a', trang_thai: 'da_duyet', so_lan_lam_lai: 0 }], false, 'còn việc chờ ghi'],
+    [[{ id: 'a', trang_thai: 'da_ghi',   so_lan_lam_lai: 0 },
+      { id: 'b', trang_thai: 'bo',       so_lan_lam_lai: 0 }], true, 'mọi việc đã kết thúc'],
+  ];
+  const sai = bộ.filter(([ds, mong]) => {
+    const sống = ds.filter(t => !NHÃN[t.trang_thai]?.kết_thúc);
+    const chờSếp = sống.filter(t => CHỜ_SẾP.includes(t.trang_thai)
+      || đangVướng(hỏiKhông()) || chạmTrần(t.so_lan_lam_lai));
+    const chờGhi = sống.filter(t => t.trang_thai === 'da_duyet');
+    const đangLàm = sống.filter(t => ['da_chot','dang_lam'].includes(t.trang_thai) && !chờSếp.includes(t));
+    return (!chờSếp.length && !chờGhi.length && !đangLàm.length) !== mong;
+  });
+  kiểm('Đóng được phiên: tính đúng cho cả 5 tình huống', !sai.length, sai[0]?.[2] ?? '5/5');
+}
+
 // ── bản nháp trỏ sai thư mục gốc thì phải bị chặn ────────────────────────
 // Lỗi này agent tự tìm ra khi chạy thật: so.json chụp `goc` lúc MỞ và không đọc
 // lại .env. Đổi DIR_* sau đó thì bản nháp cũ trỏ chỗ khác, chép về sẽ vào nhầm.

@@ -285,6 +285,20 @@ async function hoi() {
   console.log(`Đã hỏi (${id}) · ${taskId} đang chờ sếp trả lời. Đi tiếp việc khác, đừng đoán.`);
 }
 
+// Xếp việc còn sống vào ba rổ. `tinh-trang` và `dong-phien` DÙNG CHUNG hàm này —
+// trước đây mỗi chỗ tự tính một kiểu: tinh-trang quên đếm da_chot và dang_lam nên
+// báo "đóng được phiên" trong khi dong-phien vẫn chặn. Hai nguồn thì sẽ lệch.
+function xếpRổ(việc, hỏiCủa) {
+  const sống = việc.filter(t => !NHÃN[t.trang_thai]?.kết_thúc);
+  const chờSếp = sống.filter(t =>
+    CHỜ_SẾP.includes(t.trang_thai) || đangVướng(hỏiCủa(t.id)) || chạmTrần(t.so_lan_lam_lai));
+  const chờGhi = sống.filter(t => t.trang_thai === 'da_duyet');
+  const đangLàm = sống.filter(t =>
+    ['da_chot', 'dang_lam'].includes(t.trang_thai) && !chờSếp.includes(t));
+  return { sống, chờSếp, chờGhi, đangLàm,
+           đóngĐược: !chờSếp.length && !chờGhi.length && !đangLàm.length };
+}
+
 // ══════════════════════════════════════════════════════════════════════════
 // TÌNH TRẠNG — nguồn số liệu DUY NHẤT. Agent không được tự đếm.
 // ══════════════════════════════════════════════════════════════════════════
@@ -312,6 +326,7 @@ async function tinhTrang() {
     };
   });
 
+  const rổ = xếpRổ(việc, hỏiCủa);
   const hômNayLàm = sống.filter(t => t.ngay === ngày || làViệcTồn(t, ngày));
   const đãDuyệt = hômNayLàm.filter(t => t.trang_thai === 'da_duyet').map(t => t.id);
   const cònChờ = hômNayLàm.filter(chờSếp).map(t => t.id);
@@ -343,7 +358,9 @@ async function tinhTrang() {
       .map(t => ({ id: t.id, tên: t.tieu_de, lý_do: `đã bị trả lại ${t.so_lan_lam_lai} lần` })),
     đã_duyệt_chờ_ghi: đãDuyệt,
     còn_chờ_sếp: cònChờ,
-    đóng_được_phiên: cònChờ.length === 0 && đãDuyệt.length === 0,
+    đang_làm_chưa_nộp: rổ.đangLàm.map(t => ({ id: t.id, tên: t.tieu_de })),
+    // Cùng một phép tính với dong-phien — không còn hai chỗ tự tính riêng.
+    đóng_được_phiên: rổ.đóngĐược,
   });
 }
 
@@ -358,13 +375,10 @@ async function dongPhien() {
     db.đọc('tasks', 'order=ngay.asc,thu_tu.asc'),
     db.đọc('questions', 'order=ngay.desc&limit=200'),
   ]);
-  const sống = việc.filter(t => !NHÃN[t.trang_thai]?.kết_thúc);
   const hỏiCủa = (i) => hỏi.filter(h => h.task_id === i);
-  const chờSếp = sống.filter(t => CHỜ_SẾP.includes(t.trang_thai) || đangVướng(hỏiCủa(t.id)));
-  const chờGhi = sống.filter(t => t.trang_thai === 'da_duyet');
-  const đangLàm = sống.filter(t => ['da_chot', 'dang_lam'].includes(t.trang_thai));
+  const { chờSếp, chờGhi, đangLàm, đóngĐược } = xếpRổ(việc, hỏiCủa);
 
-  if (chờSếp.length || chờGhi.length || đangLàm.length) {
+  if (!đóngĐược) {
     in_({
       chặn: true, lý_do: 'Chưa đóng được phiên ngày.',
       còn_chờ_sếp: chờSếp.map(t => ({ id: t.id, nhãn: NHÃN[t.trang_thai]?.tên })),
