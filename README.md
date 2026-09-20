@@ -43,7 +43,7 @@ sáng hôm sau `/report` tự đưa lên đầu bảng.
 | Thư mục | Là gì | Có commit? |
 |---|---|---|
 | [`.claude/`](.claude) | 4 Skill · 3 lệnh slash · hook nhật ký | ✅ |
-| [`agent/`](agent) | Bộ máy chạy trên Mac, 13 script `.mjs` | ✅ |
+| [`agent/`](agent) | Bộ máy chạy trên Mac, 12 script `.mjs` | ✅ |
 | [`site/`](site) | App trên điện thoại | ✅ |
 | [`netlify/functions/`](netlify/functions) | `chat.mjs` nối Gemini · `xem.mjs` cầu xem bản nháp | ✅ |
 | [`supabase/`](supabase) | Các file SQL dựng và đổi database | ✅ |
@@ -66,7 +66,7 @@ gói Supabase Free không có sao lưu tự động, đó là bản sao duy nh�
 | Dùng chung | `lib` nối Supabase · `nhan` bộ nhãn · `phong` đường dẫn · `pham-vi` phạm vi file · `anh-chup` chụp & so thư mục |
 | Máy gọi, không phải agent | `soat-bao-cao` soát bản nháp · `dua-len` đẩy bản xem thử lên Storage |
 | Bạn tự gõ | `nhat-ky xem` · `sao-luu` |
-| Bài thử | `thu-nhanh` (không gọi Claude) · `thu-truong-phong` (gọi Claude thật) |
+| Bài thử | `thu-nhanh` — dựng văn phòng giả lập, diễn lại trọn vòng |
 
 Không cần `npm install`. Mọi script gọi thẳng REST API bằng `fetch` có sẵn trong Node.
 
@@ -185,13 +185,12 @@ Mở trên iPhone: `http://<IP-Mac>:8888`, cùng Wi-Fi. Địa chỉ in ra lúc 
 ## Chạy thử
 
 ```bash
-node agent/thu-nhanh.mjs                      # 5 giây · không gọi Claude · không tốn gì
-node agent/thu-truong-phong.mjs --model opus  # gọi Claude thật · ~70 giây
+node agent/thu-nhanh.mjs   # 5 giây · không gọi Claude · không tốn gì
 ```
 
 `thu-nhanh` dựng một thư mục E-learning giả lập trong `_thu/` rồi diễn lại trọn vòng:
 mở bản nháp → làm (kể cả cố tình làm lấn) → soát → duyệt → chép về. **Không đụng thư
-mục thật.** Số đo gần nhất, 20/09/2026: **50/50 ca đạt**.
+mục thật.** Số đo gần nhất, 20/09/2026: **53/53 ca đạt**.
 
 ---
 

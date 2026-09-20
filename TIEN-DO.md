@@ -26,7 +26,7 @@ Tham khảo repo `github.com/ngtiendong/Academic-Research-Agent-Skill` — 89 fi
 | File chữ agent đọc | 13 · 2.539 chữ | **8 · ~2.000 chữ** |
 | Chữ đọc trong một phiên | 1.095 | **805** |
 | Tên lệnh agent phải nhớ | 10 | **2** (`viec.mjs` · `nhap.mjs`) |
-| Script `.mjs` trong `agent/` | 20 | **13** |
+| Script `.mjs` trong `agent/` | 20 | **12** |
 | Nhãn trạng thái | 10 | **7** |
 | Mục trong brief | 13 | **5** |
 | Mục agent tự khai | 12 | **1** |
@@ -40,7 +40,8 @@ Tham khảo repo `github.com/ngtiendong/Academic-Research-Agent-Skill` — 89 fi
    `soat-bao-cao.mjs` không nhận file báo cáo nữa — tự đọc bản nháp và nhật ký.
 3. **Nhãn 10 → 7.** `lam_lai` · `can_sep_sua` · `can_sep_duyet` thành **điều kiện tính từ
    số liệu**, không còn là nhãn. Agent không thể quên đánh dấu.
-4. **Gộp script 20 → 13.** `viec.mjs` gộp 7 file; `nhap.mjs` gộp 2; xoá `xem-thu.mjs`.
+4. **Gộp script 20 → 12.** `viec.mjs` gộp 7 file; `nhap.mjs` gộp 2; xoá `xem-thu.mjs`
+   và `thu-truong-phong.mjs` (bài thử gọi subagent đã không còn).
 5. **Link xem thử qua Storage.** `dua-len.mjs` + `netlify/functions/xem.mjs`.
 
 ### Ba luật đổi từ chữ sang code
@@ -67,11 +68,10 @@ Tham khảo repo `github.com/ngtiendong/Academic-Research-Agent-Skill` — 89 fi
 
 | Bài thử | Kết quả |
 |---|---|
-| `node agent/thu-nhanh.mjs` · 5 giây, không gọi Claude | **50/50 ca đạt** |
+| `node agent/thu-nhanh.mjs` · 5 giây, không gọi Claude | **53/53 ca đạt** |
 | Đẩy Storage + qua cầu `/xem`, đo bằng JS trong Chrome | trang vẽ ra, CSS tương đối tải được, 32px, kẻ 1px |
 | Database sau `doi-5`, thử thật từng nhãn | 6/6 nhãn mới nhận · 7/7 nhãn cũ từ chối |
 | App: 6 màn hình render | 0 lỗi JavaScript |
-| `thu-truong-phong.mjs --model opus` (đo 18/09, **chưa chạy lại**) | 9/9 luật được theo, 38s và 32s |
 
 ---
 
@@ -79,13 +79,12 @@ Tham khảo repo `github.com/ngtiendong/Academic-Research-Agent-Skill` — 89 fi
 
 - **Chạy thật lần đầu** — một việc E-learning nhỏ do sếp chọn. Lần đầu script đụng
   thư mục Elearning thật. **Phải xin phép trước.**
-- **Ba Skill còn chỗ ✎ chờ sếp điền** — đường dẫn thật, quy ước đặt tên.
-  Phòng Kinh doanh đang **tắt**, chưa khai `## File được sửa` nên không mở bản nháp được.
-- **Chạy lại `thu-truong-phong.mjs`** với bộ Skill mới — số 9/9 là của bộ Skill cũ,
-  chưa đo lại sau đợt gộp.
+- **Skill E-learning và Lab đã trỏ vào thư mục thật**, đo 13/13 và 8/8 ca.
+  Phòng Kinh doanh vẫn **tắt**.
 - **Deploy hàm `/xem` lên Netlify** — chưa deploy thì link bản nháp không mở được.
   Tốn 15 credit cho một lần merge `main`.
-- `lab-repo` chưa clone · mục tiêu kcal/protein còn để tạm 2200/150.
+- Phòng Kinh doanh chưa khai `## File được sửa` — chưa mở bản nháp được.
+- Mục tiêu kcal/protein còn để tạm 2200/150.
 
 ---
 
@@ -95,8 +94,7 @@ Tham khảo repo `github.com/ngtiendong/Academic-Research-Agent-Skill` — 89 fi
 > deploy **0**. Thử ở nhánh `dev`, chỉ merge `main` khi đã ưng.
 
 ```bash
-node agent/thu-nhanh.mjs                      # 5 giây, không tốn hạn mức
-node agent/thu-truong-phong.mjs --model opus  # gọi Claude thật, ~70 giây
+node agent/thu-nhanh.mjs   # 5 giây, không tốn hạn mức
 node dev-server.mjs                           # app tại chỗ, cổng 8888
 node agent/nhat-ky.mjs xem                    # nhật ký hôm nay
 ```
