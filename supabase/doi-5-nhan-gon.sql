@@ -1,4 +1,4 @@
--- ĐỔI 5 · BỘ NHÃN GỌN: 10 → 7
+-- ĐỔI 5 · BỘ NHÃN GỌN (10 → 7) VÀ BỎ ĐIỂM TỰ TIN
 -- Chạy sau doi-2, doi-3, doi-4. Phải khớp đúng agent/nhan.mjs — lệch một chữ là
 -- script và app hiểu khác nhau.
 --
@@ -46,26 +46,26 @@ alter table tasks alter column trang_thai set default 'cho_chot';
 alter table tasks add constraint co_link_khi_cho_duyet check (
   trang_thai <> 'cho_duyet' or (link_san_pham is not null and length(btrim(link_san_pham)) > 0));
 
--- 3 · VIEW TÌNH TRẠNG -----------------------------------------
--- "cho_sep" nay gồm cả việc đang treo câu hỏi, vì đó cũng là đang chờ sếp.
-create or replace view v_tinh_trang as
-select m.mang,
-  count(t.id) filter (where t.trang_thai in ('cho_chot','cho_duyet')
-                         or exists (select 1 from questions q
-                                    where q.task_id = t.id and q.tra_loi is null)
-                         or coalesce(t.so_lan_lam_lai, 0) >= 3)            as cho_sep,
-  count(t.id) filter (where t.trang_thai in ('da_chot','dang_lam'))        as dang_lam,
-  count(t.id) filter (where t.trang_thai = 'da_duyet')                     as da_duyet_cho_ghi,
-  count(t.id) filter (where t.trang_thai = 'da_ghi')                       as da_ghi,
-  count(t.id) filter (where t.han_chot < now()
-                        and t.trang_thai not in ('da_ghi','bo'))           as tre_han,
-  count(t.id) filter (where t.ngay < hom_nay_vn()
-                        and t.trang_thai not in ('da_ghi','bo'))           as ton_hom_truoc,
-  round(avg(t.tin_cay), 1)                                                 as tin_cay_tb
-from (values ('lab'),('elearn'),('biz')) as m(mang)
-left join tasks t on t.mang = m.mang
-  and (t.ngay = hom_nay_vn() or (t.ngay < hom_nay_vn() and t.trang_thai not in ('da_ghi','bo')))
-group by m.mang;
+-- 3 · BỎ ĐIỂM TỰ TIN -----------------------------------------
+-- Agent tự chấm 1–5 thì luôn ra 4. Bài đo 18/09 còn bắt được Opus điền cả một câu
+-- văn vào ô số. Luật cũ "chấm 5/5 phải có da_tu_kiem dài hơn 10 chữ" agent viết bừa
+-- 11 chữ là qua.
+--
+-- Thay bằng luật máy kiểm, nằm trong agent/soat-bao-cao.mjs, không nằm trong database:
+--   nhật ký hook PHẢI có một lần đọc lại file SAU lần sửa cuối.
+-- Không mở lại thì không báo xong được, viết gì cũng vô ích.
+alter table tasks drop constraint if exists tran_tin_cay_khi_chua_tu_kiem;
+drop view if exists v_van_phong;
+drop view if exists v_tinh_trang;
+alter table tasks drop column if exists tin_cay;
+alter table tasks drop column if exists da_tu_kiem;
+
+-- 4 · BỎ HAI VIEW KHÔNG AI DÙNG ------------------------------
+-- v_van_phong và v_tinh_trang không được script hay app nào gọi: tinh-trang.mjs
+-- đếm thẳng từ bảng tasks. Bằng chứng chúng đã hỏng mà không ai biết: v_van_phong
+-- vẫn đang lọc theo nhãn tiếng Anh 'draft'/'done' — bộ nhãn từ ba đời trước.
+-- Giữ lại nghĩa là thêm hai chỗ phải nhớ sửa mỗi lần đổi nhãn. Bỏ.
+-- (Đã drop ở mục 3 vì chúng phụ thuộc cột tin_cay.)
 
 commit;
 
@@ -76,4 +76,8 @@ commit;
 --   select distinct trang_thai from tasks;             → chỉ nằm trong 7 nhãn
 --   select pg_get_constraintdef(oid) from pg_constraint
 --   where conname = 'tasks_trang_thai_check';          → liệt kê đúng 7 nhãn
---   select * from v_tinh_trang;                        → 3 dòng lab/elearn/biz
+--   select column_name from information_schema.columns
+--   where table_name='tasks' and column_name in ('tin_cay','da_tu_kiem');
+--                                                      → KHÔNG ra dòng nào
+--   select table_name from information_schema.views where table_schema='public';
+--                                                      → KHÔNG còn v_van_phong, v_tinh_trang

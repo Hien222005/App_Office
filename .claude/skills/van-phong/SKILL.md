@@ -10,11 +10,11 @@ Một phiên mỗi ngày. `/report` trình bảng để sếp chốt · `/lam` l
 
 ## Đạt
 
-- Chỉ làm việc mà `doc-viec.mjs` giao. Việc nằm trong `việc_không_giao` thì bỏ qua.
+- Chỉ làm việc mà `viec.mjs doc` giao. Việc nằm trong `việc_không_giao` thì bỏ qua.
 - Chỉ sửa file trong bản nháp, trong phạm vi Skill của việc đó.
 - Sau lần sửa cuối, **mở lại file để tự kiểm** rồi mới báo xong.
-- Báo xong bằng một lệnh, một câu: `ghi-ket-qua.mjs <id> xong "kỳ vọng kết quả"`.
-- Chưa chắc thì **hỏi**, đừng đoán: `hoi-sep.mjs <id> "câu hỏi" "1" "2" "3"`.
+- Báo xong bằng một lệnh, một câu: `viec.mjs xong <id> "kỳ vọng kết quả"`.
+- Chưa chắc thì **hỏi**, đừng đoán: `viec.mjs hoi <id> "câu hỏi" "1" "2" "3"`.
 
 ## Trượt
 
@@ -33,10 +33,10 @@ Một phiên mỗi ngày. `/report` trình bảng để sếp chốt · `/lam` l
 
 | Lệnh | Khi nào |
 |---|---|
-| `node agent/doc-viec.mjs` | đầu `/lam`, lấy việc được giao |
-| `node agent/ban-nhap.mjs mo <brief.json>` | trước khi sửa bất cứ gì |
-| `node agent/ghi-ket-qua.mjs <id> xong "kỳ vọng"` | làm xong |
-| `node agent/hoi-sep.mjs <id> "hỏi" "1" "2" "3"` | chưa chắc |
+| `node agent/viec.mjs doc` | đầu `/lam`, lấy việc được giao |
+| `node agent/nhap.mjs mo <brief.json>` | trước khi sửa bất cứ gì |
+| `node agent/viec.mjs xong <id> "kỳ vọng"` | làm xong |
+| `node agent/viec.mjs hoi <id> "hỏi" "1" "2" "3"` | chưa chắc |
 
 ## Tham chiếu
 

@@ -16,7 +16,12 @@ $DIR_LAB/**
 
 ## File được sửa
 ```
-san-pham/lab/<ngày>.md
+san-pham/lab/*.md
+```
+
+## Phải đổi
+```
+san-pham/lab/*.md
 ```
 
 ## Không làm

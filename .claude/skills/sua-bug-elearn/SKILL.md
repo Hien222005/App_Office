@@ -22,6 +22,12 @@ courses/**/02_html/**
 bugs-con-lai-can-fix-*.md
 ```
 
+## Phải đổi
+Làm xong mà không đụng file khớp mẫu này thì script từ chối.
+```
+bugs-con-lai-can-fix-*.md
+```
+
 ## Không làm
 - Không đồng bộ sang `.claude/skills/**/templates/`.
 - Không sửa cùng một lỗi sang bản khác của bài (ví dụ `courses/Module 4/`).

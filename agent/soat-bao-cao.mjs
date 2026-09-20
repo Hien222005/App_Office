@@ -32,7 +32,7 @@ const sổFile = join(THƯ_MỤC_NHÁP, id, 'so.json');
 if (!existsSync(sổFile)) { console.error(`Chưa mở bản nháp cho ${id}.`); process.exit(1); }
 const sổ = JSON.parse(readFileSync(sổFile, 'utf8'));
 const nháp = join(THƯ_MỤC_NHÁP, id, 'nhap');
-const pv = { goc: sổ.goc, duoc_sua: sổ.duoc_sua };
+const pv = { goc: sổ.goc, duoc_sua: sổ.duoc_sua, chi_sua: sổ.chi_sua };
 
 const lỗi = [];
 

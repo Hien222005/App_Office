@@ -93,7 +93,7 @@ export async function đưaLên(id) {
   if (!URL_SB || !KHOÁ) throw new Error('Thiếu SUPABASE_URL hoặc SUPABASE_SERVICE_KEY trong agent/.env');
   const sổ = JSON.parse(readFileSync(join(THƯ_MỤC_NHÁP, id, 'so.json'), 'utf8'));
   const nháp = join(THƯ_MỤC_NHÁP, id, 'nhap');
-  const pv = { goc: sổ.goc, duoc_sua: sổ.duoc_sua };
+  const pv = { goc: sổ.goc, duoc_sua: sổ.duoc_sua, chi_sua: sổ.chi_sua };
 
   const { sửa, thêm } = soSánh(sổ.ke_khai, nháp);
   const đổi = [...new Set([...sửa, ...thêm])].filter(f => xétFile(pv, join(sổ.goc, f)).được);

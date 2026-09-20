@@ -14,8 +14,8 @@ Chạy ba file theo **đúng thứ tự** trong Supabase → SQL Editor → New 
 |---|------|--------|
 | 4 | `doi-2-workflow.sql` | Bộ nhãn mới + cột `han_chot` `brief` `link_san_pham` `so_lan_lam_lai` |
 | 5 | `doi-3-gio-vn.sql` | Hàm `hom_nay_vn()` — ngày tính theo giờ Việt Nam |
-| 6 | `doi-4-dem-dung.sql` | Sửa cột `dang_lam` trong `v_tinh_trang` |
-| 7 | `doi-5-nhan-gon.sql` | **Rút bộ nhãn 10 → 7.** Ba nhãn cũ thành điều kiện tính từ số liệu |
+| 6 | `doi-4-dem-dung.sql` | Sửa cột `dang_lam` trong `v_tinh_trang` (view này bị bỏ ở doi-5) |
+| 7 | `doi-5-nhan-gon.sql` | **Rút nhãn 10 → 7 · bỏ cột `tin_cay` · bỏ 2 view không ai dùng** |
 
 Đã chạy tới file nào thì kiểm bằng:
 
@@ -36,8 +36,8 @@ where schemaname = 'public' order by tablename;
 -- phải ra 36 món
 select count(*) from food_db;
 
--- phải ra 3 sàn, số 0 hết vì chưa có task
-select * from v_van_phong;
+-- đếm việc theo phòng (thay cho view v_van_phong đã bỏ ở doi-5)
+select mang, trang_thai, count(*) from tasks group by mang, trang_thai;
 ```
 
 ## Khoá API

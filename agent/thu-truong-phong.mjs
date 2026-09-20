@@ -86,7 +86,7 @@ for (const [id, brief] of Object.entries(BRIEF)) {
   writeFileSync(fileBrief, JSON.stringify(brief, null, 2));
   // Phòng Lab ghi vào san-pham/lab; đổi tạm gốc phòng sang thư mục thử.
   const môiPhòng = brief.mang === 'lab' ? { ...môi, VP_GOC_LAB: labGốc } : môi;
-  const mở = JSON.parse(execFileSync('node', [join(agent, 'ban-nhap.mjs'), 'mo', fileBrief],
+  const mở = JSON.parse(execFileSync('node', [join(agent, 'nhap.mjs'), 'mo', fileBrief],
     { encoding: 'utf8', env: môiPhòng }));
 
   const lệnh = `Chế độ LÀM. Đây là brief của một việc đã được sếp duyệt:

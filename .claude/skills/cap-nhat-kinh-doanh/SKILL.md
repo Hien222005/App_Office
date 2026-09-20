@@ -20,6 +20,9 @@ $DIR_BIZ/**
 ## File được sửa
 ✎ *(sếp điền — để trống thì không sửa được gì)*
 
+## Phải đổi
+✎ *(sếp điền — để trống thì không bắt buộc đầu ra nào)*
+
 ## Không làm
 ✎ *(sếp điền)*
 

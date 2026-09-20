@@ -29,17 +29,14 @@ ghi(`${M4}/02_html/shared/core.css`, '.quiz-review .question + .question {\n  ma
 ghi(`${M4}/02_html/unit-8-quiz.html`, '<section class="quiz-review"></section>\n');
 ghi(`${M4}/01_md/unit-8-quiz.md`, '# Unit 8 · Quiz\n');
 
+// Brief nay chỉ còn 5 mục bắt buộc — phạm vi file đã nằm trong Skill.
+// `chi_sua` là mục tuỳ chọn để THU HẸP: việc này chỉ được đụng module-04,
+// không lan sang courses/Module 4/ (bản khác của cùng bài).
 const brief = {
-  id: ID, mang: 'elearn', ten: 'Fix bug #13 — câu hỏi sát nhau khi xem lại quiz',
+  id: ID, mang: 'elearn', skill: 'sua-bug-elearn',
+  ten: 'Fix bug #13 — câu hỏi sát nhau khi xem lại quiz',
   nhiem_vu: 'Tăng khoảng cách hai câu hỏi ở chế độ xem lại, thêm đường kẻ.',
-  boi_canh: 'Mục 13 trong bugs-con-lai-can-fix-2026-08-28.md',
-  file_can_doc: ['bugs-con-lai-can-fix-2026-08-28.md', `${M4}/02_html/unit-8-quiz.html`],
-  file_duoc_sua: [`${M4}/**`, 'bugs-con-lai-can-fix-*.md'],
-  file_phai_doi: [`${M4}/**`, 'bugs-con-lai-can-fix-*.md'],
-  viec_khong_lam: ['Không đồng bộ sang .claude/skills/**/templates/', 'Không sửa courses/Module 4/'],
-  xong_khi: 'Câu 4 và Câu 5 cách nhau 32px và có đường kẻ phân tách.',
-  diem_dung: ['Không tái hiện được bug', 'Phải sửa file ngoài file_duoc_sua mới xong được'],
-  link_san_pham: `http://<IP-Mac>:8890/nhap/${ID}/${M4}/02_html/unit-8-quiz.html`,
+  chi_sua: [`${M4}/**`, 'bugs-con-lai-can-fix-*.md'],
   han_chot: '2026-09-18T14:00',
 };
 const fileBrief = join(thử, 'brief.json');
@@ -56,6 +53,32 @@ const chạyCóLỗi = (tệp, ...args) => {
 
 const ca = [];
 const kiểm = (tên, điều_kiện, ghi_chú = '') => ca.push({ ca: tên, đạt: !!điều_kiện, ghi_chú });
+
+// ── phạm vi lấy từ Skill, brief chỉ được THU HẸP ──────────────────────────
+import { phạmViTừSkill } from './pham-vi.mjs';
+import { xétFile } from './pham-vi.mjs';
+{
+  const pvSkill = phạmViTừSkill('sua-bug-elearn');
+  kiểm('Phạm vi đọc được từ Skill, không từ brief',
+    pvSkill.duoc_sua.includes('courses/**/02_html/**') && pvSkill.phai_doi.length === 1);
+  kiểm('Skill chưa điền phạm vi thì từ chối mở bản nháp', (() => {
+    try { phạmViTừSkill('cap-nhat-kinh-doanh'); return false; }
+    catch (e) { return /chưa khai/.test(e.message); }
+  })());
+
+  const gốcThử = { goc: gốc, duoc_sua: pvSkill.duoc_sua };
+  const f = (p) => join(gốc, p);
+  kiểm('Skill cho phép 02_html', xétFile(gốcThử, f(`${M4}/02_html/shared/core.css`)).được);
+  kiểm('Skill KHÔNG cho phép 01_md', !xétFile(gốcThử, f(`${M4}/01_md/unit-8-quiz.md`)).được);
+
+  // brief thu hẹp: chỉ module-04, nên bản Module 4 khác bị loại dù Skill cho phép
+  const hẹp = { ...gốcThử, chi_sua: [`${M4}/**`] };
+  kiểm('Skill cho, nhưng brief thu hẹp thì vẫn bị chặn',
+    xétFile(gốcThử, f('courses/Module 4/02_html/shared/core.css')).được &&
+    !xétFile(hẹp,    f('courses/Module 4/02_html/shared/core.css')).được);
+  kiểm('Brief KHÔNG nới rộng được phạm vi Skill',
+    !xétFile({ ...gốcThử, chi_sua: [`${M4}/01_md/**`] }, f(`${M4}/01_md/unit-8-quiz.md`)).được);
+}
 
 // ── nhãn ──────────────────────────────────────────────────────────────────
 kiểm('Agent không tự chốt kế hoạch được', !đượcChuyển('cho_chot', 'da_chot', 'agent'));
@@ -89,7 +112,7 @@ kiểm('Đủ 7 nhãn, 2 nhãn chờ sếp', Object.keys(NHÃN).length === 7 && 
 kiểm('Câu hỏi cho sếp: đúng 3 gợi ý', SỐ_PHƯƠNG_ÁN === 3);
 
 // ── mở bản nháp ───────────────────────────────────────────────────────────
-const mở = JSON.parse(chạy('ban-nhap.mjs', 'mo', fileBrief));
+const mở = JSON.parse(chạy('nhap.mjs', 'mo', fileBrief));
 const nháp = mở.ban_nhap;
 kiểm('Mở bản nháp trong agent-app/_nhap', nháp.includes('/_nhap/'), `${mở.ms}ms`);
 const bămTrước = {
@@ -102,7 +125,7 @@ const bămTrước = {
 writeFileSync(join(nháp, M4, '02_html/shared/core.css'),
   '.quiz-review .question + .question {\n  margin-top: 32px;\n  border-top: 1px solid #e3e7ee;\n}\n');
 writeFileSync(join(nháp, 'bugs-con-lai-can-fix-2026-09-18.md', ), '# Bug\n\n13. Khoảng cách câu hỏi — 12px → 32px, thêm đường kẻ\n');
-const xem = JSON.parse(chạy('ban-nhap.mjs', 'xem', ID));
+const xem = JSON.parse(chạy('nhap.mjs', 'xem', ID));
 kiểm('xem: đúng 2 file sẽ chép về', xem.se_chep_ve.length === 2);
 kiểm('Thư mục thật chưa bị đụng trước khi duyệt',
   băm(join(gốc, M4, '02_html/shared/core.css')) === bămTrước.css);
@@ -175,7 +198,7 @@ ghiNhậtKý('Read', CSS, '10:36');
 writeFileSync(join(nháp, '.claude/skills/elearning-md-to-html/templates/interactive/accordion.css'), '.acc{gap:32px}\n');
 appendFileSync(join(nháp, 'courses/Module 4/02_html/shared/core.css'), '/* đồng bộ luôn cho tiện */\n');
 
-const xem2 = JSON.parse(chạy('ban-nhap.mjs', 'xem', ID));
+const xem2 = JSON.parse(chạy('nhap.mjs', 'xem', ID));
 kiểm('Sửa lấn: vẫn chỉ 2 file được chép về', xem2.se_chep_ve.length === 2);
 kiểm('Sửa lấn: 2 file ngoài phạm vi bị bỏ lại trong nháp', xem2.bo_qua_vi_ngoai_pham_vi.length === 2);
 kiểm('Sửa lấn: thư mục thật vẫn nguyên trạng',
@@ -187,7 +210,7 @@ kiểm('Chỉ ra đúng 2 file sửa lấn', (lấn.file_ngoai_pham_vi ?? []).le
 // ── sếp duyệt: chỉ phần trong phạm vi được chép về ────────────────────────
 // Sếp tự sửa file log trong lúc chờ duyệt → phải báo xung đột, không đè.
 writeFileSync(join(gốc, 'bugs-con-lai-can-fix-2026-09-18.md'), '# Bug (sếp tự ghi trước)\n');
-const duyệt = JSON.parse(chạy('ban-nhap.mjs', 'duyet', ID));
+const duyệt = JSON.parse(chạy('nhap.mjs', 'duyet', ID));
 kiểm('Duyệt: chép về đúng file CSS', duyệt.da_chep_ve.some(x => x.file.endsWith('core.css')) &&
   readFileSync(join(gốc, M4, '02_html/shared/core.css'), 'utf8').includes('32px'));
 kiểm('Duyệt: không đè file sếp vừa sửa', duyệt.xung_dot_khong_chep.length === 1 &&
@@ -201,7 +224,7 @@ rmSync(join(resolve(agent, '..', '_nhap'), ID2), { recursive: true, force: true 
 const brief2 = { ...brief, id: ID2, file_duoc_sua: [`${M4}/**`], file_phai_doi: [`${M4}/**`] };
 const fileBrief2 = join(thử, 'brief2.json');
 writeFileSync(fileBrief2, JSON.stringify(brief2, null, 2));
-const mở2 = JSON.parse(chạy('ban-nhap.mjs', 'mo', fileBrief2));
+const mở2 = JSON.parse(chạy('nhap.mjs', 'mo', fileBrief2));
 writeFileSync(join(mở2.ban_nhap, M4, '02_html/unit-8-quiz.html'),
   '<section class="quiz-review" data-sua="cuoi-ngay"></section>\n');
 
@@ -210,44 +233,46 @@ rmSync(join(resolve(agent, '..', '_nhap'), ID, 'bien-nhan-ghi.json'), { force: t
 
 const dsFile = join(resolve(agent, '..', '_nhap'), 'da-duyet.json');
 writeFileSync(dsFile, JSON.stringify({ ngay: '2026-09-18', da_duyet: [ID2], con_cho: ['t-con-cho'] }));
-const r1 = chạyCóLỗi('ban-nhap.mjs', 'ghi-het');
+const r1 = chạyCóLỗi('nhap.mjs', 'ghi-het');
 kiểm('ghi-het bị chặn khi còn việc sếp chưa duyệt',
   r1.ma === 1 && /chưa duyệt/.test(r1.loi + r1.ra),
   (r1.loi || '').trim().slice(0, 60));
 
 writeFileSync(dsFile, JSON.stringify({ ngay: '2026-09-18', da_duyet: [ID2], con_cho: [] }));
-const ghiHết = JSON.parse(chạy('ban-nhap.mjs', 'ghi-het'));
+const ghiHết = JSON.parse(chạy('nhap.mjs', 'ghi-het'));
 kiểm('ghi-het chép về đúng 1 việc', ghiHết.so_viec === 1 && ghiHết.ket_qua[0].da_chep_ve.length === 1);
 kiểm('File gốc đã nhận nội dung mới',
   readFileSync(join(gốc, M4, '02_html/unit-8-quiz.html'), 'utf8').includes('cuoi-ngay'));
-const rk = chạyCóLỗi('kiem-sau-ghi.mjs');
+const rk = chạyCóLỗi('nhap.mjs', 'kiem');
 const kiểmGhi = JSON.parse(rk.ra);
 kiểm('kiem-sau-ghi: đạt khi ghi đúng', rk.ma === 0 && kiểmGhi.dat === true,
   `${kiểmGhi.so_file_da_ghi} file · ${(kiểmGhi.sai[0]?.lý_do) ?? 'không lỗi'}`);
 
 // Đạt rồi thì dấu loạt ghi phải mất, để không ai kiểm lại một loạt đã xong.
-const rk0 = chạyCóLỗi('kiem-sau-ghi.mjs');
+const rk0 = chạyCóLỗi('nhap.mjs', 'kiem');
 kiểm('kiem-sau-ghi: loạt đã xong thì không kiểm lại được',
   rk0.ma === 1 && /loat-ghi/.test(rk0.loi + rk0.ra), (rk0.loi || '').trim().slice(0, 48));
 
 // ── chặng 4 · ghi xong mà file gốc bị sửa tay → hoàn tác cả loạt ──────────
-const ID3 = 't-thu-3', MD = `${M4}/01_md/unit-8-quiz.md`;
+// Dùng file trong 02_html: Skill sua-bug-elearn chỉ cho sửa courses/**/02_html/**,
+// nên file 01_md sẽ bị cổng phạm vi từ chối — đúng luật, không phải lỗi.
+const ID3 = 't-thu-3', MD = `${M4}/02_html/shared/core.css`;
 rmSync(join(resolve(agent, '..', '_nhap'), ID3), { recursive: true, force: true });
-const brief3 = { ...brief, id: ID3, file_duoc_sua: [`${M4}/**`], file_phai_doi: [`${M4}/**`] };
+const brief3 = { ...brief, id: ID3, chi_sua: [`${M4}/**`], phai_doi: [`${M4}/**`] };
 writeFileSync(join(thử, 'brief3.json'), JSON.stringify(brief3, null, 2));
-const mở3 = JSON.parse(chạy('ban-nhap.mjs', 'mo', join(thử, 'brief3.json')));
-writeFileSync(join(mở3.ban_nhap, MD), '# Unit 8 · Quiz\n\nĐã sửa ở bản nháp.\n');
+const mở3 = JSON.parse(chạy('nhap.mjs', 'mo', join(thử, 'brief3.json')));
+writeFileSync(join(mở3.ban_nhap, MD), '.quiz-review{--sua:"chang-4"}\n');
 writeFileSync(dsFile, JSON.stringify({ ngay: '2026-09-18', da_duyet: [ID3], con_cho: [] }));
-chạy('ban-nhap.mjs', 'ghi-het');
+chạy('nhap.mjs', 'ghi-het');
 writeFileSync(join(gốc, MD), 'ai đó sửa tay sau khi ghi\n');      // giả trường hợp sai
-const r2 = chạyCóLỗi('kiem-sau-ghi.mjs');
+const r2 = chạyCóLỗi('nhap.mjs', 'kiem');
 const kq2 = JSON.parse(r2.ra);
 kiểm('kiem-sau-ghi: bắt được nội dung khác bản nháp', r2.ma === 1 && kq2.sai.length > 0,
   kq2.sai[0]?.lý_do ?? '');
 kiểm('kiem-sau-ghi: đã hoàn tác về bản trước khi ghi',
-  readFileSync(join(gốc, MD), 'utf8').trim() === '# Unit 8 · Quiz');
+  !readFileSync(join(gốc, MD), 'utf8').includes('sửa tay'));
 
-const bỏ = JSON.parse(chạy('ban-nhap.mjs', 'bo', ID));
+const bỏ = JSON.parse(chạy('nhap.mjs', 'bo', ID));
 kiểm('Bỏ bản nháp', bỏ.da_bo_ban_nhap && !existsSync(nháp));
 
 // ── bảng kết quả ──────────────────────────────────────────────────────────
