@@ -1,6 +1,7 @@
 // VIỆC — mọi thao tác với công việc, một cửa duy nhất.
 //
 //   node viec.mjs mo-phien                          mở phiên hôm nay, quét việc tồn
+//   node viec.mjs ke-hoach                          việc hôm nay theo kế hoạch tuần
 //   node viec.mjs doc [--kinh-nghiem]               lấy việc được giao
 //   cat phieu.json | node viec.mjs phieu            ghi phiếu việc, luôn chờ sếp chốt
 //   node viec.mjs lam  <id>                         đánh dấu đang làm
@@ -21,7 +22,7 @@ import {
   đượcChuyển, chạmTrần, cầnSếpSửa, đangVướng, agentNhậnĐược, vìSaoKhôngNhận,
   trễHạn, làViệcTồn,
 } from './nhan.mjs';
-import { PHÒNG, THƯ_MỤC_NHÁP } from './phong.mjs';
+import { PHÒNG, THƯ_MỤC_NHÁP, gốcCủaPhòng } from './phong.mjs';
 import { phạmViTừSkill } from './pham-vi.mjs';
 import { đưaLên } from './dua-len.mjs';
 
@@ -32,6 +33,7 @@ const [lệnh, ...đối] = process.argv.slice(2);
 const DÙNG = `Dùng: node viec.mjs <lệnh>
 
   mo-phien                        mở phiên hôm nay
+  ke-hoach                        việc hôm nay theo kế hoạch tuần
   doc [--kinh-nghiem]             lấy việc được giao
   phieu                           (đọc JSON từ stdin) ghi phiếu việc
   lam  <id>                       đánh dấu đang làm
@@ -51,8 +53,8 @@ const lấyViệc = async (id) => {
 // MỞ PHIÊN — một ngày một phiên. Mở lại thì lấy đúng phiên đang mở.
 // ══════════════════════════════════════════════════════════════════════════
 async function moPhien() {
-  const [đangMở] = await db.đọc('agent_runs', `ngay=eq.${ngày}&phien=eq.ngay`);
-  const phiên = đangMở ?? (await db.thêm('agent_runs', { phien: 'ngay', ngay: ngày }))[0];
+  const [đangMở] = await db.đọc('agent_runs', `ngay=eq.${ngày}`);
+  const phiên = đangMở ?? (await db.thêm('agent_runs', { ngay: ngày }))[0];
   const việc = await db.đọc('tasks', 'order=ngay.asc,thu_tu.asc');
   const tồn = việc.filter(t => làViệcTồn(t, ngày));
   in_({
@@ -60,6 +62,81 @@ async function moPhien() {
     viec_ton: tồn.map(t => ({ id: t.id, ton_tu: t.ngay, ten: t.tieu_de, dang_cho: NHÃN[t.trang_thai]?.tên })),
     nhac: tồn.length ? `Có ${tồn.length} việc tồn từ ngày trước. Đưa lên đầu bảng khi báo cáo.`
                      : 'Không có việc tồn.',
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// KẾ HOẠCH — việc hôm nay, lấy từ bảng sếp tự ghi trên điện thoại.
+//
+// Đây là chỗ thay cho bước nguy hiểm nhất của workflow cũ: `/report` phải TỰ ĐỌC NGUỒN
+// TỪNG PHÒNG RỒI TỰ NGHĨ RA VIỆC. Đó là chỗ duy nhất agent được phán đoán tự do — nên
+// cũng là chỗ dễ sai nhất, và không lần nào giống lần nào. Nay nó chỉ còn chép.
+//
+// In ra ĐÚNG khuôn mà `phieu` nhận, nên nối thẳng được:
+//   node agent/viec.mjs ke-hoach | node agent/viec.mjs phieu
+//
+//   thu   2…7 = T2…T7, 8 = CN. Trống = ngày nào trong tuần cũng lấy.
+//   tuan  Thứ Hai của tuần đó. TRỐNG = lặp mọi tuần.
+//   bat   false = tạm ngưng, không lấy.
+// ══════════════════════════════════════════════════════════════════════════
+const thứCủa = (d) => (d.getDay() === 0 ? 8 : d.getDay() + 1);      // 2=T2 … 7=T7, 8=CN
+function thứHaiCủaTuần(d) {
+  const x = new Date(d);
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));                   // lùi về Thứ Hai
+  return x.toLocaleDateString('sv-SE');
+}
+
+async function keHoach() {
+  const nay = new Date();
+  const thứ = thứCủa(nay), tuần = thứHaiCủaTuần(nay);
+  const [cả, đãCó] = await Promise.all([
+    db.đọc('ke_hoach', 'order=thu.asc,thu_tu.asc'),
+    db.đọc('tasks', `ngay=eq.${ngày}&select=id,trang_thai`),
+  ]);
+  const mãViệc = (k) => `${k.id}-${ngày.replaceAll('-', '')}`;
+  const đãLập = new Map(đãCó.map(t => [t.id, t.trang_thai]));
+
+  const bỏQua = [];
+  const hômNayLàm = cả.filter(k => {
+    if (!k.bat)                            { bỏQua.push({ id: k.id, viec: k.viec, lý_do: 'đang tạm ngưng' }); return false; }
+    if (k.thu != null && k.thu !== thứ)    { bỏQua.push({ id: k.id, viec: k.viec, lý_do: `xếp vào thứ ${k.thu}` }); return false; }
+    if (k.tuan && k.tuan !== tuần)         { bỏQua.push({ id: k.id, viec: k.viec, lý_do: `của tuần ${k.tuan}` }); return false; }
+    // ĐÃ LẬP PHIẾU RỒI THÌ THÔI. Mã việc suy ra từ mã kế hoạch + ngày, mà `phieu` ghi
+    // bằng upsert — không chặn ở đây thì gõ /report lần hai trong ngày sẽ ĐÈ NGƯỢC việc
+    // sếp đã chốt về lại `cho_chot`, và xoá cả link sản phẩm của việc đang chờ duyệt.
+    if (đãLập.has(mãViệc(k))) {
+      bỏQua.push({ id: k.id, viec: k.viec, lý_do: `hôm nay đã lập phiếu rồi (đang ở "${NHÃN[đãLập.get(mãViệc(k))]?.tên ?? đãLập.get(mãViệc(k))}")` });
+      return false;
+    }
+    return true;
+  });
+
+  // Mảng đang tắt thì loại ngay tại đây, kèm lý do đọc được — đừng để nó đi tới `phieu`
+  // rồi mới bị chặn, sếp nhìn sẽ tưởng hỏng.
+  const dùngĐược = [], mảngTắt = [];
+  for (const k of hômNayLàm) {
+    try { gốcCủaPhòng(k.mang); dùngĐược.push(k); }
+    catch (e) { mảngTắt.push({ id: k.id, viec: k.viec, mang: k.mang, lý_do: e.message.split('\n')[0] }); }
+  }
+
+  // Hạn chót mặc định: 17h hôm nay. Kế hoạch không ghi giờ, mà `phieu` bắt buộc phải có hạn.
+  const hạn = `${ngày}T17:00:00`;
+  in_({
+    ngay: ngày, thu: thứ, tuan: tuần,
+    viec: dùngĐược.map((k, i) => ({
+      // Mã việc suy ra từ mã dòng kế hoạch + ngày, KHÔNG sinh ngẫu nhiên. Nhờ vậy gõ
+      // /report hai lần trong ngày thì lần sau ghi đè đúng dòng cũ, không đẻ việc trùng.
+      id: mãViệc(k),
+      mang: k.mang, skill: k.skill, ten: k.viec,
+      nhiem_vu: k.ghi_chu || k.viec,
+      han_chot: hạn, thu_tu: i,
+    })),
+    bo_qua: bỏQua,
+    mang_dang_tat: mảngTắt,
+    nhac: dùngĐược.length
+      ? `${dùngĐược.length} việc theo kế hoạch. Nối thẳng: node agent/viec.mjs ke-hoach | node agent/viec.mjs phieu`
+      : (cả.length ? 'Kế hoạch có dòng nhưng hôm nay không dòng nào tới lượt.'
+                   : 'Bảng kế hoạch còn trống. Sếp mở app, tab Kế hoạch, ghi việc vào.'),
   });
 }
 
@@ -75,15 +152,16 @@ async function doc() {
     return;
   }
 
-  const [phiếu] = await db.đọc('daily_report', `ngay=eq.${ngày}`);
-  if (!phiếu) {
-    in_({ chặn: true, lý_do: 'Chưa có phiếu cho hôm nay. Chạy /report trước.' });
+  // Cổng: đã mở phiên hôm nay chưa. Trước đây cổng này hỏi "đã có daily_report hôm nay
+  // chưa" — nhưng bảng đó không ai đọc, lại đang là CHA của tasks, nên đã bỏ. Phiên ngày
+  // mới đúng là thứ /report mở ra.
+  const [phiên] = await db.đọc('agent_runs', `ngay=eq.${ngày}`);
+  if (!phiên) {
+    in_({ chặn: true, lý_do: 'Chưa mở phiên hôm nay. Chạy /report trước.' });
     return;
   }
-  // KHÔNG còn cổng cấp phiếu. Trước đây đòi daily_report.trang_thai === 'approved' —
-  // tàn dư của workflow cũ, hồi đó sếp duyệt CẢ PHIẾU một lần. Workflow mới sếp chốt
-  // TỪNG VIỆC, và không chỗ nào đặt phiếu thành 'approved' nữa → cổng thành khoá chết.
-  // Nhãn `da_chot` của từng việc CHÍNH LÀ sự chốt: bảng CHUYỂN chỉ cho sếp đặt nhãn đó.
+  // KHÔNG có cổng duyệt cả phiếu một lần. Workflow này sếp chốt TỪNG VIỆC: nhãn
+  // `da_chot` của từng việc CHÍNH LÀ sự chốt, và bảng CHUYỂN chỉ cho sếp đặt nhãn đó.
 
   const [việc, hỏi] = await Promise.all([
     db.đọc('tasks', `trang_thai=in.(${PHIÊN_NHẬN.join(',')})&order=ngay.asc,thu_tu.asc`),
@@ -158,27 +236,22 @@ async function phieu() {
     });
     const id = v.id ?? `t-${Date.now().toString(36)}-${i}`;
     if (thiếu.length) { loại.push({ id, ten: v.ten ?? '(chưa có tên)', thiếu }); return; }
+    // Mảng phải có thật VÀ đang bật. Trước đây chỗ này không kiểm `mang` gì cả: luật
+    // "mảng đang tắt thì bỏ qua" chỉ nằm trong report.md dưới dạng CÂU CHỮ, nên phiếu
+    // cho mảng đã tắt vẫn ghi được, mãi tới lúc `nhap.mjs mo` mới vỡ. Nay chặn ngay đây,
+    // bằng đúng hàm biết mảng nào đang tạm dừng.
+    try { gốcCủaPhòng(v.mang); } catch (e) { loại.push({ id, ten: v.ten, thiếu: [e.message.split('\n')[0]] }); return; }
     // Skill phải tồn tại và khai được phạm vi, kẻo tới lúc làm mới vỡ.
     try { phạmViTừSkill(v.skill); } catch (e) { loại.push({ id, ten: v.ten, thiếu: [e.message] }); return; }
     hợpLệ.push({ ...v, id });
   });
-
-  await db.nhét('daily_report', [{
-    ngay: ngày,
-    dinh_duong_nhan_xet: vào.dinh_duong_nhan_xet ?? null,
-    lab_tom_tat: vào.lab_tom_tat ?? null,
-    lab_nguon: vào.lab_nguon ?? null,
-    lab_noi_bo: vào.lab_noi_bo ?? false,
-    trang_thai: 'pending',          // LUÔN pending. Chốt là việc của sếp.
-  }]);
 
   if (hợpLệ.length) {
     mkdirSync(THƯ_MỤC_BRIEF, { recursive: true });
     for (const v of hợpLệ) writeFileSync(join(THƯ_MỤC_BRIEF, `${v.id}.json`), JSON.stringify(v, null, 2));
     await db.nhét('tasks', hợpLệ.map((v, i) => ({
       id: v.id, ngay: ngày, mang: v.mang, tieu_de: v.ten,
-      chi_tiet: v.nhiem_vu, tieu_chi_xong: v.xong_khi ?? null,
-      han_chot: v.han_chot, brief: v,
+      chi_tiet: v.nhiem_vu, han_chot: v.han_chot, brief: v,
       trang_thai: 'cho_chot', thu_tu: i,
     })));
   }
@@ -393,14 +466,14 @@ async function dongPhien() {
   const đãGhi = việc.filter(t => t.trang_thai === 'da_ghi' && t.ngay === ngày).length;
   await db.sửa('agent_runs', `id=eq.${id}`, {
     ket_thuc: new Date().toISOString(),
-    so_task_lam: đãGhi, so_viec_da_ghi: đãGhi, tom_tat: tómTắt,
+    so_viec_da_ghi: đãGhi, tom_tat: tómTắt,
   });
   in_({ chặn: false, phien: id, so_viec_da_ghi: đãGhi, tom_tat: tómTắt });
 }
 
 // ══════════════════════════════════════════════════════════════════════════
 const BẢNG = {
-  'mo-phien': moPhien, doc, phieu,
+  'mo-phien': moPhien, 'ke-hoach': keHoach, doc, phieu,
   lam: () => lamHoacXong('dang_lam'),
   xong: () => lamHoacXong('cho_duyet'),
   hoi, 'tinh-trang': tinhTrang, 'dong-phien': dongPhien,

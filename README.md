@@ -27,16 +27,24 @@ mở ra xem, bạn bấm duyệt thì cuối ngày script mới chép về.
 
 Một ngày **một phiên**, ba lệnh gõ trong Claude Code:
 
+> **Việc hôm nay lấy từ bảng kế hoạch tuần bạn tự ghi trên điện thoại** — app → tab Việc
+> → **Kế hoạch tuần**. Agent không tự nghĩ ra việc. Dòng nào để trống ô tuần thì **lặp
+> mọi tuần**: ghi một lần, tuần nào cũng tự lên bảng.
+
 ```
-/report   Agent đọc việc hôm nay + việc tồn hôm qua → trình bảng
-          → BẠN chốt trên điện thoại (bấm nút)
+/report   Agent đọc kế hoạch tuần + việc tồn hôm qua → lập phiếu → trình bảng
+          → BẠN bấm Cập nhật ⟳ rồi chốt trên điện thoại (bấm nút)
 
 /lam      Agent mở bản nháp, làm, đẩy bản xem thử lên, nộp kèm link
-          → BẠN mở link xem rồi duyệt hoặc trả lại (bấm nút)
+          → BẠN bấm Cập nhật ⟳, mở link xem rồi duyệt hoặc trả lại (bấm nút)
           ↑ gõ lại lệnh này mỗi lần bạn trả việc về, tối đa 3 lần
 
 /chot     Bạn đã duyệt hết → chép cả loạt vào file gốc → so mã băm → đóng phiên
 ```
+
+> **App không tự cập nhật.** Nó tải dữ liệu một lần lúc đăng nhập rồi nằm im. Nút
+> **Cập nhật ⟳** ở góc trên bên phải tab Việc. Chạy xong lệnh trên Mac mà điện thoại
+> chưa thấy gì thì bấm nó, chưa hỏng đâu.
 
 Chưa duyệt hết trong ngày thì **phiên không đóng**. Việc còn lại thành *việc tồn*,
 sáng hôm sau `/report` tự đưa lên đầu bảng.
@@ -53,7 +61,7 @@ sáng hôm sau `/report` tự đưa lên đầu bảng.
 | [`agent/`](agent) | Bộ máy chạy trên Mac, 12 script `.mjs` | ✅ |
 | [`site/`](site) | App trên điện thoại | ✅ |
 | [`netlify/functions/`](netlify/functions) | `chat.mjs` nối Gemini · `xem.mjs` cầu xem bản nháp | ✅ |
-| [`supabase/`](supabase) | Các file SQL dựng và đổi database | ✅ |
+| [`supabase/`](supabase) | 3 file SQL dựng database · `lich-su/` là các bản vá cũ | ✅ |
 | `_brief/` `_nhap/` `_thu/` `nhat-ky/` `sao-luu/` | Chỗ chạy, không phải mã nguồn | ❌ |
 
 Năm thư mục cuối `.gitignore` chặn hết. Xoá đi cũng không mất gì ngoài `sao-luu/` —
@@ -65,7 +73,7 @@ gói Supabase Free không có sao lưu tự động, đó là bản sao duy nh�
 
 | File | Việc |
 |---|---|
-| **`viec.mjs`** | mọi thao tác với công việc — `mo-phien` · `doc` · `phieu` · `lam` · `xong` · `hoi` · `tinh-trang` · `dong-phien` |
+| **`viec.mjs`** | mọi thao tác với công việc — `mo-phien` · `ke-hoach` · `doc` · `phieu` · `lam` · `xong` · `hoi` · `tinh-trang` · `dong-phien` |
 | **`nhap.mjs`** | bản nháp — `mo` · `xem` · `duyet` · `ghi-het` · `kiem` · `bo` |
 
 | Nhóm | File |
@@ -81,7 +89,8 @@ Không cần `npm install`. Mọi script gọi thẳng REST API bằng `fetch` c
 
 ## Skill — một việc, một file
 
-Một loại việc được mô tả ở **đúng một chỗ**, và phạm vi file nằm ngay trong đó:
+Một loại việc được mô tả ở **đúng một chỗ**. Mảng việc, thư mục, màu trên app và phạm vi
+file — tất cả nằm trong Skill:
 
 ```
 .claude/skills/
@@ -91,7 +100,19 @@ Một loại việc được mô tả ở **đúng một chỗ**, và phạm vi 
 └── cap-nhat-kinh-doanh/  ĐANG TẮT, chờ bạn điền luật
 ```
 
-Mỗi Skill việc có ba mục **máy đọc được**, mỗi mục là một khối ` ``` `:
+Frontmatter khai **mảng việc**. Có dòng `mang:` thì Skill này mở ra một mảng —
+`agent/phong.mjs` quét ra, `tao-cau-hinh.mjs` gửi sang app. **Thêm một mảng = tạo một
+thư mục Skill**, không sửa `.env`, không sửa `phong.mjs`, không sửa app, không đụng database:
+
+```yaml
+mang: thacsi                     # mã mảng
+ten_mang: Thạc sĩ                 # tên hiện trên app
+thu_muc: ~/Documents/Thac si      # thư mục gốc — hoặc $DIR_THACSI để lấy từ .env
+mau: '#7B61FF'                    # màu trên app
+tat: true                         # tạm dừng mảng này
+```
+
+Rồi ba mục **máy đọc được**, mỗi mục là một khối ` ``` `:
 
 ```
 ## File được xem     agent đọc ở đâu
@@ -160,9 +181,12 @@ văn thì bạn để đó, và một tuần sau cả hệ thống đứng vì m
 
 ### 1 · Supabase
 
-supabase.com → tạo project → SQL Editor → chạy **lần lượt** các file trong
-[`supabase/`](supabase/README.md): `schema` → `rls` → `seed_food` → `doi-2` → `doi-3`
-→ `doi-4` → `doi-5`. File `supabase/README.md` ghi rõ file nào cần sửa gì trước khi chạy.
+supabase.com → tạo project → SQL Editor → chạy **ba** file trong
+[`supabase/`](supabase/README.md): `schema.sql` → `rls.sql` → `seed_food.sql`.
+
+Trước 21/09 phải chạy bảy file theo đúng thứ tự, trong đó hai file dựng view mà file
+sau xoá ngay. Nay gộp hết vào `schema.sql`; các file `doi-*` cũ nằm trong
+`supabase/lich-su/`, chỉ để đọc lại chuyện đã qua.
 
 Rồi **Authentication → Sign In / Providers** → bật **Email**, bật **Magic Link**.
 
@@ -185,8 +209,12 @@ kèm `otp_expired`.
 cp agent/.env.example agent/.env
 ```
 
-Mở `agent/.env` điền: khoá Supabase · đường dẫn ba phòng (`DIR_ELEARNING`, `DIR_LAB`,
-`DIR_BIZ`) · ba mã bí mật cho link xem thử (`XEM_THU_MA_*`, script in sẵn cho bạn nếu thiếu).
+Mở `agent/.env` điền: khoá Supabase · ba mã bí mật cho link xem thử (`XEM_THU_MA_*`,
+script in sẵn cho bạn nếu thiếu) · và đường dẫn của mảng nào đang trỏ bằng `$DIR_…`.
+
+> **Đường dẫn thư mục thuộc về Skill, không thuộc `.env`.** Skill khai `thu_muc:` trong
+> frontmatter — ghi thẳng đường dẫn (`~/Documents/Thac si`) hoặc trỏ sang `.env` bằng
+> `$DIR_LAB`. Ba mảng cũ đang dùng cách thứ hai.
 
 > `SUPABASE_SERVICE_KEY` đi vòng qua mọi RLS. Chỉ nằm trên máy này.
 > `.gitignore` đã chặn `agent/.env` — **đừng bỏ dòng đó ra.**
@@ -210,7 +238,10 @@ node agent/thu-nhanh.mjs   # 5 giây · không gọi Claude · không tốn gì
 
 `thu-nhanh` dựng một thư mục E-learning giả lập trong `_thu/` rồi diễn lại trọn vòng:
 mở bản nháp → làm (kể cả cố tình làm lấn) → soát → duyệt → chép về. **Không đụng thư
-mục thật.** Số đo gần nhất, 20/09/2026: **53/53 ca đạt**.
+mục thật.** Số đo gần nhất, 21/09/2026: **62/62 ca đạt**.
+
+Mảng `elearn` đang tạm dừng, nên bài thử bật riêng nó lên bằng `VP_BAT_PHONG=elearn` —
+khai đích danh một mảng, không phải công tắc bỏ qua mọi kiểm tra.
 
 ---
 

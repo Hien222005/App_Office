@@ -1,7 +1,7 @@
 # Văn Phòng Agent — tiến độ
 
 > Đọc file này + `README.md` là nắm đủ để làm tiếp, kể cả sau khi `/clear`.
-> Cập nhật: **20/09/2026**
+> Cập nhật: **21/09/2026**
 
 ## Link
 
@@ -68,17 +68,72 @@ Tham khảo repo `github.com/ngtiendong/Academic-Research-Agent-Skill` — 89 fi
 
 | Bài thử | Kết quả |
 |---|---|
-| `node agent/thu-nhanh.mjs` · 5 giây, không gọi Claude | **53/53 ca đạt** |
+| `node agent/thu-nhanh.mjs` · 5 giây, không gọi Claude | **62/62 ca đạt** · đo 21/09 |
 | Đẩy Storage + qua cầu `/xem`, đo bằng JS trong Chrome | trang vẽ ra, CSS tương đối tải được, 32px, kẻ 1px |
 | Database sau `doi-5`, thử thật từng nhãn | 6/6 nhãn mới nhận · 7/7 nhãn cũ từ chối |
 | App: 6 màn hình render | 0 lỗi JavaScript |
 
 ---
 
-## Còn lại
+## Đợt đơn giản hoá cấu trúc 21/09 — đã xong
 
-- **Chạy thật lần đầu** — một việc E-learning nhỏ do sếp chọn. Lần đầu script đụng
-  thư mục Elearning thật. **Phải xin phép trước.**
+Sếp đặt vấn đề: *thêm một việc mới thì hệ thống rắc rối.* Đúng — thêm một mảng việc phải
+sửa **năm chỗ**: `.env` · `phong.mjs` · ràng buộc SQL · `site/index.html` · Skill.
+Bốn chỗ đầu chỉ để khai một cái tên, trong đó có một lần đụng database thật.
+
+| | Trước | Sau |
+|---|---|---|
+| Chỗ phải sửa khi thêm một mảng | 5 | **1** — tạo một thư mục Skill |
+| File SQL để cài máy mới | 7 | **3** |
+| Bảng trong database | 8 | **8** (bỏ `daily_report`, thêm `ke_hoach`) |
+| Ca thử | 53 | **62/62** |
+
+- **Mảng khai trong frontmatter của Skill.** `mang` · `ten_mang` · `thu_muc` · `mau` · `tat`.
+  `phong.mjs` quét ra, `tao-cau-hinh.mjs` gửi sang app. Đo: thêm mảng giả `thacsi` vào
+  cấu hình, app dựng đủ tên và màu **không sửa dòng nào**.
+- **Bỏ `check (mang in (…))` trong SQL** — thứ duy nhất bắt phải migration mỗi lần thêm mảng,
+  mà lại yếu hơn `gốcCủaPhòng()`: nó không biết mảng nào đang tắt.
+- **`viec.mjs phieu` nay kiểm `mang`.** Trước đây luật "mảng tắt thì bỏ qua" chỉ nằm trong
+  `report.md` dưới dạng câu chữ; phiếu cho mảng đã tắt vẫn ghi được, tới `nhap.mjs mo` mới vỡ.
+- **Bỏ bảng `daily_report`** — không ai đọc, mà đang là CHA của `tasks` (`on delete cascade`).
+  Cổng đầu `/lam` nay hỏi "đã mở phiên hôm nay chưa", đúng hơn "đã có phiếu chưa".
+- **`rls.sql` quét cả schema** thay vì liệt kê cứng 8 tên bảng — thêm bảng mà quên sửa danh
+  sách thì bảng đó chạy không có RLS, tức ai cầm khoá anon đều đọc được.
+- **Thêm bảng `ke_hoach`** — kế hoạch tuần, nguồn việc của `/report`. Cột `tuan` để trống
+  nghĩa là **lặp mọi tuần**.
+- **Tạm dừng mảng `elearn`.** Việc đang dở trong database nằm nguyên.
+
+### Lỗi bắt được khi làm
+
+- Bài thử không dọn `_thu/nhat-ky/`. `soat-bao-cao.mjs` đọc nhật ký của **cả hôm qua**, nên
+  bản ghi còn sót từ lần chạy hôm trước làm **4 ca đáng lẽ trượt lại qua** — nghĩa là chạy
+  bài thử vào ngày hôm sau lần chạy trước thì bốn chốt an toàn bị vô hiệu mà không ai biết.
+- `site/index.html` còn ba chỗ ghi "ca trưa" theo workflow sáng/trưa đã bỏ.
+
+### Kế hoạch tuần — xong 21/09 (đợt hai)
+
+`doi-6-don-nen.sql` **đã chạy** trên database thật. Đo lại: `agent_runs` hết cột `phien`,
+`tasks` hết ba cột chết, `daily_report` đã bỏ, `ke_hoach` đã có.
+
+- **Màn Kế hoạch trong app** — bố cục C, vào từ tab Việc. Ô gõ nằm sẵn trên đầu: gõ tên
+  việc → chạm mảng → chạm thứ → `+` hoặc Enter. Chạm một dòng để tạm ngưng, chạm `×`
+  **hai lần** để xoá (không dùng `confirm()` — hộp thoại trình duyệt chặn mọi thứ sau nó).
+- **`/report` thôi tự nghĩ ra việc.** Lệnh mới `viec.mjs ke-hoach` in đúng khuôn mà `phieu`
+  nhận, nối thẳng: `node agent/viec.mjs ke-hoach | node agent/viec.mjs phieu`.
+- Bản vẽ workflow sáu bước: https://claude.ai/artifact/LaYP69gL5ohxuQHU9vC4rP
+- Ba bố cục đã chọn: https://claude.ai/artifact/4LEzfuF7d7eZH497EWzJmT
+
+### Lỗi tự tạo ra rồi tự bắt được
+
+Mã việc suy ra từ `mã kế hoạch + ngày` cho `/report` chạy lại không đẻ việc trùng —
+nhưng `db.nhét` là **upsert**, nên gõ `/report` lần hai trong ngày sẽ **đè ngược việc sếp
+đã chốt về lại `cho_chot`**, xoá cả link sản phẩm của việc đang chờ duyệt. Đã chặn trong
+`ke-hoach`: dòng nào hôm nay đã lập phiếu thì bỏ qua, kèm lý do đọc được. Thử thật: chốt
+việc → gõ lại → nhãn `da_chot` giữ nguyên.
+
+## Còn lại
+- **Skill mảng Thạc sĩ** — sếp và Claude viết cùng. Chưa có thư mục, chưa có loại việc.
+- **Mục `## Cách làm`** cho cả ba Skill đang bật — flow từng bước, cố định một kiểu.
 - **Skill E-learning và Lab đã trỏ vào thư mục thật**, đo 13/13 và 8/8 ca.
   Phòng Kinh doanh vẫn **tắt**.
 - **Deploy hàm `/xem` lên Netlify** — chưa deploy thì link bản nháp không mở được.

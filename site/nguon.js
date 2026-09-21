@@ -119,7 +119,7 @@
   function doiSangApp(t) {
     return {
       id: t.id, mang: t.mang, ngay: t.ngay, tieu_de: t.tieu_de,
-      chi_tiet: t.chi_tiet || '', tieu_chi: t.tieu_chi_xong || '',
+      chi_tiet: t.chi_tiet || '',
       tt: t.trang_thai, phan_hoi: t.phan_hoi_cua_toi || '',
       ket: t.ghi_chu_agent || '',            // kỳ vọng kết quả — thứ duy nhất agent tự khai
       link: t.link_san_pham || '',
@@ -152,6 +152,36 @@
 
   // Chốt ngày: đánh dấu mọi việc đã duyệt là chờ ghi — phần ghi vào file gốc do lệnh `chot` trên Mac làm.
   NG.chotNgay = async (ids) => Promise.all(ids.map((id) => NG.doiNhan(id, 'da_duyet')));
+
+  /* ── KẾ HOẠCH TUẦN ────────────────────────────────────────────────────────
+   * Bảng sếp tự ghi. `/report` mỗi sáng đọc nó rồi lập phiếu việc, thay cho việc
+   * agent tự đọc nguồn từng phòng rồi tự nghĩ ra việc.
+   *
+   * `tuan` để trống = LẶP MỌI TUẦN. Đây là cột đáng giá nhất của bảng: việc lặp theo
+   * ngày thì ghi một lần, tuần nào cũng tự lên bảng — đúng thứ sếp cần nhất.
+   */
+  NG.taiKeHoach = async () => {
+    if (NG.cheDo !== 'that') return [];
+    return gọi('/rest/v1/ke_hoach?select=*&order=thu.asc,thu_tu.asc,tao_luc.asc');
+  };
+
+  NG.themKeHoach = async (k) => {
+    const id = 'k-' + Date.now().toString(36);
+    const [ra] = await gọi('/rest/v1/ke_hoach', {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ id, bat: true, ...k }),
+    });
+    return ra;
+  };
+
+  NG.suaKeHoach = async (id, vá) => gọi(`/rest/v1/ke_hoach?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify(vá),
+  });
+
+  NG.xoaKeHoach = async (id) => gọi(`/rest/v1/ke_hoach?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
 
   window.NGUON = NG;
 })();
