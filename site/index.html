@@ -128,8 +128,11 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
   font:inherit; font-size:12px; font-weight:800; border-radius:9px; padding:6px 9px; cursor:pointer}
 .kh-go .pick:active{transform:scale(.95)}
 .kh-go .gui{width:34px; height:34px; border-radius:11px; border:0; background:var(--ok); color:#052015;
-  font-size:17px; font-weight:900; cursor:pointer; flex:0 0 auto; line-height:1}
+  cursor:pointer; flex:0 0 auto; padding:0; display:grid; place-items:center}
+.kh-go .gui svg{width:17px; height:17px; display:block; fill:none; stroke:currentColor;
+  stroke-width:2.6; stroke-linecap:round}
 .kh-go .gui:disabled{opacity:.35}
+.kh-go .gui:active{transform:scale(.94)}
 .kh-loc{display:flex; gap:6px; flex-wrap:wrap; margin:0 2px 10px}
 .kh-loc button{font:inherit; font-size:12.5px; font-weight:800; padding:6px 13px; border-radius:20px;
   border:1px solid var(--line); background:var(--panel); color:var(--mut); cursor:pointer}
@@ -344,6 +347,9 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
   transition:transform .4s cubic-bezier(.37,1.95,.66,.56),
              width .4s cubic-bezier(.37,1.95,.66,.56),
              background .35s ease-in-out, box-shadow .35s ease-in-out}
+/* Lúc đo kích thước đích thì phải tắt transition của .tab, nếu không offsetWidth trả
+   về kích thước ĐANG TRÊN ĐƯỜNG BAY chứ không phải kích thước cuối. */
+.tabs.do-luong .tab{transition:none !important}
 .tab{position:relative; z-index:2; flex:1 1 0; min-width:0; height:44px; display:flex;
   align-items:center; justify-content:center; gap:7px; border-radius:22px;
   transition:color .25s ease-in-out, flex .4s cubic-bezier(.37,1.95,.66,.56),
@@ -632,13 +638,31 @@ function toast(msg,warn){
   document.getElementById('dev').appendChild(e);
   toastT=setTimeout(()=>e.remove(),2400);
 }
+/* Chạy fn ở khung hình kế tiếp, NHƯNG có lưới an toàn.
+   requestAnimationFrame bị treo khi tab chạy nền, khi iOS khoá màn, khi trình duyệt
+   tiết kiệm pin. Chỉ dựa vào nó thì có lúc màn hình không bao giờ được vẽ.
+   Đo được ngay khi thử: tab nền → go() treo hẳn. Ai tới trước thì chạy, chỉ chạy MỘT lần. */
+function khungKeTiep(fn){
+  let xong=false;
+  const chay=()=>{ if(xong) return; xong=true; fn(); };
+  requestAnimationFrame(chay);
+  setTimeout(chay, 40);
+}
+
 function go(man,opt={}){
   S.man=man;
   if(opt.loc!==undefined) S.locDe=opt.loc;
   if(opt.task!==undefined) S.taskId=opt.task;
   if(opt.meal!==undefined) S.mealId=opt.meal;
-  render();
-  const b=document.querySelector('.body'); if(b) b.scrollTop=0;
+
+  // Cho viên trượt bay NGAY, rồi mới dựng thân màn ở khung hình sau. Dựng màn Nhà
+  // tốn hàng chục mili giây trên điện thoại; làm trước thì nó nuốt mất mấy khung hình
+  // đầu của hiệu ứng, và đó chính là cái giật sếp thấy.
+  capNhatBar();
+  khungKeTiep(()=>{
+    render();
+    const b=document.querySelector('.body'); if(b) b.scrollTop=0;
+  });
 }
 
 /* ══════════ HÀNH ĐỘNG ══════════ */
@@ -1159,7 +1183,8 @@ function manKeHoach(){
           >${S.khMang?TEN[S.khMang]:'—'}</button>
         <input id="khIn" placeholder="Việc mới…" value="${esc(S.khNhap)}" autocomplete="off">
         <button class="pick" data-khthu="1">${S.khThu?TEN_THU[S.khThu]:'mọi ngày'}</button>
-        <button class="gui" aria-label="Thêm việc" data-khthem="1">+</button>
+        <button class="gui" aria-label="Thêm việc" data-khthem="1">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
       </div>
 
       ${bat.length>1?`<div class="kh-loc">
@@ -1485,33 +1510,10 @@ function thanhDuoi(){
 
 /* viên trượt bám theo tab đang mở — nhớ vị trí cũ để trượt chứ không nhảy */
 let glidePrev=null;
-function datGlide(){
-  const nav=document.querySelector('.tabs'); if(!nav) return;
-  const on=nav.querySelector('.tab.on'), gl=nav.querySelector('.glider');
-  if(!on||!gl) return;
-  const i=[...nav.querySelectorAll('.tab')].indexOf(on);
-  const w=on.offsetWidth, x=on.offsetLeft;
+/* Tên cũ, vẫn còn vài chỗ gọi (đổi phông chữ xong, xoay màn hình, chỉnh thanh dưới).
+   Nay chỉ là lối vào capNhatBar — một nguồn duy nhất, không hai chỗ tự tính riêng. */
+function datGlide(){ capNhatBar(); }
 
-  // Màn hình vẽ lại rất nhiều lần (duyệt việc, mở chat, chạy ca trưa…).
-  // Chỉ cho viên trượt bay khi tab THẬT SỰ đổi; còn lại đặt thẳng vào chỗ,
-  // nếu không nó nhấp nháy mỗi lần render.
-  const doiTab = glidePrev && glidePrev.i !== i;
-  gl.style.transition = doiTab ? '' : 'none';
-  if(doiTab){
-    gl.style.width=glidePrev.w+'px';
-    gl.style.transform='translateX('+glidePrev.x+'px)';
-    void gl.offsetWidth;            // ép vẽ mốc cũ trước khi bay
-    gl.style.transition='';
-    requestAnimationFrame(()=>{
-      gl.style.width=w+'px'; gl.style.transform='translateX('+x+'px)';
-    });
-  }else{
-    gl.style.width=w+'px'; gl.style.transform='translateX('+x+'px)';
-    void gl.offsetWidth;
-    gl.style.transition='';
-  }
-  glidePrev={i,w,x};
-}
 
 /* ══════════ RENDER ══════════ */
 /* ══════════ NGUỒN DỮ LIỆU ══════════ */
@@ -1614,24 +1616,83 @@ async function taiTuNguon(){
   S.dangTai=false; render();
 }
 
+function manHienTai(){
+  if(S.man==='office')  return manOffice();
+  if(S.man==='phong')   return manPhong();
+  if(S.man==='task')    return manTask();
+  if(S.man==='food')    return manFood();
+  if(S.man==='dangnhap')return manDangNhap();
+  if(S.man==='lab')     return manLab();
+  if(S.man==='kehoach') return manKeHoach();
+  return manKetQua();
+}
+
+/* Vẽ lại màn hình NHƯNG KHÔNG ĐỤNG THANH DƯỚI.
+   Trước đây render() ghi đè cả dev.innerHTML, nên mỗi lần đổi tab là thanh dưới bị đập
+   đi xây lại — đúng lúc nó đang chạy hiệu ứng. Màn Nhà nặng 41,8 KB với 396 thẻ SVG
+   (đo 21/09), trình duyệt bận dựng đống đó nên viên trượt khựng. Ba màn kia nhẹ nên
+   không thấy. Nay thanh dưới là một thẻ SỐNG SUỐT ĐỜI, chỉ đổi class. */
 function render(){
   const dev=document.getElementById('dev');
-  let m;
-  if(S.man==='office') m=manOffice();
-  else if(S.man==='phong') m=manPhong();
-  else if(S.man==='task') m=manTask();
-  else if(S.man==='food') m=manFood();
-  else if(S.man==='dangnhap') m=manDangNhap();
-  else if(S.man==='lab') m=manLab();
-  else if(S.man==='kehoach') m=manKeHoach();
-  else m=manKetQua();
-  dev.innerHTML=`<div class="head">${m.back?`<button class="bk" data-go="${m.back}">${sv('back')}</button>`:''}${m.head}
-      <button class="kh ${S.chinhBar?'mo':''}" data-bar="${S.chinhBar?'khoa':'mo'}"
-        aria-label="${S.chinhBar?'Khoá vị trí thanh dưới':'Chỉnh vị trí thanh dưới'}"
-        >${sv(S.chinhBar?'mokhoa':'khoa')}</button></div>
-    <div class="body ${m.office?'office':''}">${m.body}</div>
-    ${thanhDuoi()}${bangChinh()}${cuaSoChat()}`;
-  datGlide();
+  if(!dev.querySelector(':scope > .bar')){
+    dev.innerHTML=`<div class="head"></div><div class="body"></div>${thanhDuoi()}<div class="phu"></div>`;
+  }
+  const m=manHienTai();
+  dev.querySelector(':scope > .head').innerHTML=
+    `${m.back?`<button class="bk" data-go="${m.back}">${sv('back')}</button>`:''}${m.head}
+     <button class="kh ${S.chinhBar?'mo':''}" data-bar="${S.chinhBar?'khoa':'mo'}"
+       aria-label="${S.chinhBar?'Khoá vị trí thanh dưới':'Chỉnh vị trí thanh dưới'}"
+       >${sv(S.chinhBar?'mokhoa':'khoa')}</button>`;
+  const than=dev.querySelector(':scope > .body');
+  than.className='body'+(m.office?' office':'');
+  than.innerHTML=m.body;
+  dev.querySelector(':scope > .phu').innerHTML=bangChinh()+cuaSoChat();
+  capNhatBar();
+}
+
+/* Chỉ đổi class và số trên thanh dưới. Không dựng lại thẻ nào. */
+function capNhatBar(){
+  const nav=document.querySelector('.tabs'); if(!nav) return;
+  const bar=nav.closest('.bar');
+  if(bar) bar.className=`bar bar-${S.kieu} ${S.chinhBar?'chinh':''}`;
+
+  let cur=S.man;
+  if(cur==='task'||cur==='lab') cur='phong';
+  const i=Math.max(0,TAB.indexOf(cur));
+  const tabs=[...nav.querySelectorAll('.tab')];
+
+  // Đổi class trong lúc transition đang tắt, để đo được kích thước ĐÍCH.
+  nav.classList.add('do-luong');
+  tabs.forEach((t,k)=>t.classList.toggle('on',k===i));
+  nav.dataset.i=i; nav.style.setProperty('--i',i);
+
+  // huy hiệu số việc chờ sếp trên tab Việc
+  const cd=choSep(), tabViec=tabs[TAB.indexOf('phong')];
+  if(tabViec){
+    let n=tabViec.querySelector('.noti');
+    if(cd&&!n){ n=document.createElement('i'); n.className='noti'; tabViec.appendChild(n); }
+    if(n){ if(cd) n.textContent=cd; else n.remove(); }
+  }
+
+  const on=tabs[i], gl=nav.querySelector('.glider');
+  if(!on||!gl){ nav.classList.remove('do-luong'); return; }
+  const w=on.offsetWidth, x=on.offsetLeft;      // ép tính lại, transition đang tắt
+  nav.classList.remove('do-luong');
+
+  const doiTab = glidePrev && glidePrev.i!==i;
+  if(doiTab){
+    gl.style.transition='none';
+    gl.style.width=glidePrev.w+'px'; gl.style.transform=`translateX(${glidePrev.x}px)`;
+    void gl.offsetWidth;                         // ép vẽ mốc cũ trước khi bay
+    gl.style.transition='';
+    khungKeTiep(()=>{ gl.style.width=w+'px'; gl.style.transform=`translateX(${x}px)`; });
+  }else{
+    gl.style.transition='none';
+    gl.style.width=w+'px'; gl.style.transform=`translateX(${x}px)`;
+    void gl.offsetWidth;
+    gl.style.transition='';
+  }
+  glidePrev={i,w,x};
 }
 
 /* ══════════ SỰ KIỆN ══════════ */
@@ -1844,5 +1905,5 @@ document.addEventListener('visibilitychange', () => {
 render();
 doVungAnToan();
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{glidePrev=null; datGlide();});
-window.addEventListener('resize',()=>{glidePrev=null; datGlide();});
+window.addEventListener('resize',()=>{glidePrev=null; capNhatBar();});
 </script>

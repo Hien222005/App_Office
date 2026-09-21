@@ -73,11 +73,46 @@ export default async (req) => {
     systemInstruction: { parts: [{ text: CHI_DAN }] },
     generationConfig: CAU_HINH,
   });
-  const goi = (xac_thuc) => fetch(DIA_CHI, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...xac_thuc },
-    body: THAN,
-  });
+  // HẠN THỜI GIAN. Trước đây không có: Gemini treo thì hàm treo theo, tới khi cổng
+  // Netlify tự cắt và trả về trang "Inactivity Timeout" — sếp nhận được một trang HTML
+  // lạ hoắc thay vì câu báo lỗi. Đo 21/09: đúng lỗi này, /api/chat trả 504.
+  // Cắt ở 8 giây để còn kịp trả JSON trước khi cổng cắt ở 10 giây.
+  const HAN_MS = Number(process.env.GEMINI_TIMEOUT_MS || 8000);
+  const goi = (xac_thuc) => {
+    const bo = new AbortController();
+    const hen = setTimeout(() => bo.abort(), HAN_MS);
+    return fetch(DIA_CHI, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...xac_thuc },
+      body: THAN,
+      signal: bo.signal,
+    }).finally(() => clearTimeout(hen));
+  };
+
+  // CHẨN ĐOÁN: gọi /api/chat?chan_doan=1 để biết máy chủ đang thấy gì, mà KHÔNG lộ khoá.
+  if (new URL(req.url).searchParams.get('chan_doan')) {
+    const bo = new AbortController();
+    const hen = setTimeout(() => bo.abort(), HAN_MS);
+    let ds = null, loiDs = null;
+    try {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models',
+        { headers: { 'x-goog-api-key': KEY }, signal: bo.signal });
+      const d = await r.json();
+      ds = r.ok
+        ? (d.models || []).map(m => m.name.replace('models/', '')).filter(n => /flash|pro/.test(n)).slice(0, 12)
+        : null;
+      if (!r.ok) loiDs = d?.error?.message || `HTTP ${r.status}`;
+    } catch (e) { loiDs = e.name === 'AbortError' ? `quá ${HAN_MS}ms không trả lời` : e.message; }
+    finally { clearTimeout(hen); }
+    return json({
+      model_dang_dung: MODEL,
+      khoa: { co: true, dai: KEY.length, bat_dau: KEY.slice(0, 4) },
+      han_thoi_gian_ms: HAN_MS,
+      goi_duoc_google: ds !== null,
+      model_google_dang_cap: ds,
+      loi_khi_hoi_google: loiDs,
+    });
+  }
 
   try {
     let r = await goi({ 'x-goog-api-key': KEY });
@@ -108,6 +143,14 @@ export default async (req) => {
       : 'Gemini không trả về nội dung' }, 502);
     return json({ tra_loi: text });
   } catch (e) {
+    if (e.name === 'AbortError') {
+      return json({ loi:
+        `Gemini không trả lời trong ${HAN_MS / 1000} giây nên tôi cắt.\n\n` +
+        `Model đang gọi: "${MODEL}". Hai chỗ hay gặp:\n` +
+        `1. Tên model sai hoặc đã ngừng phục vụ — mở /api/chat?chan_doan=1 để xem Google ` +
+        `đang cấp những model nào, rồi sửa biến GEMINI_MODEL trên Netlify.\n` +
+        `2. Câu hỏi quá dài nên model nghĩ lâu. Hỏi ngắn lại thử xem.` }, 504);
+    }
     return json({ loi: 'Không gọi được Gemini: ' + e.message }, 502);
   }
 };
