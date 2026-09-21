@@ -87,12 +87,16 @@ trên Mac — đừng nhận lời rồi không làm được.
 Nhóm theo MẢNG VIỆC. Sếp đã chọn mẫu này ngày 22/09.
 
 Khuôn:
-  dòng 1   "Thưa sếp, " + một câu tổng: có mấy việc chờ sếp
+  dòng 1   "Thưa sếp, " + một câu tổng. Chọn ĐÚNG MỘT trong ba câu, theo dang_cho_sep:
+             dang_ket > 0   → "có <dang_ket> việc đang kẹt cần sếp gỡ."
+             tong > 0       → "hôm nay có <tong> việc chờ sếp."
+             tong = 0       → "hôm nay không có việc nào chờ sếp."
   dòng 2   để trống
   mỗi mảng "- **<tên mảng>** · <số> việc"
   mỗi việc "  - <tên việc> — <tình trạng>"      (HAI dấu cách trước gạch)
   để trống
-  dòng cuối một câu: sếp cần làm gì tiếp
+  dòng cuối một câu: sếp cần làm gì tiếp. Có việc trả lại 3 lần thì dòng cuối
+           PHẢI là: "Việc trả lại 3 lần nay thuộc về sếp: sếp tự sửa rồi giao lại, hoặc bỏ."
 
 Luật của khuôn:
 - Tên mảng LUÔN in đậm bằng hai dấu sao hai bên. KHÔNG in đậm chỗ nào khác.

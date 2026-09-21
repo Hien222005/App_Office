@@ -498,6 +498,19 @@ const MANG=Object.entries((window.CAU_HINH&&window.CAU_HINH.mang)||DUPHONG)
   .sort((a,b)=>(a[1].tat-b[1].tat)||a[1].ten.localeCompare(b[1].ten,'vi'));
 
 const PHONG=[...MANG.map(([m])=>m),'food'];
+
+/* HIỆN NHỮNG MẢNG NÀO — một nguồn duy nhất cho tab Việc lẫn màn Nhà.
+   Mảng đang bật: luôn hiện. Mảng tạm dừng: chỉ hiện khi còn việc đang sống, để việc
+   dở của nó không biến mất khỏi mắt sếp.
+   Trước 22/09 ba chỗ tự viết cứng ['lab','elearn','biz'] — nên việc Thạc sĩ được tạo
+   ra trong database mà KHÔNG BAO GIỜ hiện. Sếp phát hiện khi giao việc đầu tiên. */
+const VIEC_SONG=t=>!['bo','da_ghi'].includes(t.tt);
+function mangHienThi(){
+  return MANG.map(([m])=>m).filter(m=>{
+    const x=MANG.find(([k])=>k===m)[1];
+    return !x.tat || S.tasks.some(t=>t.mang===m&&VIEC_SONG(t));
+  });
+}
 const TEN={...Object.fromEntries(MANG.map(([m,v])=>[m,v.ten])), food:'Dinh dưỡng'};
 const NEON={...Object.fromEntries(MANG.map(([m,v])=>
   [m,{c:v.mau, toi:pha(v.mau,-.45), canh:pha(v.mau,.42), bong:v.mau}])),
@@ -800,6 +813,9 @@ function doiGram(d){
 
 /* ══════════ VẼ VĂN PHÒNG NEON ══════════ */
 const BAN_VT=[[-28,-10],[6,-14],[-2,8]];   // ba bàn mỗi phòng, không che nhau
+/* Mảng mới chưa khai màu áo thì pha từ màu của chính mảng đó, nhạt dần. */
+const aoPhong=k=>NV3[k]||[.15,.45,.3].map((v,i)=>({ao:pha(NEON[k].c,v),
+  toc:['#231B13','#4A3222','#191310'][i], da:['#F2D6B4','#DFB791','#EBC79F'][i], bui:i%2}));
 const NV3={
   lab:[{ao:'#6FCBBE',toc:'#231B13',da:'#F2D6B4',bui:0},{ao:'#A6E2D8',toc:'#4A3222',da:'#DFB791',bui:1},
        {ao:'#8AD6C8',toc:'#191310',da:'#EBC79F',bui:0}],
@@ -837,7 +853,8 @@ const CAY={
     <circle cx="-2" cy="-6.4" r="2.5" fill="#4FBE7E"/><circle cx="1.8" cy="-7.2" r="2.9" fill="#3FA36A"/>
     <circle cx=".2" cy="-9.4" r="2.3" fill="#5ACD8B"/><circle cx="2.6" cy="-4.6" r="1.9" fill="#54C485"/>`
 };
-const chau=k=>`<g><ellipse cx="0" cy="5.4" rx="4.4" ry="1.8" fill="#000" opacity=".3"/>${CAY[k]}
+/* Mảng mới chưa vẽ cây riêng thì mượn cây của Lab — đừng để SVG in ra chữ "undefined". */
+const chau=k=>`<g><ellipse cx="0" cy="5.4" rx="4.4" ry="1.8" fill="#000" opacity=".3"/>${CAY[k]||CAY.lab}
   <path d="M-3.4 -1.4 h6.8 l-1.1 6 h-4.6 z" fill="#C07E45"/>
   <path d="M-3.4 -1.4 h6.8 l-1.1 6 h-2.3 z" fill="#A2632F"/>
   <ellipse cx="0" cy="-1.4" rx="3.4" ry="1.4" fill="#8E5628"/>
@@ -892,7 +909,7 @@ function san(k,cx,cy){
     <path d="M${cx} ${cy-H} L${cx+W} ${cy} L${cx} ${cy+H} L${cx-W} ${cy} Z"
       fill="none" stroke="${N.canh}" stroke-width="1.7" opacity=".9" filter="url(#glow)"/>
     <g transform="translate(${cx+34},${cy+2})">${chau(k)}</g>`;
-  BAN_VT.forEach((p,i)=>{ g+=ban(cx+p[0],cy+p[1],N.canh,(i*0.31)%1.1,NV3[k][i],i); });
+  BAN_VT.forEach((p,i)=>{ g+=ban(cx+p[0],cy+p[1],N.canh,(i*0.31)%1.1,aoPhong(k)[i],i); });
   return g+`</g>`;
 }
 /* biển tên — vẽ SAU CÙNG nên không bao giờ bị đường nối đè */
@@ -933,13 +950,16 @@ function huyHieu(k,cx,y){
 /* Kiểu 3 · sóng sáng quét. Ba lớp chồng nhau cho vệt có đầu đuôi mềm.
    dasharray 20+200 = 220, chạy đúng -220 = MỘT chu kỳ tròn → vòng lặp khít,
    không bao giờ khựng. Bản cũ dùng 4+7=11 mà chạy -24 nên mỗi vòng lệch 2. */
-function luong(){
+function luong(VT){
   const t = S.dangChay ? 1.8 : 4.2;
-  const P=[
-    {id:'l1',d:'M104 156 C 130 182, 152 208, 180 236', c:'#22E5C4', c2:'#7B61FF'},
-    {id:'l2',d:'M256 274 C 238 306, 208 342, 180 372', c:'#7B61FF', c2:'#FF4D6D'},
-    {id:'l3',d:'M104 410 C 124 438, 142 466, 164 494', c:'#FF4D6D', c2:'#FFB020'}
-  ];
+  // Nối đáy sàn này với góc gần nhất của sàn kế tiếp. Màu chuyển từ mảng này sang mảng kia.
+  const P=VT.slice(0,-1).map((a,i)=>{
+    const b=VT[i+1], x0=a.x, y0=a.y+38, x1=b.x+(b.x>a.x?-76:76), y1=b.y;
+    const dx=x1-x0, dy=y1-y0;
+    return {id:'l'+(i+1),
+      d:`M${x0} ${y0} C ${x0+dx*.34} ${y0+dy*.33}, ${x0+dx*.63} ${y0+dy*.65}, ${x1} ${y1}`,
+      c:NEON[a.k].c, c2:NEON[b.k].c};
+  });
   return '<g class="luong">' + P.map(p=>`
     <defs><linearGradient id="g${p.id}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="${p.c}"/><stop offset="100%" stop-color="${p.c2}"/>
@@ -954,10 +974,18 @@ function luong(){
       stroke-dasharray="7 213" class="song-quet" style="--t:${t}s" filter="url(#glow)"/>`).join('')
     + '</g>';
 }
-const SAN_VT=[{k:'lab',x:104,y:118},{k:'elearn',x:256,y:236},
-               {k:'biz',x:104,y:372},{k:'food',x:252,y:494}];
+/* Bốn mốc đầu giữ đúng tọa độ cũ để bố cục quen mắt không xê dịch. Quá bốn sàn thì
+   nối dài xuống, so le trái phải như cũ. Dinh dưỡng luôn đứng cuối. */
+const MOC_SAN=[[104,118],[256,236],[104,372],[252,494]];
+function sanVT(){
+  return [...mangHienThi(),'food'].map((k,i)=>{
+    const [x,y]=MOC_SAN[i]||[i%2?254:104, 494+(i-3)*124];
+    return {k,x,y};
+  });
+}
 function vanPhong(){
-  return `<svg viewBox="0 0 361 580" class="scene" xmlns:xlink="http://www.w3.org/1999/xlink" role="img"
+  const VT=sanVT(), cao=Math.max(580, VT[VT.length-1].y+86);
+  return `<svg viewBox="0 0 361 ${cao}" class="scene" xmlns:xlink="http://www.w3.org/1999/xlink" role="img"
     aria-label="Bốn phòng ban neon nối nhau bằng luồng sáng. Chạm một phòng để vào.">
     <defs>
       <filter id="glow" x="-70%" y="-70%" width="240%" height="240%">
@@ -986,11 +1014,11 @@ function vanPhong(){
         @media (prefers-reduced-motion:reduce){*{animation:none!important}}
       </style>
     </defs>
-    <rect width="361" height="580" fill="none"/>
-    ${luong()}
-    ${SAN_VT.map(o=>san(o.k,o.x,o.y)).join('')}
-    ${SAN_VT.map(o=>bienTen(o.k,o.x,o.y-50)).join('')}
-    ${SAN_VT.map(o=>huyHieu(o.k,o.x,o.y-84)).join('')}
+    <rect width="361" height="${cao}" fill="none"/>
+    ${luong(VT)}
+    ${VT.map(o=>san(o.k,o.x,o.y)).join('')}
+    ${VT.map(o=>bienTen(o.k,o.x,o.y-50)).join('')}
+    ${VT.map(o=>huyHieu(o.k,o.x,o.y-84)).join('')}
   </svg>`;
 }
 
@@ -1025,7 +1053,7 @@ function theTask(t,click){
    Chạm một dòng thì nhảy xuống khối của phòng đó. */
 function bangTinhTrang(){
   const o=(v,mau)=>v?`<b style="color:${mau}">${v}</b>`:'<i>·</i>';
-  const dong=['lab','elearn','biz'].map(m=>`<button class="tr" data-cuon="${m}">
+  const dong=mangHienThi().map(m=>`<button class="tr" data-cuon="${m}">
     <span style="color:${NEON[m].c}">${TEN[m]}</span>
     ${o(choSep(m),'var(--wait)')}${o(dangLam(m),'var(--info)')}${o(choGhi(m)+daGhi(m),'var(--ok)')}${o(treHan(m),'var(--bad)')}
   </button>`).join('');
@@ -1057,7 +1085,7 @@ function manPhong(){
         <span>${choSep(m)?choSep(m)+' chờ bạn':'không cần bạn'}</span></div>
       ${l.map(t=>theTask(t,true)).join('')}`;
   };
-  const dsPhong=k?khoi(k):['lab','elearn','biz'].map(khoi).join('');
+  const dsPhong=k?khoi(k):mangHienThi().map(khoi).join('');
   // Skill báo cáo chốt: việc cần sếp sửa ghi riêng, kèm lý do chạm trần.
   const canSua=S.tasks.filter(t=>canBanSua(t)&&!laTon(t));
   const daGhiDs=S.tasks.filter(t=>t.tt==='da_ghi');
@@ -1573,6 +1601,8 @@ function boiCanh(){
       cho_duyet_ket_qua: S.tasks.filter(t=>t.tt==='cho_duyet').length,
       da_tra_lai_3_lan: S.tasks.filter(t=>canBanSua(t)).length,
       tre_han: S.tasks.filter(t=>t.tre).length,
+      // "Kẹt" = việc đứng im chờ sếp gỡ: agent đang hỏi, hoặc đã trả lại 3 lần.
+      dang_ket: S.tasks.filter(t=>VIEC_SONG(t)&&(dangVuong(t)||canBanSua(t))).length,
     },
     // CHỈ gửi việc còn sống. Trước đây gửi tất, nên trợ lý báo cáo cả việc "Bỏ" như
     // việc hôm nay — sếp thấy ngay trong ảnh chụp 22/09.
