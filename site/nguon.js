@@ -82,15 +82,46 @@
    *
    * Mã 6 số gõ thẳng trong app, không rời app lần nào, nên kho nào cũng vào được.
    */
-  NG.xacNhanMa = async (email, ma) => {
+  /* Nhận CẢ HAI: link chép từ email, hoặc mã 6 số.
+   *
+   * Gói Supabase Free KHÔNG cho sửa mẫu email (phải gắn SMTP riêng mới mở khoá), nên
+   * mẫu mặc định chỉ có link, không in mã 6 số ra. Nhưng chính cái link đó đã mang sẵn
+   * token — chép link dán vào đây là đủ, không phải đụng gì tới dashboard.
+   *
+   * Link có dạng:
+   *   https://<project>.supabase.co/auth/v1/verify?token=<hash>&type=magiclink&redirect_to=…
+   * Bản GoTrue mới đặt tên tham số là `token_hash`. Đọc cả hai tên.
+   */
+  NG.xacNhanVao = async (email, thô) => {
+    const v = String(thô || '').trim();
+    if (!v) throw new Error('Chưa dán gì vào ô này');
+
+    let thân;
+    if (/^\d{4,8}$/.test(v)) {
+      // mã số — cần email đi kèm để Supabase biết hỏi ai
+      if (!email) throw new Error('Gõ email vào ô trên trước');
+      thân = { email, token: v, type: 'email' };
+    } else {
+      let q;
+      try { q = new URL(v).searchParams; }
+      catch { throw new Error('Không đọc được. Dán CẢ link từ email, hoặc gõ mã 6 số.'); }
+      const hash = q.get('token_hash') || q.get('token');
+      if (!hash) throw new Error('Link này không có token. Chép lại link "Sign in" trong email.');
+      // type trong link: magiclink · email · signup · recovery
+      thân = { token_hash: hash, type: q.get('type') || 'magiclink' };
+    }
+
     const r = await fetch(`${C.url}/auth/v1/verify`, {
       method: 'POST',
       headers: { apikey: C.anon, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, token: String(ma).trim(), type: 'email' }),
+      body: JSON.stringify(thân),
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok || !d.access_token) {
-      throw new Error(d.error_description || d.msg || d.message || 'Mã không đúng hoặc đã hết hạn');
+      const l = d.error_description || d.msg || d.message || '';
+      throw new Error(/expired|invalid/i.test(l)
+        ? 'Link hoặc mã đã dùng rồi hoặc hết hạn. Bấm "Gửi link mới" rồi chép link mới nhất.'
+        : (l || 'Không vào được'));
     }
     lưuPhiên(d);
     return true;

@@ -1044,11 +1044,13 @@ async function guiMa(){
 }
 
 async function xacNhanMa(){
-  const v=layEmail(); if(!v) return;
-  const o=document.getElementById('fMa'), ma=(o?.value||'').trim();
-  if(!/^\d{4,8}$/.test(ma)){ o?.focus(); toast('Gõ mã 6 số trong email vào ô này',true); return; }
+  const o=document.getElementById('fMa'), val=(o?.value||S.maNhap||'').trim();
+  if(!val){ o?.focus(); toast('Dán link từ email vào ô này',true); return; }
+  // Email chỉ bắt buộc khi dán MÃ SỐ; dán link thì token đã đủ định danh.
+  const email=/^\d{4,8}$/.test(val) ? layEmail() : (S.emailGui||'').trim();
+  if(/^\d{4,8}$/.test(val) && !email) return;
   try{
-    await NG().xacNhanMa(v,ma);
+    await NG().xacNhanVao(email,val);
     S.maNhap=''; S.dangNhapXong=false;
     toast('Đã vào app');
     go('phieu'); await taiTuNguon();
@@ -1514,34 +1516,41 @@ function bangChoNguon(){
       <button class="btn gh" data-dangnhap="1">Đăng nhập để dùng dữ liệu thật</button></div>`:''}</div>`;
 }
 
-/* Hai đường vào, và MÃ là đường chính.
-   iOS cho app ngoài màn hình chính một kho lưu trữ riêng, tách hẳn Safari — nên
-   đăng nhập bằng link (luôn mở bằng Safari) thì không bao giờ vào được app đó.
-   Gõ mã 6 số thì không rời app lần nào. */
+/* ĐĂNG NHẬP
+   iOS cho app ngoài màn hình chính MỘT KHO LƯU TRỮ RIÊNG, tách hẳn Safari. Bấm link
+   trong email thì link mở bằng Safari, token rơi vào kho của Safari — app ngoài màn
+   hình chính không bao giờ thấy.
+
+   Cách vòng qua: CHÉP link rồi DÁN vào app. Link mang sẵn token, app tự đổi lấy phiên.
+   Không phải đụng gì tới Supabase — gói Free không cho sửa mẫu email nên không có
+   cách nào bắt nó in mã 6 số ra. */
 function manDangNhap(){
   const app=ngoaiManHinh();
   return {back:'phong',head:`<h1>Đăng nhập</h1>`,
-    body:`<div class="fld"><div class="lb">Email chủ nhân</div>
+    body:`<div class="fld"><div class="lb">1 · Email chủ nhân</div>
         <input id="fMail" type="email" inputmode="email" autocomplete="email"
           placeholder="ban@gmail.com" value="${esc(S.emailGui||'')}"></div>
 
-      <div class="btnrow"><button class="btn ${app?'gh':'pri'}" data-guima="1">
-        ${S.dangNhapXong?'Gửi lại mã':'Gửi mã vào email'}</button></div>
+      <div class="btnrow"><button class="btn ${S.dangNhapXong?'gh':'pri'}" data-guima="1">
+        ${S.dangNhapXong?'Gửi link mới':'Gửi link vào email'}</button></div>
 
-      ${S.dangNhapXong?`<div class="fld hi"><div class="lb">Mã 6 số trong email</div>
-        <input id="fMa" type="text" inputmode="numeric" autocomplete="one-time-code"
-          maxlength="6" placeholder="123456" value="${esc(S.maNhap||'')}"
-          style="letter-spacing:.35em;font-size:21px;font-weight:900;text-align:center"></div>
+      ${S.dangNhapXong?`
+        <div class="fld"><div class="lb">2 · Mở Mail, CHẠM GIỮ link "Sign in" → Sao chép liên kết</div>
+          <div class="tx" style="font-size:13px;color:var(--mut);line-height:1.5">
+            Chạm giữ, đừng bấm thường — bấm thường là nó mở Safari.</div></div>
+
+        <div class="fld hi"><div class="lb">3 · Dán link vào đây</div>
+          <textarea id="fMa" rows="3" inputmode="url" placeholder="https://…supabase.co/auth/v1/verify?token=…"
+            style="font-size:13px;word-break:break-all">${esc(S.maNhap||'')}</textarea></div>
         <div class="btnrow"><button class="btn pri" data-xacnhan="1">Vào app</button></div>`:''}
 
       <div class="fld"><div class="tx" style="font-size:13px;color:var(--mut);line-height:1.55">
-        ${app?'<b style="color:var(--wait)">Bạn đang mở app từ màn hình chính.</b> iOS cho app này một kho lưu trữ riêng, tách hẳn Safari — nên phải <b>gõ mã</b>, bấm link trong email sẽ nhảy sang Safari chứ không vào đây.'
-             :'Gõ mã 6 số là cách duy nhất đăng nhập được vào app ngoài màn hình chính. Bấm link trong email cũng được, nhưng chỉ dùng được trong Safari.'}
-        <br><br>Chỉ email chủ nhân đọc được dữ liệu — email khác vào cũng thấy trống, RLS chặn.</div></div>
-
-      ${app?'':`<div class="btnrow" style="margin-top:auto">
-        <button class="btn gh" data-guilink="1">Hoặc gửi link (chỉ Safari)</button></div>`}`};
+        ${app?'<b style="color:var(--wait)">Bạn đang mở app từ màn hình chính.</b> Phải dán link — bấm thẳng link trong email sẽ nhảy sang Safari chứ không vào đây.'
+             :'Đang mở trong Safari thì bấm thẳng link trong email cũng được. Dán link là cách dùng cho app ngoài màn hình chính.'}
+        <br><br>Làm một lần thôi. Vào được rồi thì app nhớ, lần sau mở là chạy luôn.
+        <br><br>Chỉ email chủ nhân đọc được dữ liệu — email khác vào cũng thấy trống, RLS chặn.</div></div>`};
 }
+
 
 async function taiTuNguon(){
   const n=NG(); if(!n) return;
@@ -1588,7 +1597,6 @@ document.getElementById('dev').addEventListener('input',e=>{
 });
 document.getElementById('dev').addEventListener('keydown',e=>{
   if(e.target.id==='khIn'&&e.key==='Enter'){ e.preventDefault(); khThem(); }
-  if(e.target.id==='fMa'  &&e.key==='Enter'){ e.preventDefault(); xacNhanMa(); }
   if(e.target.id==='fMail'&&e.key==='Enter'){ e.preventDefault(); guiMa(); }
 });
 document.getElementById('dev').addEventListener('click',e=>{
