@@ -51,6 +51,7 @@ async function hoiDanhSachModel(KEY, hanMs) {
 
 // Trong danh sách Google cấp, chọn bản flash mới nhất — nhẹ và rẻ, hợp việc tóm tắt đếm số.
 const chonModel = (ds) =>
+  ds.find((n) => n === 'gemini-flash-latest') ||     // bí danh tự bám bản mới nhất
   ds.find((n) => /flash/.test(n) && !/lite|preview|exp/.test(n)) ||
   ds.find((n) => /flash/.test(n)) ||
   ds.find((n) => /pro/.test(n)) ||
@@ -137,10 +138,22 @@ export default async (req) => {
     let { r, d } = await goi(model);
 
     // Model chết thì TỰ ĐỔI, đừng bắt sếp vào Netlify sửa biến môi trường.
-    if (!r.ok && /not found|NOT_FOUND|is not supported/i.test(d?.error?.message || '')) {
-      const ds = await hoiDanhSachModel(KEY, HAN_MS);
-      const thay = chonModel(ds.filter((n) => n !== model));
-      if (!thay) return json({ loi: `Model "${model}" không còn, mà Google cũng không cấp model nào khác dùng được.` }, 502);
+    //
+    // Ba kiểu từ chối, phải bắt cả ba. Kiểu thứ ba là cái đã làm chat im lặng suốt:
+    //   "This model models/gemini-2.5-flash is no longer available to NEW USERS.
+    //    Please update your code to use models/gemini-3.6-flash"
+    // Model vẫn NẰM TRONG danh sách Google cấp, nên chỉ nhìn danh sách thì tưởng còn
+    // dùng được — chỉ lúc gọi thật mới lộ.
+    const loiModel = d?.error?.message || '';
+    if (!r.ok && /not found|NOT_FOUND|is not supported|no longer available|deprecat/i.test(loiModel)) {
+      // Google thường chỉ luôn bản thay thế ngay trong câu lỗi. Dùng lời nó trước.
+      const goiY = [...loiModel.matchAll(/models\/([\w.-]+)/g)].map((m) => m[1]).find((n) => n !== model);
+      let thay = goiY;
+      if (!thay) {
+        const ds = await hoiDanhSachModel(KEY, HAN_MS);
+        thay = chonModel(ds.filter((n) => n !== model));
+      }
+      if (!thay) return json({ loi: `Model "${model}" không dùng được, mà cũng không tìm ra bản thay thế.` }, 502);
       model = thay;
       ({ r, d } = await goi(model));
     }
