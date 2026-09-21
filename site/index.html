@@ -332,6 +332,14 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
 .tin::-webkit-scrollbar{display:none}
 .m{max-width:84%; padding:11px 14px; border-radius:18px; font-size:14.5px; line-height:1.55;
   font-weight:500; white-space:pre-wrap; word-break:break-word}
+.m.bot{white-space:normal}
+.m.bot .d{display:block; min-height:.55em}
+.m.bot b{font-weight:800; color:var(--tx)}
+.m.bot .ch{display:block; padding-left:15px; text-indent:-15px}
+.m.bot .ch::before{content:'•'; color:var(--ok); font-weight:900; display:inline-block;
+  width:15px; text-indent:0}
+.m.bot .ch.sau{padding-left:30px; text-indent:-15px; margin-left:15px}
+.m.bot .ch.sau::before{content:'–'; color:var(--mut)}
 .m.toi{align-self:flex-end; background:var(--ok); color:#052015; font-weight:600;
   border-bottom-right-radius:6px}
 .m.bot{align-self:flex-start; background:var(--panel); border:1px solid var(--line);
@@ -1525,6 +1533,22 @@ const GOI_Y = ['Hôm nay có việc gì?','Tôi ăn bao nhiêu calo rồi?',
   'Việc nào cần tôi xem kỹ?','Tóm tắt bài Lab chiều'];
 
 // gói trạng thái hiện tại thành bối cảnh — Gemini không tự biết gì về app
+/* Vẽ chữ trợ lý trả về. Nó viết **đậm** và gạch đầu dòng; app trước nay hiện chữ thô
+   nên sếp thấy cả dấu sao. RÀO TRƯỚC rồi mới đổi — thứ tự đó là chỗ an toàn nằm ở:
+   mọi dấu < > & của trợ lý đã thành chữ thường trước khi ta chèn thẻ nào vào.
+   Chỉ nhận ĐÚNG hai thứ: **đậm** và dòng mở đầu bằng "- ". Không nhận gì khác. */
+function veChuChat(tho){
+  const rao = String(tho ?? '').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  return rao.split('\n').map(d=>{
+    const dam = t => t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+                      .replace(/\*/g, '');          // dấu sao lẻ còn sót thì bỏ luôn
+    const m = d.match(/^(\s*)-\s+(.*)$/);
+    if(!m) return `<span class="d">${dam(d)}</span>`;
+    const sau = m[1].length >= 2 ? ' sau' : '';       // gạch đầu dòng cấp hai thụt vào
+    return `<span class="ch${sau}">${dam(m[2])}</span>`;
+  }).join('');
+}
+
 function boiCanh(){
   const v = t => ({id:t.id, mang:TEN[t.mang], tieu_de:t.tieu_de, trang_thai:t.tt,
     ky_vong_ket_qua:t.ket||null,
@@ -1539,7 +1563,10 @@ function boiCanh(){
       da_tra_lai_3_lan: S.tasks.filter(t=>canBanSua(t)).length,
       tre_han: S.tasks.filter(t=>t.tre).length,
     },
-    viec: S.tasks.map(v),
+    // CHỈ gửi việc còn sống. Trước đây gửi tất, nên trợ lý báo cáo cả việc "Bỏ" như
+    // việc hôm nay — sếp thấy ngay trong ảnh chụp 22/09.
+    viec: S.tasks.filter(t=>!['bo','da_ghi'].includes(t.tt)).map(v),
+    da_xong_hoac_bo: S.tasks.filter(t=>['bo','da_ghi'].includes(t.tt)).length,
     ke_hoach: S.kehoach.map(k=>({mang:TEN[k.mang]||k.mang, viec:k.viec,
       ngay:k.ngay||null, lap_moi_tuan:!k.ngay, dang_bat:k.bat})),
     cau_hoi_agent: S.hoi.tl ? null : {hoi:S.hoi.cau_hoi, phuong_an:S.hoi.pa},
@@ -1579,7 +1606,7 @@ function cuaSoChat(){
   if(!S.chatMo) return '';
   const tin = S.chatTin.length
     ? S.chatTin.map(m=>`<div class="m ${m.ai==='toi'?'toi':m.ai==='loi'?'loi':'bot'}">${
-        m.noi.replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</div>`).join('')
+        veChuChat(m.noi)}</div>`).join('')
     : `<div class="m bot">Chào sếp. Tôi nắm được việc hôm nay, tình hình duyệt và số liệu ăn uống — hỏi gì cũng được.</div>`;
   return `<div class="nen" data-chat="dong"></div>
     <div class="sheet">
