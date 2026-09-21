@@ -9,23 +9,65 @@
 //   3. ĐƯỜNG CHẨN ĐOÁN /api/chat?chan_doan=1 — mở bằng trình duyệt là xem được, nằm
 //      TRƯỚC cổng chặn GET.
 
-const MODEL_MAC_DINH = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+// Đo thật ngày 22/09 qua /api/chat?chan_doan=1&thu=<model>:
+//   gemini-3.6-flash       3.170ms  ✓        gemini-3.5-flash-lite    685ms  ✓
+//   gemini-flash-latest    9.039ms  quá tải  gemini-3.8-flash         454ms  quá tải
+//   gemini-3.5-flash       9.503ms  quá hạn  gemini-2.5-flash(-lite)  ngừng cấp
+// Danh sách model Google cấp KHÔNG nói gì về tốc độ hay việc còn nhận người dùng mới
+// hay không — phải gọi thật mới biết. Thứ tự dưới đây xếp theo số đo, không theo phỏng đoán.
+const UU_TIEN = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.7-flash', 'gemini-3.5-flash'];
+const MODEL_MAC_DINH = process.env.GEMINI_MODEL || UU_TIEN[0];
 const GOC = 'https://generativelanguage.googleapis.com/v1beta';
 
-const CHI_DAN = `Bạn là trợ lý trong app "Văn Phòng Agent" của một người quản lý bốn mảng việc:
-Thạc sĩ (bài vở cao học), Lab Coach (dạy lab), Kinh doanh (Fitness Tracker), Dinh dưỡng.
-Mảng E-learning đang tạm dừng.
+const CHI_DAN = `Bạn là trợ lý trong app "Văn Phòng Agent". Người dùng là SẾP — chủ của
+hệ thống. Gọi họ là "sếp", tự xưng "tôi".
 
-Người dùng là SẾP. Một agent khác làm việc dưới máy, sếp chỉ duyệt.
+## Hệ thống này hoạt động thế nào
 
-Quy tắc trả lời:
-- Tiếng Việt, xưng "tôi", gọi người dùng là "sếp".
-- NGẮN. Hai đến bốn câu là đủ. Không gạch đầu dòng trừ khi liệt kê từ 3 mục trở lên.
-- CHỈ dựa vào dữ liệu trong BỐI CẢNH. Không có thì nói thẳng là chưa có, đừng bịa.
-- Nói số cụ thể khi bối cảnh có số.
-- Không chào hỏi dài dòng, vào thẳng câu trả lời.
-- Khi sếp hỏi thống kê, đếm từ dữ liệu và nói ra con số, đừng nói chung chung.
-- Câu trả lời có thể được ĐỌC TO lên, nên viết như nói: không markdown, không ký hiệu lạ.`;
+Một agent khác (Claude Code) làm việc dưới máy Mac. Sếp chỉ DUYỆT trên điện thoại.
+Mỗi ngày một phiên, ba lệnh sếp gõ trên Mac:
+
+  /report  agent đọc bảng kế hoạch tuần → lập phiếu việc → trình lên để sếp chốt
+  /lam     agent làm trong BẢN NHÁP, không đụng file thật, nộp kèm link xem thử
+  /chot    chép kết quả đã duyệt vào file gốc, so mã băm, đóng phiên ngày
+
+Sếp đi qua HAI cổng: chốt việc (trước khi làm), và duyệt kết quả (sau khi làm).
+
+## Bảy nhãn của một việc
+
+  Chờ sếp chốt      agent chưa được đụng vào
+  Sếp đã chốt       agent được làm, chưa làm
+  Đang làm          agent đang làm dở
+  Chờ sếp duyệt     đã nộp, có link, đang đợi sếp mở ra xem
+  Đã duyệt · chờ ghi  sếp duyệt rồi, đợi lệnh /chot ghi vào file gốc
+  Đã ghi vào file gốc  xong hẳn
+  Bỏ                sếp bỏ việc này
+
+Ba tình trạng KHÔNG phải nhãn, tính từ số liệu:
+  đang làm lại   — đã bị trả lại ít nhất một lần
+  cần sếp sửa    — đã trả lại 3 lần, agent không chạm nữa, việc thành của sếp
+  đang vướng     — có câu hỏi agent hỏi mà sếp chưa trả lời, việc đứng im
+
+## Bạn làm được gì
+
+Bạn CHỈ đọc phần BỐI CẢNH gửi kèm rồi trả lời. Bạn KHÔNG chạy được lệnh, không sửa
+được việc, không duyệt thay sếp, không đọc được file trên máy.
+
+Sếp nhờ làm việc gì đó thì nói rõ sếp cần bấm nút nào trong app, hoặc gõ lệnh nào
+trên Mac — đừng nhận lời rồi không làm được.
+
+## Luật trả lời
+
+- Tiếng Việt. NGẮN: hai đến bốn câu. Liệt kê từ 3 mục trở lên mới dùng gạch đầu dòng.
+- CHỈ dựa vào BỐI CẢNH. Bối cảnh không có thì nói thẳng "bối cảnh chưa có phần đó",
+  tuyệt đối không bịa tên việc, con số, ngày tháng hay tình trạng.
+- Bối cảnh có số thì nói ra con số, đừng nói "một vài", "khá nhiều".
+- Chủ động nhắc thứ đang CHỜ SẾP: việc chờ chốt, kết quả chờ duyệt, câu hỏi chưa trả
+  lời, việc đã trả lại 3 lần, việc trễ hạn. Đó là thứ làm cả hệ thống đứng.
+- Không chào hỏi dài dòng, vào thẳng câu trả lời. Không nhắc lại câu hỏi.
+- Câu trả lời có thể được ĐỌC TO lên: viết như nói, không markdown, không ký hiệu lạ,
+  không emoji, không dấu sao.
+- Mã việc dạng k-… hay t-… thì đọc gọn, đừng đánh vần từng ký tự.`;
 
 // Model tốt tìm được thì NHỚ LẠI trong suốt đời của instance. Netlify giữ ấm hàm giữa
 // các lần gọi, nên lần sau khỏi phải đốt một cuộc gọi vào model đã chết rồi mới đổi.
@@ -54,12 +96,14 @@ async function hoiDanhSachModel(KEY, hanMs) {
 }
 
 // Trong danh sách Google cấp, chọn bản flash mới nhất — nhẹ và rẻ, hợp việc tóm tắt đếm số.
-const chonModel = (ds) =>
-  ds.find((n) => n === 'gemini-flash-latest') ||     // bí danh tự bám bản mới nhất
-  ds.find((n) => /flash/.test(n) && !/lite|preview|exp/.test(n)) ||
-  ds.find((n) => /flash/.test(n)) ||
-  ds.find((n) => /pro/.test(n)) ||
-  ds[0] || null;
+const chonModel = (ds, tru = []) => {
+  const duoc = (n) => ds.includes(n) && !tru.includes(n);
+  return UU_TIEN.find(duoc)
+    || ds.find((n) => /flash/.test(n) && !tru.includes(n) && !/preview|exp/.test(n))
+    || ds.find((n) => /flash/.test(n) && !tru.includes(n))
+    || ds.find((n) => !tru.includes(n))
+    || null;
+};
 
 export default async (req) => {
   const KEY = (process.env.GEMINI_API_KEY || '').trim();   // .trim(): dán vào ô web hay lẫn dấu cách
@@ -104,7 +148,7 @@ export default async (req) => {
     return json({
       model_dang_dat: MODEL_MAC_DINH,
       model_nay_con_song: ds ? ds.includes(MODEL_MAC_DINH) : null,
-      model_se_tu_doi_sang: ds && !ds.includes(MODEL_MAC_DINH) ? chonModel(ds) : null,
+      model_se_tu_doi_sang: ds && !ds.includes(MODEL_MAC_DINH) ? chonModel(ds, [MODEL_MAC_DINH]) : null,
       khoa: { co: true, dai: KEY.length, bat_dau: KEY.slice(0, 4) },
       han_thoi_gian_ms: HAN_MS,
       hoi_duoc_google: ds !== null,
@@ -178,13 +222,15 @@ export default async (req) => {
     // Model vẫn NẰM TRONG danh sách Google cấp, nên chỉ nhìn danh sách thì tưởng còn
     // dùng được — chỉ lúc gọi thật mới lộ.
     const loiModel = d?.error?.message || '';
-    if (!r.ok && /not found|NOT_FOUND|is not supported|no longer available|deprecat/i.test(loiModel)) {
+    // "high demand" / 503 cũng phải đổi: model còn sống nhưng đang quá tải thì chờ
+    // cũng vô ích. Đo 22/09: gemini-3.8-flash trả lời "high demand" sau 454ms.
+    if (!r.ok && (/not found|NOT_FOUND|is not supported|no longer available|deprecat|high demand|overloaded|UNAVAILABLE/i.test(loiModel) || r.status === 503)) {
       // Google thường chỉ luôn bản thay thế ngay trong câu lỗi. Dùng lời nó trước.
       const goiY = [...loiModel.matchAll(/models\/([\w.-]+)/g)].map((m) => m[1]).find((n) => n !== model);
       let thay = goiY;
       if (!thay) {
         const ds = await hoiDanhSachModel(KEY, HAN_MS);
-        thay = chonModel(ds.filter((n) => n !== model));
+        thay = chonModel(ds, [model]);
       }
       if (!thay) return json({ loi: `Model "${model}" không dùng được, mà cũng không tìm ra bản thay thế.` }, 502);
       model = thay;

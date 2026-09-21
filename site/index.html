@@ -1531,8 +1531,17 @@ function boiCanh(){
     dan_do_cua_sep:t.phan_hoi||null});
   return {
     ngay: new Date().toLocaleDateString('vi-VN'),
-    ca_trua_dang_chay: S.dangChay,
+    // Trợ lý không tự đếm được nếu không đưa số. Đếm sẵn ở đây, một nguồn duy nhất.
+    dang_cho_sep: {
+      tong: choSep(),
+      cho_chot: S.tasks.filter(t=>t.tt==='cho_chot').length,
+      cho_duyet_ket_qua: S.tasks.filter(t=>t.tt==='cho_duyet').length,
+      da_tra_lai_3_lan: S.tasks.filter(t=>canBanSua(t)).length,
+      tre_han: S.tasks.filter(t=>t.tre).length,
+    },
     viec: S.tasks.map(v),
+    ke_hoach: S.kehoach.map(k=>({mang:TEN[k.mang]||k.mang, viec:k.viec,
+      ngay:k.ngay||null, lap_moi_tuan:!k.ngay, dang_bat:k.bat})),
     cau_hoi_agent: S.hoi.tl ? null : {hoi:S.hoi.cau_hoi, phuong_an:S.hoi.pa},
     dinh_duong: {
       da_an_kcal: tongKcal(), muc_tieu_kcal: S.mt.kcal,
