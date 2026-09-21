@@ -60,7 +60,7 @@ sáng hôm sau `/report` tự đưa lên đầu bảng.
 | [`.claude/`](.claude) | 4 Skill · 3 lệnh slash · hook nhật ký | ✅ |
 | [`agent/`](agent) | Bộ máy chạy trên Mac, 12 script `.mjs` | ✅ |
 | [`site/`](site) | App trên điện thoại | ✅ |
-| [`netlify/functions/`](netlify/functions) | `chat.mjs` nối Gemini · `xem.mjs` cầu xem bản nháp | ✅ |
+| [`netlify/functions/`](netlify/functions) | `chat.mjs` nối Gemini · **`chi-dan.mjs` lời dặn cho trợ lý chat** · `xem.mjs` cầu xem bản nháp | ✅ |
 | [`supabase/`](supabase) | 3 file SQL dựng database · `lich-su/` là các bản vá cũ | ✅ |
 | `_brief/` `_nhap/` `_thu/` `nhat-ky/` `sao-luu/` | Chỗ chạy, không phải mã nguồn | ❌ |
 
