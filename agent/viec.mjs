@@ -75,9 +75,11 @@ async function moPhien() {
 // In ra ĐÚNG khuôn mà `phieu` nhận, nên nối thẳng được:
 //   node agent/viec.mjs ke-hoach | node agent/viec.mjs phieu
 //
-//   thu   2…7 = T2…T7, 8 = CN. Trống = ngày nào trong tuần cũng lấy.
-//   tuan  Thứ Hai của tuần đó. TRỐNG = lặp mọi tuần.
-//   bat   false = tạm ngưng, không lấy.
+// Ba cách xếp một việc, xét theo ĐÚNG thứ tự này:
+//   ngay có            → chỉ đúng ngày đó, một lần. Sếp chọn trên lịch.
+//   ngay trống, thu có → thứ đó, lặp mọi tuần (2…7 = T2…T7, 8 = CN)
+//   cả hai trống       → ngày nào cũng lên bảng
+//   tuan  thu hẹp thêm về đúng một tuần · bat false = tạm ngưng, không lấy.
 // ══════════════════════════════════════════════════════════════════════════
 const thứCủa = (d) => (d.getDay() === 0 ? 8 : d.getDay() + 1);      // 2=T2 … 7=T7, 8=CN
 function thứHaiCủaTuần(d) {
@@ -99,6 +101,12 @@ async function keHoach() {
   const bỏQua = [];
   const hômNayLàm = cả.filter(k => {
     if (!k.bat)                            { bỏQua.push({ id: k.id, viec: k.viec, lý_do: 'đang tạm ngưng' }); return false; }
+    // Ngày cụ thể thì CHỈ xét ngày — không ngó tới thu/tuan nữa, kẻo một dòng vừa có
+    // ngày vừa có thứ lại bị loại oan.
+    if (k.ngay) {
+      if (k.ngay !== ngày) { bỏQua.push({ id: k.id, viec: k.viec, lý_do: `xếp vào ngày ${k.ngay}` }); return false; }
+      return true;
+    }
     if (k.thu != null && k.thu !== thứ)    { bỏQua.push({ id: k.id, viec: k.viec, lý_do: `xếp vào thứ ${k.thu}` }); return false; }
     if (k.tuan && k.tuan !== tuần)         { bỏQua.push({ id: k.id, viec: k.viec, lý_do: `của tuần ${k.tuan}` }); return false; }
     // ĐÃ LẬP PHIẾU RỒI THÌ THÔI. Mã việc suy ra từ mã kế hoạch + ngày, mà `phieu` ghi

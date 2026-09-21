@@ -53,15 +53,18 @@ create table if not exists food_db (
 -- PHÒNG RỒI TỰ NGHĨ RA VIỆC — chỗ duy nhất agent được phán đoán tự do, và cũng là
 -- chỗ dễ sai nhất. Nay nó chỉ còn chép.
 --
---   thu   2…7 = Thứ Hai…Thứ Bảy, 8 = Chủ nhật. Để TRỐNG = ngày nào trong tuần cũng được.
---   tuan  ngày Thứ Hai của tuần đó. Để TRỐNG = LẶP MỌI TUẦN — đây là cột quan trọng
---         nhất của bảng: việc lặp theo ngày thì ghi một lần, tuần nào cũng tự lên bảng.
+-- Ba cách xếp một việc, xét theo đúng thứ tự này:
+--   ngay có            → CHỈ đúng ngày đó, một lần. Sếp chọn trên lịch.
+--   ngay trống, thu có → thứ đó, LẶP MỌI TUẦN (2…7 = T2…T7, 8 = CN)
+--   cả hai trống       → ngày nào cũng lên bảng
+--   tuan  giới hạn thêm về đúng một tuần (ngày Thứ Hai của tuần đó)
 --   bat   tạm ngưng một việc mà không phải xoá nó đi.
 create table if not exists ke_hoach (
   id       text primary key,
   mang     text not null,
   viec     text not null,
   skill    text not null,
+  ngay     date,
   thu      smallint check (thu between 2 and 8),
   tuan     date,
   ghi_chu  text,
@@ -70,6 +73,7 @@ create table if not exists ke_hoach (
   tao_luc  timestamptz not null default now()
 );
 create index if not exists ke_hoach_dang_bat_idx on ke_hoach (mang, thu) where bat;
+create index if not exists ke_hoach_theo_ngay_idx on ke_hoach (ngay) where bat and ngay is not null;
 
 
 -- 4 · VIỆC ----------------------------------------------------

@@ -119,7 +119,41 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
 .st-b .hd small{font-size:11.5px; color:var(--mut); font-weight:700; margin-left:5px}
 .st-b .bd{display:grid; gap:7px; margin-top:4px}
 .st-b.cho .bd{opacity:.45}
-.kh-go{display:grid; grid-template-columns:auto minmax(0,1fr) auto auto; gap:8px; align-items:center;
+/* nút icon lịch trong hàng gõ */
+.kh-go .ngay{flex:0 0 auto; border:1px solid var(--line2); background:var(--bg2); color:var(--tx);
+  font:inherit; font-size:12px; font-weight:800; border-radius:9px; padding:6px 9px; cursor:pointer;
+  display:flex; align-items:center; gap:5px; white-space:nowrap}
+.kh-go .ngay svg{width:14px; height:14px; flex:none; fill:none; stroke:currentColor;
+  stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round}
+.kh-go .ngay.co{border-color:var(--ok); color:var(--ok)}
+.kh-go .ngay:active{transform:scale(.95)}
+
+/* tấm lịch trượt lên từ đáy */
+.lop{position:absolute; inset:0; z-index:40; background:rgba(4,8,14,.62);
+  display:flex; flex-direction:column; justify-content:flex-end; animation:hienlop .18s ease-out}
+@keyframes hienlop{from{opacity:0}to{opacity:1}}
+.tam{background:var(--panel2); border-top:1px solid var(--line2); border-radius:20px 20px 0 0;
+  padding:10px 14px calc(16px + var(--sab)); animation:truotlen .24s cubic-bezier(.2,.9,.3,1)}
+@keyframes truotlen{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.tam .keo{width:36px; height:4px; border-radius:2px; background:var(--line2); margin:0 auto 12px}
+.lich .dau{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px}
+.lich .dau b{font-size:15px; font-weight:900}
+.lich .dau button{border:0; background:transparent; color:var(--mut); font:inherit; font-size:21px;
+  font-weight:700; padding:2px 12px; cursor:pointer; line-height:1; border-radius:8px}
+.lich .dau button:active{background:var(--bg2)}
+.lich table{width:100%; border-collapse:collapse}
+.lich th{font-size:10px; font-weight:800; color:var(--dim); padding-bottom:6px; text-transform:uppercase}
+.lich td{text-align:center; padding:1.5px}
+.lich .o{width:100%; aspect-ratio:1; border:0; background:transparent; border-radius:10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  font:inherit; font-size:13px; font-weight:700; color:var(--tx); cursor:pointer; padding:0}
+.lich .o.mo{color:var(--dim)}
+.lich .o.nay{outline:1.5px solid var(--mut); outline-offset:-1.5px}
+.lich .o.chon{background:var(--ok); color:#052015; font-weight:900}
+.lich .o i{width:4px; height:4px; border-radius:50%; background:var(--mut)}
+.lich .o.chon i{background:#052015}
+.lich .o:disabled{opacity:.28; cursor:default}
+.kh-go{display:grid; grid-template-columns:auto minmax(0,1fr) auto auto; gap:7px; align-items:center;
   background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:10px 11px; margin:2px 0 10px}
 .kh-go input{min-width:0; background:transparent; border:0; color:var(--tx); font:inherit;
   font-size:14.5px; font-weight:600; padding:2px 0; outline:none}
@@ -490,6 +524,7 @@ const SEED=()=>({
   chatMo:false, chatBan:false, chatTin:[], chatNhap:'', nghe:false, doc:true, chinhBar:false,
   nguon:'mau', dangTai:false, emailGui:'', dangNhapXong:false, maNhap:'',
   kehoach:[], khNhap:'', khMang:null, khThu:null, khLoc:null, khXoa:null,
+  khNgay:null, lichMo:false, lichThang:null,
   tasks:[
     {id:'t-0147',mang:'elearn',ngay:'2026-09-18',han:'14:00 hôm nay',lan:0,
      tieu_de:'Fix bug #13 — khoảng cách câu hỏi khi xem lại quiz',
@@ -1099,8 +1134,6 @@ async function xacNhanMa(){
 /* ══════════ HÀNH ĐỘNG · KẾ HOẠCH ══════════
    Ghi thẳng lên Supabase rồi mới vẽ lại. Hỏng thì báo và KHÔNG đổi màn hình — đừng để
    app hiện một đằng database một nẻo. */
-const THU_VONG=[null,2,3,4,5,6,7,8];
-
 function khLuuNhap(){ const o=document.getElementById('khIn'); if(o) S.khNhap=o.value; }
 
 async function khThem(){
@@ -1112,17 +1145,20 @@ async function khThem(){
   const skill=cauHinh[m]?.skill;
   if(!skill){ toast('Mảng này chưa gắn Skill nào',true); return; }
   try{
-    const ra=await NG().themKeHoach({mang:m, viec:ten, skill, thu:S.khThu, tuan:null,
-      thu_tu:S.kehoach.length});
+    const ra=await NG().themKeHoach({mang:m, viec:ten, skill,
+      ngay:S.khNgay, thu:null, tuan:null, thu_tu:S.kehoach.length});
     S.kehoach=[...S.kehoach,ra].sort(sxKeHoach);
     S.khNhap='';
     render();
     document.getElementById('khIn')?.focus();
-    toast(`Đã thêm · ${S.khThu?TEN_THU[S.khThu]:'mọi ngày'}, lặp mọi tuần`);
+    toast(S.khNgay?`Đã thêm · ${ngayDoc(S.khNgay)}`:'Đã thêm · ngày nào cũng lên bảng');
   }catch(e){ toast('Không ghi được: '+e.message,true); }
 }
 
-const sxKeHoach=(a,b)=>(a.thu??99)-(b.thu??99)||(a.thu_tu??0)-(b.thu_tu??0);
+/* Việc không gắn ngày (lặp) đứng trước, rồi tới việc theo ngày, sớm trước muộn sau. */
+const sxKeHoach=(a,b)=>
+  (a.ngay?1:0)-(b.ngay?1:0) || String(a.ngay||'').localeCompare(String(b.ngay||''))
+  || (a.thu??99)-(b.thu??99) || (a.thu_tu??0)-(b.thu_tu??0);
 
 async function khBat(id){
   const k=S.kehoach.find(x=>x.id===id); if(!k) return;
@@ -1142,6 +1178,72 @@ async function khXoa(id){
     await NG().xoaKeHoach(id);
     S.kehoach=S.kehoach.filter(x=>x.id!==id); S.khXoa=null; render(); toast('Đã xoá');
   }catch(e){ toast('Không xoá được: '+e.message,true); }
+}
+
+
+/* ══════════ LỊCH CHỌN NGÀY ══════════
+   Chỉ bật lên khi sếp bấm icon lịch trong hàng gõ — bản B sếp chọn. Danh sách giữ
+   trọn màn hình, lịch chỉ xuất hiện đúng lúc cần. */
+const THANG_TEN=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
+                 'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+const ngayISO=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const homNay =()=>ngayISO(new Date());
+/* Hiện cho người đọc: "T5 24/09", hoặc "Hôm nay" / "Mai" cho hai ngày gần nhất. */
+function ngayDoc(iso){
+  if(!iso) return 'Mọi ngày';
+  const h=homNay(); if(iso===h) return 'Hôm nay';
+  const mai=new Date(); mai.setDate(mai.getDate()+1);
+  if(iso===ngayISO(mai)) return 'Mai';
+  const d=new Date(iso+'T00:00:00');
+  return `${['CN','T2','T3','T4','T5','T6','T7'][d.getDay()]} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function veLich(){
+  const moc=S.lichThang?new Date(S.lichThang+'-01T00:00:00'):new Date();
+  const nam=moc.getFullYear(), thang=moc.getMonth();
+  const dau=new Date(nam,thang,1), soNgay=new Date(nam,thang+1,0).getDate();
+  const lui=(dau.getDay()+6)%7;                       // Thứ Hai đứng đầu tuần
+  const h=homNay();
+  // ngày nào đã có việc → chấm nhỏ dưới số
+  const coViec=new Set(S.kehoach.filter(k=>k.ngay).map(k=>k.ngay));
+
+  let o=[];
+  for(let i=0;i<lui;i++) o.push(null);
+  for(let d=1;d<=soNgay;d++) o.push(ngayISO(new Date(nam,thang,d)));
+  while(o.length%7) o.push(null);
+
+  const hang=[];
+  for(let i=0;i<o.length;i+=7) hang.push(o.slice(i,i+7));
+
+  return `<div class="lich">
+    <div class="dau">
+      <button data-lichthang="-1" aria-label="Tháng trước">‹</button>
+      <b>${THANG_TEN[thang]} · ${nam}</b>
+      <button data-lichthang="1" aria-label="Tháng sau">›</button>
+    </div>
+    <table><tr>${['T2','T3','T4','T5','T6','T7','CN'].map(t=>`<th>${t}</th>`).join('')}</tr>
+    ${hang.map(r=>`<tr>${r.map(iso=>{
+      if(!iso) return '<td></td>';
+      const ngay=+iso.slice(8);
+      // Ngày đã qua thì khoá: xếp việc vào quá khứ chỉ tạo ra một dòng không bao giờ
+      // tới lượt, mà sếp lại tưởng đã đặt xong.
+      const qua = iso < h;
+      const cls=[iso===h?'nay':'', iso===S.khNgay?'chon':'', qua?'mo':''].filter(Boolean).join(' ');
+      return `<td><button class="o ${cls}" ${qua?'disabled':`data-chonngay="${iso}"`}>${ngay}${
+        coViec.has(iso)?'<i></i>':''}</button></td>`;
+    }).join('')}</tr>`).join('')}
+    </table></div>`;
+}
+
+function tamLich(){
+  if(!S.lichMo) return '';
+  return `<div class="lop"><div class="tam">
+    <div class="keo"></div>
+    ${veLich()}
+    <div class="btnrow" style="margin-top:12px">
+      <button class="btn gh" data-chonngay="">Mọi ngày</button>
+      <button class="btn pri" data-dongtam="1">${S.khNgay?'Chọn '+ngayDoc(S.khNgay):'Xong'}</button>
+    </div></div></div>`;
 }
 
 /* ══════════ MÀN KẾ HOẠCH TUẦN ══════════
@@ -1168,8 +1270,8 @@ function manKeHoach(){
       <span class="dot" style="background:${N.c}; box-shadow:0 0 7px ${N.c}"></span>
       <span><span class="ti">${esc(k.viec)}</span>
         <span class="du">${TEN[k.mang]||k.mang}${k.bat?'':' · tạm ngưng'}</span></span>
-      <span class="thu">${k.thu?TEN_THU[k.thu]:'mọi ngày'}</span>
-      ${k.tuan?'':'<span class="lap">lặp</span>'}
+      <span class="thu">${k.ngay?ngayDoc(k.ngay):(k.thu?TEN_THU[k.thu]:'mọi ngày')}</span>
+      ${k.ngay?'':'<span class="lap">lặp</span>'}
       <button class="xoa ${hoi?'hoi':''}" data-khxoa="${k.id}"
         aria-label="Xoá việc này">${hoi?'Xoá?':'×'}</button></div>`;
   };
@@ -1182,7 +1284,9 @@ function manKeHoach(){
         <button class="pick" data-khmang="1" style="color:${(NEON[S.khMang]||NEON.lab).c}"
           >${S.khMang?TEN[S.khMang]:'—'}</button>
         <input id="khIn" placeholder="Việc mới…" value="${esc(S.khNhap)}" autocomplete="off">
-        <button class="pick" data-khthu="1">${S.khThu?TEN_THU[S.khThu]:'mọi ngày'}</button>
+        <button class="ngay ${S.khNgay?'co':''}" data-molich="1" aria-label="Chọn ngày">
+          <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3.2"/>
+            <path d="M3.5 9.5h17M8 3.5v3M16 3.5v3"/></svg>${ngayDoc(S.khNgay)}</button>
         <button class="gui" aria-label="Thêm việc" data-khthem="1">
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
       </div>
@@ -1192,6 +1296,7 @@ function manKeHoach(){
         ${bat.map(m=>`<button class="${loc===m?'on':''}" data-khloc="${m}">${TEN[m]}</button>`).join('')}
       </div>`:''}
 
+      ${tamLich()}
       ${ds.length?ds.map(dong).join('')
         :`<div class="empty"><b>Chưa có việc nào</b>
           <p>Gõ vào ô trên rồi bấm <b>+</b>. Chạm nút thứ để chọn ngày — để <b>mọi ngày</b>
@@ -1722,9 +1827,27 @@ document.getElementById('dev').addEventListener('click',e=>{
   if(kmg){ khLuuNhap(); const b=MANG_BAT();
     S.khMang=b[(b.indexOf(S.khMang)+1)%(b.length||1)]??null; render();
     document.getElementById('khIn')?.focus(); return; }
-  const kth=e.target.closest('[data-khthu]');
-  if(kth){ khLuuNhap(); S.khThu=THU_VONG[(THU_VONG.indexOf(S.khThu)+1)%THU_VONG.length]; render();
+  if(e.target.closest('[data-molich]')){
+    khLuuNhap();
+    S.lichThang=(S.khNgay||homNay()).slice(0,7);
+    S.lichMo=true; render(); return; }
+  const lt=e.target.closest('[data-lichthang]');
+  if(lt){
+    const [n,t]=S.lichThang.split('-').map(Number);
+    const d=new Date(n, t-1+ +lt.dataset.lichthang, 1);
+    S.lichThang=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    render(); return; }
+  const cn=e.target.closest('[data-chonngay]');
+  if(cn){ S.khNgay=cn.dataset.chonngay||null; S.lichMo=false; render();
     document.getElementById('khIn')?.focus(); return; }
+  if(S.lichMo){
+    // Nút Xong thì đóng. Chạm nền tối (ngoài tấm) thì đóng. Chạm trong tấm thì thôi,
+    // đừng để rơi xuống các nhánh phía dưới.
+    if(e.target.closest('[data-dongtam]') || !e.target.closest('.tam')){
+      S.lichMo=false; render(); return;
+    }
+    return;
+  }
   const klc=e.target.closest('[data-khloc]');
   if(klc){ khLuuNhap(); S.khLoc=klc.dataset.khloc||null; render(); return; }
   const kx=e.target.closest('[data-khxoa]');
