@@ -1043,6 +1043,20 @@ async function guiMa(){
   }catch(e){ toast('Không gửi được: '+e.message,true); }
 }
 
+/* Chép mã: dùng Clipboard API, có đường lui cho trình duyệt cũ. KHÔNG in mã ra
+   console hay gửi đi đâu — nó là chìa khoá vào dữ liệu của sếp. */
+async function chepMa(){
+  const o=document.getElementById('fMaCho'), v=(o?.value||'').trim();
+  if(!v){ toast('Chưa có mã — Safari này chưa đăng nhập',true); return; }
+  try{ await navigator.clipboard.writeText(v); toast('Đã chép · mở app rồi dán vào'); }
+  catch{
+    o.removeAttribute('readonly'); o.focus(); o.select();
+    const ok=(()=>{ try{ return document.execCommand('copy'); }catch{ return false; } })();
+    o.setAttribute('readonly','');
+    toast(ok?'Đã chép · mở app rồi dán vào':'Chạm giữ ô mã rồi chọn Sao chép',!ok);
+  }
+}
+
 async function xacNhanMa(){
   const o=document.getElementById('fMa'), val=(o?.value||S.maNhap||'').trim();
   if(!val){ o?.focus(); toast('Dán link từ email vào ô này',true); return; }
@@ -1516,41 +1530,71 @@ function bangChoNguon(){
       <button class="btn gh" data-dangnhap="1">Đăng nhập để dùng dữ liệu thật</button></div>`:''}</div>`;
 }
 
-/* ĐĂNG NHẬP
-   iOS cho app ngoài màn hình chính MỘT KHO LƯU TRỮ RIÊNG, tách hẳn Safari. Bấm link
-   trong email thì link mở bằng Safari, token rơi vào kho của Safari — app ngoài màn
-   hình chính không bao giờ thấy.
+/* ĐĂNG NHẬP — hai vai, tuỳ app đang mở ở đâu.
+   Safari đã đăng nhập  → PHÁT mã chuyển phiên.
+   App ngoài màn hình chính → NHẬN mã đó.
 
-   Cách vòng qua: CHÉP link rồi DÁN vào app. Link mang sẵn token, app tự đổi lấy phiên.
-   Không phải đụng gì tới Supabase — gói Free không cho sửa mẫu email nên không có
-   cách nào bắt nó in mã 6 số ra. */
+   Không dùng link email cho app nữa: Gmail tự quét và bấm thử link trong thư, nên
+   token một-lần bị đốt trước khi sếp chạm vào — bấm lần nào cũng ra otp_expired. */
 function manDangNhap(){
-  const app=ngoaiManHinh();
+  const app=ngoaiManHinh(), daVao=NG()?.daDangNhap?.();
+
+  // ── Safari đã đăng nhập: phát mã cho app ──
+  if(daVao&&!app){
+    const ma=NG().maChuyen();
+    return {back:'phong',head:`<h1>Chuyển sang app</h1>`,
+      body:`<div class="fld okb"><div class="lb">Safari này đã đăng nhập</div>
+          <div class="tx" style="font-size:13.5px;color:var(--mut);line-height:1.55">
+            Chép mã dưới đây, mở app ngoài màn hình chính rồi dán vào. App sẽ vào thẳng,
+            không cần email.</div></div>
+
+        <div class="fld hi"><div class="lb">Mã chuyển phiên</div>
+          <textarea id="fMaCho" rows="3" readonly
+            style="font-size:12px;word-break:break-all">${esc(ma||'')}</textarea></div>
+        <div class="btnrow"><button class="btn pri" data-chepma="1">Sao chép mã</button></div>
+
+        <div class="fld"><div class="tx" style="font-size:13px;color:var(--mut);line-height:1.55">
+          Mã này là chìa khoá vào dữ liệu của bạn — <b>đừng gửi cho ai</b>.
+          Dùng xong nó vẫn còn giá trị, chép một lần là đủ.</div></div>
+
+        <div class="btnrow" style="margin-top:auto">
+          <button class="btn no" data-dangxuat="1">Đăng xuất khỏi Safari này</button></div>`};
+  }
+
+  // ── chưa đăng nhập, hoặc đang ở trong app: nhận mã / xin link ──
   return {back:'phong',head:`<h1>Đăng nhập</h1>`,
-    body:`<div class="fld"><div class="lb">1 · Email chủ nhân</div>
-        <input id="fMail" type="email" inputmode="email" autocomplete="email"
-          placeholder="ban@gmail.com" value="${esc(S.emailGui||'')}"></div>
+    body:`${app?`<div class="fld hi"><div class="lb">1 · Dán mã chuyển lấy từ Safari</div>
+          <textarea id="fMa" rows="3" placeholder="VP1.…"
+            style="font-size:12px;word-break:break-all">${esc(S.maNhap||'')}</textarea></div>
+        <div class="btnrow"><button class="btn pri" data-xacnhan="1">Vào app</button></div>
 
-      <div class="btnrow"><button class="btn ${S.dangNhapXong?'gh':'pri'}" data-guima="1">
-        ${S.dangNhapXong?'Gửi link mới':'Gửi link vào email'}</button></div>
+        <div class="fld"><div class="tx" style="font-size:13px;color:var(--mut);line-height:1.55">
+          <b style="color:var(--wait)">Lấy mã ở đâu:</b> mở
+          <b>dev--courageous-sprite-17c1ff.netlify.app</b> bằng Safari, đăng nhập bằng link
+          email như mọi khi, rồi vào lại màn này — Safari sẽ hiện mã để chép.
+          <br><br>Làm một lần thôi. Vào được rồi thì app nhớ, lần sau mở là chạy luôn.
+          <br><br>Không dùng link email thẳng vào đây được: Gmail tự bấm thử link trong thư
+          nên link cháy trước khi bạn chạm vào.</div></div>`
+      :`<div class="fld"><div class="lb">Email chủ nhân</div>
+          <input id="fMail" type="email" inputmode="email" autocomplete="email"
+            placeholder="ban@gmail.com" value="${esc(S.emailGui||'')}"></div>
 
-      ${S.dangNhapXong?`
-        <div class="fld"><div class="lb">2 · Mở Mail, CHẠM GIỮ link "Sign in" → Sao chép liên kết</div>
-          <div class="tx" style="font-size:13px;color:var(--mut);line-height:1.5">
-            Chạm giữ, đừng bấm thường — bấm thường là nó mở Safari.</div></div>
+        <div class="btnrow"><button class="btn pri" data-guilink="1">
+          ${S.dangNhapXong?'Gửi lại link':'Gửi link vào email'}</button></div>
 
-        <div class="fld hi"><div class="lb">3 · Dán link vào đây</div>
-          <textarea id="fMa" rows="3" inputmode="url" placeholder="https://…supabase.co/auth/v1/verify?token=…"
-            style="font-size:13px;word-break:break-all">${esc(S.maNhap||'')}</textarea></div>
-        <div class="btnrow"><button class="btn pri" data-xacnhan="1">Vào app</button></div>`:''}
+        ${S.dangNhapXong?`<div class="fld okb"><div class="tx">Đã gửi tới ${esc(S.emailGui)}.
+          Mở email rồi bấm link — mở ngay trong Safari này.</div></div>`:''}
 
-      <div class="fld"><div class="tx" style="font-size:13px;color:var(--mut);line-height:1.55">
-        ${app?'<b style="color:var(--wait)">Bạn đang mở app từ màn hình chính.</b> Phải dán link — bấm thẳng link trong email sẽ nhảy sang Safari chứ không vào đây.'
-             :'Đang mở trong Safari thì bấm thẳng link trong email cũng được. Dán link là cách dùng cho app ngoài màn hình chính.'}
-        <br><br>Làm một lần thôi. Vào được rồi thì app nhớ, lần sau mở là chạy luôn.
-        <br><br>Chỉ email chủ nhân đọc được dữ liệu — email khác vào cũng thấy trống, RLS chặn.</div></div>`};
+        <div class="fld"><div class="tx" style="font-size:13px;color:var(--mut);line-height:1.55">
+          Vào được rồi thì quay lại màn này, Safari sẽ hiện <b>mã chuyển</b> để mang sang
+          app ngoài màn hình chính.
+          <br><br>Chỉ email chủ nhân đọc được dữ liệu — email khác vào cũng thấy trống, RLS chặn.</div></div>
+
+        <div class="fld"><div class="lb">Hoặc dán mã chuyển</div>
+          <textarea id="fMa" rows="2" placeholder="VP1.…"
+            style="font-size:12px;word-break:break-all">${esc(S.maNhap||'')}</textarea></div>
+        <div class="btnrow"><button class="btn gh" data-xacnhan="1">Vào bằng mã</button></div>`}`};
 }
-
 
 async function taiTuNguon(){
   const n=NG(); if(!n) return;
@@ -1604,6 +1648,10 @@ document.getElementById('dev').addEventListener('click',e=>{
     const a=document.getElementById('fTitle'),b=document.getElementById('fNote');
     if(a) t.tieu_de=a.value.trim()||t.tieu_de; if(b) t.phan_hoi=b.value;};
   if(e.target.closest('[data-guima]')){ guiMa(); return; }
+  if(e.target.closest('[data-chepma]')){ chepMa(); return; }
+  if(e.target.closest('[data-dangxuat]')){
+    NG().dangXuat(); S.nguon=NG().cheDo; S.tasks=[]; S.kehoach=[]; render();
+    toast('Đã đăng xuất khỏi Safari này'); return; }
   if(e.target.closest('[data-xacnhan]')){ xacNhanMa(); return; }
 
   /* ── kế hoạch tuần ── */

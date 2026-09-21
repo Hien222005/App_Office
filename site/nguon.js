@@ -46,14 +46,17 @@
     return text ? JSON.parse(text) : null;
   }
 
-  async function làmMớiPhiên(refresh) {
+  // `xoáNếuHỏng`: chỉ ĐÚNG khi đây là phiên đang lưu và nó đã chết — xoá cho sạch.
+  // Khi chuỗi refresh do NGƯỜI GÕ VÀO (mã chuyển) thì tuyệt đối KHÔNG xoá: gõ nhầm một
+  // chữ mà bị đăng xuất khỏi phiên đang dùng tốt là mất dữ liệu của người ta.
+  async function làmMớiPhiên(refresh, xoáNếuHỏng = true) {
     try {
       const r = await fetch(`${C.url}/auth/v1/token?grant_type=refresh_token`, {
         method: 'POST',
         headers: { apikey: C.anon, 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: refresh }),
       });
-      if (!r.ok) { xoáPhiên(); return false; }
+      if (!r.ok) { if (xoáNếuHỏng) xoáPhiên(); return false; }
       const d = await r.json();
       lưuPhiên(d);
       return true;
@@ -96,6 +99,21 @@
     const v = String(thô || '').trim();
     if (!v) throw new Error('Chưa dán gì vào ô này');
 
+    // 1 · mã chuyển phiên từ Safari — đổi thẳng ra phiên mới
+    if (v.startsWith('VP1.')) {
+      const ok = await làmMớiPhiên(v.slice(4).trim(), false);   // gõ nhầm KHÔNG được đăng xuất
+      if (!ok) throw new Error('Mã chuyển không còn dùng được. Sang Safari bấm "Lấy mã mới" rồi chép lại.');
+      return true;
+    }
+
+    // 2 · sếp dán nhầm địa chỉ Safari hiện ra SAU khi link đã hỏng — nói thẳng ra
+    if (/[#?&]error(_code)?=/.test(v)) {
+      const m = v.match(/error_code=([a-z_]+)/);
+      throw new Error(m?.[1] === 'otp_expired'
+        ? 'Đây là màn hình lỗi, không phải link đăng nhập. Link email đã bị Gmail bấm thử trước — dùng MÃ CHUYỂN từ Safari.'
+        : 'Đây là địa chỉ báo lỗi, không phải link đăng nhập.');
+    }
+
     let thân;
     if (/^\d{4,8}$/.test(v)) {
       // mã số — cần email đi kèm để Supabase biết hỏi ai
@@ -104,7 +122,7 @@
     } else {
       let q;
       try { q = new URL(v).searchParams; }
-      catch { throw new Error('Không đọc được. Dán CẢ link từ email, hoặc gõ mã 6 số.'); }
+      catch { throw new Error('Không đọc được. Dán mã chuyển lấy từ Safari (bắt đầu bằng VP1.).'); }
       const hash = q.get('token_hash') || q.get('token');
       if (!hash) throw new Error('Link này không có token. Chép lại link "Sign in" trong email.');
       // type trong link: magiclink · email · signup · recovery
@@ -135,6 +153,22 @@
     lưuPhiên({ access_token: q.get('access_token'), refresh_token: q.get('refresh_token') });
     history.replaceState(null, '', location.pathname);
     return true;
+  };
+
+  /* MÃ CHUYỂN PHIÊN — đường vào chắc chắn nhất cho app ngoài màn hình chính.
+   *
+   * Vì sao không dùng link email nữa: Gmail TỰ QUÉT và bấm thử link trong thư, nên
+   * token một-lần bị đốt trước khi sếp chạm vào. Bấm lần nào cũng ra otp_expired.
+   * Đo được trên máy sếp 21/09.
+   *
+   * Safari đã đăng nhập rồi thì trong đó có sẵn refresh_token — thứ đổi được ra phiên
+   * mới bất cứ lúc nào. Chép chuỗi đó sang app là xong, không qua email lần nào.
+   * Tiền tố VP1. để phân biệt dứt khoát với link và với mã số.
+   */
+  NG.maChuyen = () => {
+    const p = phiên();
+    if (!p?.refresh_token) return null;
+    return 'VP1.' + p.refresh_token;
   };
 
   NG.dangXuat = () => { xoáPhiên(); NG.cheDo = C.url && C.anon ? 'chua-dang-nhap' : 'mau'; };
