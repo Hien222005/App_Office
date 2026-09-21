@@ -15,7 +15,10 @@
 //   gemini-3.5-flash       9.503ms  quá hạn  gemini-2.5-flash(-lite)  ngừng cấp
 // Danh sách model Google cấp KHÔNG nói gì về tốc độ hay việc còn nhận người dùng mới
 // hay không — phải gọi thật mới biết. Thứ tự dưới đây xếp theo số đo, không theo phỏng đoán.
-const UU_TIEN = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.7-flash', 'gemini-3.5-flash'];
+// flash-lite đứng ĐẦU: nhanh gấp 5 lần, và hạn mức free rộng hơn hẳn. Đo 22/09 đúng
+// lúc thử: gemini-3.6-flash chạm trần "limit: 20" requests/ngày chỉ sau một buổi thử.
+// Việc ở đây là tóm tắt và đếm số, không cần model nặng.
+const UU_TIEN = ['gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-3.5-flash'];
 const MODEL_MAC_DINH = process.env.GEMINI_MODEL || UU_TIEN[0];
 const GOC = 'https://generativelanguage.googleapis.com/v1beta';
 
@@ -247,9 +250,12 @@ export default async (req) => {
     // Model vẫn NẰM TRONG danh sách Google cấp, nên chỉ nhìn danh sách thì tưởng còn
     // dùng được — chỉ lúc gọi thật mới lộ.
     const loiModel = d?.error?.message || '';
-    // "high demand" / 503 cũng phải đổi: model còn sống nhưng đang quá tải thì chờ
-    // cũng vô ích. Đo 22/09: gemini-3.8-flash trả lời "high demand" sau 454ms.
-    if (!r.ok && (/not found|NOT_FOUND|is not supported|no longer available|deprecat|high demand|overloaded|UNAVAILABLE/i.test(loiModel) || r.status === 503)) {
+    // Bốn kiểu đều phải đổi model, không phải chỉ model chết:
+    //   ngừng cấp · không tồn tại · đang quá tải (503) · HẾT HẠN MỨC (429)
+    // Hạn mức đếm THEO TỪNG MODEL, nên hết ở model này vẫn còn ở model khác — chờ
+    // thì vô ích mà đổi thì xong ngay. Đo 22/09: gemini-3.6-flash trần 20 lượt/ngày.
+    const doiDuoc = /not found|NOT_FOUND|is not supported|no longer available|deprecat|high demand|overloaded|UNAVAILABLE|quota|RESOURCE_EXHAUSTED/i;
+    if (!r.ok && (doiDuoc.test(loiModel) || r.status === 503 || r.status === 429)) {
       // Google thường chỉ luôn bản thay thế ngay trong câu lỗi. Dùng lời nó trước.
       const goiY = [...loiModel.matchAll(/models\/([\w.-]+)/g)].map((m) => m[1]).find((n) => n !== model);
       let thay = goiY;
@@ -273,7 +279,8 @@ export default async (req) => {
                '2. Khoá thuộc project chưa bật Generative Language API.\n' +
                '3. Khoá dán thiếu ký tự. Tạo khoá mới ở aistudio.google.com/apikey là nhanh nhất.';
       else if (/quota|RESOURCE_EXHAUSTED/i.test(goc))
-        them = '\n\nHết hạn mức free của hôm nay. Đợi sang ngày mới hoặc hỏi ít lại.';
+        them = '\n\nHết hạn mức free của hôm nay, và mọi model dự phòng cũng hết. '
+             + 'Hạn mức đếm theo từng model và reset theo ngày — mai hỏi lại là được.';
       return json({ loi: goc + them, model_da_goi: model }, 502);
     }
 
