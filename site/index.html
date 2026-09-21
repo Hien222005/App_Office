@@ -1550,11 +1550,22 @@ function veChuChat(tho){
 }
 
 function boiCanh(){
-  const v = t => ({id:t.id, mang:TEN[t.mang], tieu_de:t.tieu_de, trang_thai:t.tt,
+  // Mỗi việc gửi kèm CỜ, để Thư ký chọn đúng cụm tình trạng trong mẫu báo cáo
+  // thay vì tự suy từ tên nhãn.
+  const soNgayTre = t => {
+    if(!t.tre || !t.hanISO) return null;
+    return Math.max(1, Math.floor((Date.now()-new Date(t.hanISO))/864e5));
+  };
+  const v = t => ({mang:TEN[t.mang]||t.mang, tieu_de:t.tieu_de, trang_thai:t.tt,
+    tre_han_ngay: soNgayTre(t),
+    dang_hoi: dangVuong(t),
+    da_tra_lai_3_lan: canBanSua(t),
     ky_vong_ket_qua:t.ket||null,
     dan_do_cua_sep:t.phan_hoi||null});
   return {
     ngay: new Date().toLocaleDateString('vi-VN'),
+    // Thứ tự và danh sách mảng cho mẫu báo cáo: mảng không có việc vẫn phải hiện "· trống".
+    cac_mang_dang_bat: MANG.filter(([,x])=>!x.tat).map(([,x])=>x.ten),
     // Trợ lý không tự đếm được nếu không đưa số. Đếm sẵn ở đây, một nguồn duy nhất.
     dang_cho_sep: {
       tong: choSep(),

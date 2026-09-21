@@ -212,6 +212,7 @@
       link: t.link_san_pham || '',
       files: Array.isArray(t.file_da_doi) ? t.file_da_doi : [],   // máy lấy từ bản nháp
       han: t.han_chot ? gioNgan(t.han_chot) : 'chưa có hạn',
+      hanISO: t.han_chot || null,
       tre: !!t.han_chot && new Date(t.han_chot) < new Date() && !['da_ghi', 'bo'].includes(t.trang_thai),
       lan: t.so_lan_lam_lai || 0,
       brief: t.brief || null,
