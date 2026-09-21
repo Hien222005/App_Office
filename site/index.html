@@ -5,6 +5,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Văn phòng">
 <meta name="theme-color" content="#0C111C">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <title>Văn Phòng Agent</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -468,17 +471,18 @@ const ICO={
   khoa:'<rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
   mokhoa:'<rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 7.5-1.8"/>',
   // Mũi tên tròn — nút tải lại dữ liệu từ Supabase.
-  taiLai:'<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.6h-4.6"/>'
+  taiLai:'<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.6h-4.6"/>',
+  kh:'<rect x="3.5" y="5" width="17" height="15.5" rx="3.2"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3"/><path d="M7.5 13.5h3M7.5 17h6"/>'
 };
 const sv=(k,vb=24)=>`<svg viewBox="0 0 ${vb} ${vb}">${ICO[k]}</svg>`;
 /* thứ tự tab để glider biết trượt đi đâu */
-const TAB=['office','phong','food','ketqua'];
+const TAB=['office','phong','food','kehoach'];
 
 /* ══════════ DỮ LIỆU ══════════ */
 const SEED=()=>({
   man:'office',taskId:null,kieu:'kinh',locDe:null,mealId:null,dangChay:false,
   chatMo:false, chatBan:false, chatTin:[], chatNhap:'', nghe:false, doc:true, chinhBar:false,
-  nguon:'mau', dangTai:false, emailGui:'', dangNhapXong:false,
+  nguon:'mau', dangTai:false, emailGui:'', dangNhapXong:false, maNhap:'',
   kehoach:[], khNhap:'', khMang:null, khThu:null, khLoc:null, khXoa:null,
   tasks:[
     {id:'t-0147',mang:'elearn',ngay:'2026-09-18',han:'14:00 hôm nay',lan:0,
@@ -1004,14 +1008,52 @@ function manPhong(){
       ${!k&&canSua.length?`<div class="grp" style="color:var(--bad)">Cần bạn sửa
         <span>đã trả lại ${TRAN_LAM_LAI} lần</span></div>${canSua.map(t=>theTask(t,true)).join('')}`:''}
       ${dsPhong}
-      ${!k&&daGhiDs.length?`<div class="fld okb"><div class="lb">Đã ghi vào file gốc · ${daGhiDs.length} việc</div>
-        <div class="tx" style="font-size:13px">${daGhiDs.map(t=>'· '+t.tieu_de).join('<br>')}</div></div>`:''}
+      ${!k&&daGhiDs.length?`<button class="plink" data-go="ketqua" style="margin:4px 0">
+        <span><b>Đã ghi vào file gốc · ${daGhiDs.length} việc</b><span style="font-size:12.5px;color:var(--mut)">
+        ${daGhiDs.map(t=>t.tieu_de).join(' · ')}</span></span>
+        <span style="font-size:19px;color:var(--mut)">›</span></button>`:''}
       ${chotDuoc()?`<div class="btnrow" style="margin-top:auto;padding-top:6px">
         <button class="btn pri" data-chot="1">Chốt ngày · ghi ${choGhi()} việc vào file gốc</button></div>`
         :choSep()?`<div class="fld" style="margin-top:auto"><div class="tx" style="font-size:13.5px;color:var(--mut)">
           Còn ${choSep()} việc chờ bạn. Duyệt hết mới chốt ngày được.</div></div>`:''}`};
 }
 
+
+/* App đang chạy ngoài màn hình chính (standalone) hay trong Safari?
+   iOS dùng navigator.standalone; chuẩn chung dùng display-mode. */
+function ngoaiManHinh(){
+  try{ return window.navigator.standalone===true
+    || window.matchMedia('(display-mode: standalone)').matches; }catch{ return false; }
+}
+
+function layEmail(){
+  const o=document.getElementById('fMail'), v=(o?.value||S.emailGui||'').trim();
+  if(!/.+@.+\..+/.test(v)){ o?.focus(); toast('Gõ email chủ nhân vào ô này',true); return null; }
+  S.emailGui=v; return v;
+}
+
+async function guiMa(){
+  const v=layEmail(); if(!v) return;
+  const o=document.getElementById('fMa'); if(o) S.maNhap=o.value;
+  try{
+    await NG().guiLink(v);
+    S.dangNhapXong=true; render();
+    requestAnimationFrame(()=>document.getElementById('fMa')?.focus());
+    toast('Đã gửi mã · mở email lấy 6 số');
+  }catch(e){ toast('Không gửi được: '+e.message,true); }
+}
+
+async function xacNhanMa(){
+  const v=layEmail(); if(!v) return;
+  const o=document.getElementById('fMa'), ma=(o?.value||'').trim();
+  if(!/^\d{4,8}$/.test(ma)){ o?.focus(); toast('Gõ mã 6 số trong email vào ô này',true); return; }
+  try{
+    await NG().xacNhanMa(v,ma);
+    S.maNhap=''; S.dangNhapXong=false;
+    toast('Đã vào app');
+    go('phieu'); await taiTuNguon();
+  }catch(e){ toast(e.message,true); }
+}
 
 /* ══════════ HÀNH ĐỘNG · KẾ HOẠCH ══════════
    Ghi thẳng lên Supabase rồi mới vẽ lại. Hỏng thì báo và KHÔNG đổi màn hình — đừng để
@@ -1074,7 +1116,7 @@ function manKeHoach(){
   const loc=S.khLoc&&bat.includes(S.khLoc)?S.khLoc:null;
   const ds=S.kehoach.filter(k=>!loc||k.mang===loc);
 
-  if(S.nguon!=='that') return {back:'phieu',head:`<h1>Kế hoạch</h1>`,
+  if(S.nguon!=='that') return {head:`<h1>Kế hoạch</h1>`,
     body:`<div class="empty"><b>Cần đăng nhập</b><p>Kế hoạch tuần lưu trên Supabase.
       Đăng nhập rồi mới ghi được.</p>
       <div class="btnrow"><button class="btn pri" data-dangnhap="1">Đăng nhập</button></div></div>`};
@@ -1091,7 +1133,7 @@ function manKeHoach(){
         aria-label="Xoá việc này">${hoi?'Xoá?':'×'}</button></div>`;
   };
 
-  return {back:'phieu',
+  return {
     head:`<h1>Kế hoạch</h1><span class="sub">${S.kehoach.length} việc · tuần này</span>
       <button class="kh" data-tailai="1" aria-label="Cập nhật dữ liệu" title="Cập nhật">${sv('taiLai')}</button>`,
     body:`
@@ -1112,12 +1154,7 @@ function manKeHoach(){
         :`<div class="empty"><b>Chưa có việc nào</b>
           <p>Gõ vào ô trên rồi bấm <b>+</b>. Chạm nút thứ để chọn ngày — để <b>mọi ngày</b>
           thì hôm nào cũng lên bảng.</p></div>`}
-
-      <div class="fld" style="margin-top:auto"><div class="lb">Cách dùng</div>
-        <div class="tx" style="font-size:13px;color:var(--mut);line-height:1.55">
-        Chạm một dòng để <b>tạm ngưng</b> hoặc bật lại · chạm <b>×</b> hai lần để xoá.<br>
-        Nhãn <b>lặp</b> nghĩa là tuần nào việc đó cũng tự lên bảng.<br>
-        Sáng mai gõ <b>/report</b> trên Mac, Claude đọc đúng bảng này.</div></div>`};
+`};
 }
 
 /* Màn chi tiết một việc = dòng thời gian bốn bước, đúng bản đã chốt:
@@ -1412,7 +1449,6 @@ function thanhDuoi(){
   let cur=S.man;
   if(cur==='task') cur='phong';
   if(cur==='lab')  cur='phong';
-  if(cur==='kehoach') cur='phong';
   const i=Math.max(0,TAB.indexOf(cur));
   const cd=choSep(), sanSang=S.tasks.some(t=>t.tt==='da_chot');
 
@@ -1424,7 +1460,7 @@ function thanhDuoi(){
       ${tab('office','nha','Nhà',0)}
       ${tab('phong','viec','Việc',cd)}
       ${tab('food','an','Ăn',0)}
-      ${tab('ketqua','kq','Kết quả',0)}
+      ${tab('kehoach','kh','Kế hoạch',0)}
     </div>
     <button class="fab" data-chat="mo" aria-label="Mở chat">${sv('chat')}</button>
   </div>`;
@@ -1478,15 +1514,33 @@ function bangChoNguon(){
       <button class="btn gh" data-dangnhap="1">Đăng nhập để dùng dữ liệu thật</button></div>`:''}</div>`;
 }
 
+/* Hai đường vào, và MÃ là đường chính.
+   iOS cho app ngoài màn hình chính một kho lưu trữ riêng, tách hẳn Safari — nên
+   đăng nhập bằng link (luôn mở bằng Safari) thì không bao giờ vào được app đó.
+   Gõ mã 6 số thì không rời app lần nào. */
 function manDangNhap(){
+  const app=ngoaiManHinh();
   return {back:'phong',head:`<h1>Đăng nhập</h1>`,
     body:`<div class="fld"><div class="lb">Email chủ nhân</div>
-        <input id="fMail" type="email" inputmode="email" placeholder="ban@gmail.com" value="${S.emailGui||''}"></div>
-      <div class="fld"><div class="tx" style="font-size:13.5px;color:var(--mut)">
-        Supabase gửi một link vào email. Mở link trên chính điện thoại này là xong, không cần mật khẩu.
-        Chỉ email chủ nhân đọc được dữ liệu — các email khác bị RLS chặn.</div></div>
-      ${S.dangNhapXong?`<div class="fld okb"><div class="tx">Đã gửi link tới ${S.emailGui}. Mở email rồi bấm link.</div></div>`:''}
-      <div class="btnrow" style="margin-top:auto"><button class="btn pri" data-guilink="1">Gửi link vào email</button></div>`};
+        <input id="fMail" type="email" inputmode="email" autocomplete="email"
+          placeholder="ban@gmail.com" value="${esc(S.emailGui||'')}"></div>
+
+      <div class="btnrow"><button class="btn ${app?'gh':'pri'}" data-guima="1">
+        ${S.dangNhapXong?'Gửi lại mã':'Gửi mã vào email'}</button></div>
+
+      ${S.dangNhapXong?`<div class="fld hi"><div class="lb">Mã 6 số trong email</div>
+        <input id="fMa" type="text" inputmode="numeric" autocomplete="one-time-code"
+          maxlength="6" placeholder="123456" value="${esc(S.maNhap||'')}"
+          style="letter-spacing:.35em;font-size:21px;font-weight:900;text-align:center"></div>
+        <div class="btnrow"><button class="btn pri" data-xacnhan="1">Vào app</button></div>`:''}
+
+      <div class="fld"><div class="tx" style="font-size:13px;color:var(--mut);line-height:1.55">
+        ${app?'<b style="color:var(--wait)">Bạn đang mở app từ màn hình chính.</b> iOS cho app này một kho lưu trữ riêng, tách hẳn Safari — nên phải <b>gõ mã</b>, bấm link trong email sẽ nhảy sang Safari chứ không vào đây.'
+             :'Gõ mã 6 số là cách duy nhất đăng nhập được vào app ngoài màn hình chính. Bấm link trong email cũng được, nhưng chỉ dùng được trong Safari.'}
+        <br><br>Chỉ email chủ nhân đọc được dữ liệu — email khác vào cũng thấy trống, RLS chặn.</div></div>
+
+      ${app?'':`<div class="btnrow" style="margin-top:auto">
+        <button class="btn gh" data-guilink="1">Hoặc gửi link (chỉ Safari)</button></div>`}`};
 }
 
 async function taiTuNguon(){
@@ -1529,14 +1583,21 @@ function render(){
 /* ══════════ SỰ KIỆN ══════════ */
 document.getElementById('dev').addEventListener('input',e=>{
   if(e.target.id==='khIn') S.khNhap=e.target.value;   // giữ chữ, KHÔNG vẽ lại: vẽ lại là mất con trỏ
+  if(e.target.id==='fMa')  S.maNhap=e.target.value;
+  if(e.target.id==='fMail')S.emailGui=e.target.value;
 });
 document.getElementById('dev').addEventListener('keydown',e=>{
   if(e.target.id==='khIn'&&e.key==='Enter'){ e.preventDefault(); khThem(); }
+  if(e.target.id==='fMa'  &&e.key==='Enter'){ e.preventDefault(); xacNhanMa(); }
+  if(e.target.id==='fMail'&&e.key==='Enter'){ e.preventDefault(); guiMa(); }
 });
 document.getElementById('dev').addEventListener('click',e=>{
   const luu=()=>{const t=S.tasks.find(x=>x.id===S.taskId); if(!t) return;
     const a=document.getElementById('fTitle'),b=document.getElementById('fNote');
     if(a) t.tieu_de=a.value.trim()||t.tieu_de; if(b) t.phan_hoi=b.value;};
+  if(e.target.closest('[data-guima]')){ guiMa(); return; }
+  if(e.target.closest('[data-xacnhan]')){ xacNhanMa(); return; }
+
   /* ── kế hoạch tuần ── */
   if(e.target.closest('[data-khthem]')){ khThem(); return; }
   const kmg=e.target.closest('[data-khmang]');

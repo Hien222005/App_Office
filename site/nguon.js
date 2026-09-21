@@ -74,6 +74,28 @@
     }).then(async (r) => { if (!r.ok) throw new Error((await r.text()).slice(0, 200)); });
   };
 
+  /* Xác nhận bằng MÃ 6 SỐ trong email, không qua link.
+   *
+   * VÌ SAO CẦN: iOS cho app "Thêm vào màn hình chính" một KHO LƯU TRỮ RIÊNG, tách hẳn
+   * Safari. Phiên đăng nhập bên Safari không sang được. Mà magic link thì LUÔN mở bằng
+   * Safari — nên đăng nhập bằng link thì không đời nào vào được app ngoài màn hình chính.
+   *
+   * Mã 6 số gõ thẳng trong app, không rời app lần nào, nên kho nào cũng vào được.
+   */
+  NG.xacNhanMa = async (email, ma) => {
+    const r = await fetch(`${C.url}/auth/v1/verify`, {
+      method: 'POST',
+      headers: { apikey: C.anon, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, token: String(ma).trim(), type: 'email' }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.access_token) {
+      throw new Error(d.error_description || d.msg || d.message || 'Mã không đúng hoặc đã hết hạn');
+    }
+    lưuPhiên(d);
+    return true;
+  };
+
   // Link trong email trả token về ở phần sau dấu # của địa chỉ.
   NG.batTokenTuLink = () => {
     const h = location.hash.slice(1);
