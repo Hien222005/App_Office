@@ -27,6 +27,10 @@ Quy tắc trả lời:
 - Khi sếp hỏi thống kê, đếm từ dữ liệu và nói ra con số, đừng nói chung chung.
 - Câu trả lời có thể được ĐỌC TO lên, nên viết như nói: không markdown, không ký hiệu lạ.`;
 
+// Model tốt tìm được thì NHỚ LẠI trong suốt đời của instance. Netlify giữ ấm hàm giữa
+// các lần gọi, nên lần sau khỏi phải đốt một cuộc gọi vào model đã chết rồi mới đổi.
+let modelTot = null;
+
 const json = (d, s = 200) =>
   new Response(JSON.stringify(d), { status: s, headers: { 'Content-Type': 'application/json' } });
 
@@ -65,6 +69,35 @@ export default async (req) => {
   // Đặt TRƯỚC cổng chặn GET, để mở thẳng bằng trình duyệt là xem được.
   if (new URL(req.url).searchParams.get('chan_doan')) {
     if (!KEY) return json({ loi: 'Máy chủ chưa có GEMINI_API_KEY' }, 500);
+
+    // ?chan_doan=1&thu=<model>  → gọi thật một câu ngắn và BẤM GIỜ. Dùng để tìm model
+    // nào đủ nhanh, thay vì đoán. Nhiều model còn sống nhưng nghĩ quá lâu so với hạn
+    // 10 giây của cổng Netlify.
+    const thuModel = new URL(req.url).searchParams.get('thu');
+    if (thuModel) {
+      const t0 = Date.now();
+      try {
+        const r = await fetchCoHan(`${GOC}/models/${thuModel}:generateContent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': KEY },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: 'Trả lời đúng hai chữ: xin chào' }] }],
+            generationConfig: /^gemini-3/.test(thuModel)
+              ? { maxOutputTokens: 500, thinkingConfig: { thinkingLevel: 'LOW' } }
+              : { maxOutputTokens: 500 },
+          }),
+        }, 9500);
+        const d = await r.json();
+        return json({ model: thuModel, ms: Date.now() - t0, ok: r.ok,
+          tra_loi: d?.candidates?.[0]?.content?.parts?.map((x) => x.text).join('').trim() || null,
+          ly_do_dung: d?.candidates?.[0]?.finishReason || null,
+          loi: r.ok ? null : (d?.error?.message || '').slice(0, 220) });
+      } catch (e) {
+        return json({ model: thuModel, ms: Date.now() - t0, ok: false,
+          loi: e.name === 'AbortError' ? 'quá 9,5 giây không trả lời' : e.message });
+      }
+    }
+
     let ds = null, loiDs = null;
     try { ds = await hoiDanhSachModel(KEY, HAN_MS); }
     catch (e) { loiDs = e.name === 'AbortError' ? `quá ${HAN_MS}ms Google không trả lời` : e.message; }
@@ -134,7 +167,7 @@ export default async (req) => {
   }
 
   try {
-    let model = MODEL_MAC_DINH;
+    let model = modelTot || MODEL_MAC_DINH;
     let { r, d } = await goi(model);
 
     // Model chết thì TỰ ĐỔI, đừng bắt sếp vào Netlify sửa biến môi trường.
@@ -156,6 +189,7 @@ export default async (req) => {
       if (!thay) return json({ loi: `Model "${model}" không dùng được, mà cũng không tìm ra bản thay thế.` }, 502);
       model = thay;
       ({ r, d } = await goi(model));
+      if (r.ok) modelTot = model;        // nhớ lại, lần sau khỏi đốt một cuộc gọi vô ích
     }
 
     if (!r.ok) {
