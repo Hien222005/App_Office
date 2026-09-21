@@ -1,6 +1,11 @@
 ---
 name: soan-bai-lab
 description: Viết bản tóm tắt tài liệu Lab cho buổi dạy hôm sau. Dùng cho việc mảng lab.
+mang: lab
+ten_mang: Lab Coach
+thu_muc: $DIR_LAB
+tu_tao_thu_muc: true
+mau: '#22E5C4'
 ---
 
 # Soạn bài Lab Coach

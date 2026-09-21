@@ -21,6 +21,9 @@ const ID = 't-thu-1';
 
 rmSync(gốc, { recursive: true, force: true });
 rmSync(join(resolve(agent, '..', '_nhap'), ID), { recursive: true, force: true });
+// Phải dọn: soat-bao-cao.mjs đọc nhật ký của CẢ hôm qua lẫn hôm nay. Bản ghi còn sót từ
+// lần chạy hôm trước làm bốn ca "đáng lẽ trượt" lại qua — đo được ngày 21/09.
+rmSync(join(thử, 'nhat-ky'), { recursive: true, force: true });
 const ghi = (f, nd) => { mkdirSync(dirname(join(gốc, f)), { recursive: true }); writeFileSync(join(gốc, f), nd); };
 ghi('.gitignore', 'courses/\n*.zip\n');
 ghi('bugs-con-lai-can-fix-2026-08-28.md', '# Bug còn lại\n\n13. Câu hỏi sát nhau khi xem lại quiz\n');
@@ -45,7 +48,10 @@ mkdirSync(thử, { recursive: true });
 writeFileSync(fileBrief, JSON.stringify(brief, null, 2));
 
 // VP_NHAT_KY: script con ghi và đọc nhật ký trong thư mục thử, không đụng nhật ký thật.
-const môi = { ...process.env, DIR_ELEARNING: gốc, VP_NHAT_KY: join(thử, 'nhat-ky') };
+// VP_BAT_PHONG: mảng elearn đang TẠM DỪNG ngoài đời thật (agent/phong.mjs). Bài thử vẫn
+// phải diễn được trọn vòng trên nó, nên bật riêng đích danh mảng này cho bài thử.
+const môi = { ...process.env, DIR_ELEARNING: gốc, VP_NHAT_KY: join(thử, 'nhat-ky'),
+              VP_BAT_PHONG: 'elearn' };
 const chạy = (tệp, ...args) => execFileSync('node', [join(agent, tệp), ...args], { encoding: 'utf8', env: môi });
 const chạyCóLỗi = (tệp, ...args) => {
   try { return { ma: 0, ra: chạy(tệp, ...args), loi: '' }; }

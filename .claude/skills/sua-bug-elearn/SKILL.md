@@ -1,9 +1,22 @@
 ---
 name: sua-bug-elearn
-description: Sửa bug gói bài học trong thư mục Elearning rồi ghi lại vào file log bug. Dùng cho việc mảng elearn.
+description: Sửa bug khoá học E-learning. TẠM DỪNG 21/09, không nhận việc.
+mang: elearn
+ten_mang: E-learning
+thu_muc: $DIR_ELEARNING
+mau: '#7B61FF'
+tat: true
 ---
 
 # Sửa bug E-learning
+
+> ## ⛔ TẠM DỪNG — 21/09/2026
+> Không đề xuất, không nhận việc mảng `elearn`. Lý do: E-learning là cả một dự án lớn,
+> hệ thống chưa gánh được. Trước mắt tập trung việc nhỏ, lặp theo ngày.
+>
+> Việc E-learning đang dở trong database **vẫn nằm nguyên**, không mất.
+>
+> **Bật lại:** bỏ dòng `tat: true` ở frontmatter ngay trên đầu file này, rồi xoá khối này.
 
 ## Việc
 Đọc mục bug được giao trong file log, tái hiện lỗi, sửa trong bản nháp, mở lại trang

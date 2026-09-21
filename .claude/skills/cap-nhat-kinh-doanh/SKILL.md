@@ -1,6 +1,11 @@
 ---
 name: cap-nhat-kinh-doanh
 description: Nội dung và rà soát cho Fitness Tracker. ĐANG TẮT, chưa dùng được.
+mang: biz
+ten_mang: Kinh doanh
+thu_muc: $DIR_BIZ
+mau: '#FF4D6D'
+tat: true
 ---
 
 # Cập nhật Kinh doanh

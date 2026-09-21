@@ -1,6 +1,8 @@
-# Văn Phòng Agent · Giai đoạn 1
+# Văn Phòng Agent · database
 
-Chạy ba file theo **đúng thứ tự** trong Supabase → SQL Editor → New query.
+## Máy mới — chạy BA file, đúng thứ tự
+
+Supabase → SQL Editor → New query.
 
 | # | File | Trước khi chạy cần sửa gì |
 |---|------|---------------------------|
@@ -8,16 +10,25 @@ Chạy ba file theo **đúng thứ tự** trong Supabase → SQL Editor → New 
 | 2 | `rls.sql` | Thay `YOUR_EMAIL_HERE` bằng email đăng nhập của bạn. |
 | 3 | `seed_food.sql` | Bỏ comment 5 dòng cuối, điền mục tiêu kcal/protein thật. |
 
-## Các file đổi · chạy theo đúng thứ tự sau ba file trên
+Trước 21/09 phải chạy **bảy** file, trong đó `doi-3` và `doi-4` dựng view mà `doi-5` xoá
+ngay sau đó, còn `schema.sql` đọc lên thì thấy bộ nhãn tiếng Anh từ ba đời trước. Nay gộp
+hết vào `schema.sql`; các bản vá cũ chuyển sang [`lich-su/`](lich-su), chỉ để đọc lại.
 
-| # | File | Làm gì |
-|---|------|--------|
-| 4 | `doi-2-workflow.sql` | Bộ nhãn mới + cột `han_chot` `brief` `link_san_pham` `so_lan_lam_lai` |
-| 5 | `doi-3-gio-vn.sql` | Hàm `hom_nay_vn()` — ngày tính theo giờ Việt Nam |
-| 6 | `doi-4-dem-dung.sql` | Sửa cột `dang_lam` trong `v_tinh_trang` (view này bị bỏ ở doi-5) |
-| 7 | `doi-5-nhan-gon.sql` | **Rút nhãn 10 → 7 · bỏ cột `tin_cay` · bỏ 2 view không ai dùng** |
+## Database ĐANG CHẠY — còn một file phải chạy
 
-Chạy xong `doi-5` thì kiểm bằng câu này — ra đúng **bốn số `7 · 0 · 0 · 0`**:
+Project `dwissbrcqrbknaxniwhz` đang ở trạng thái `doi-5`. Để dùng được code từ 21/09:
+
+| Bước | Làm gì |
+|---|---|
+| 1 | `node agent/sao-luu.mjs` — **bắt buộc, chạy trước**, lúc `daily_report` hãy còn |
+| 2 | `doi-6-don-nen.sql` — bỏ ràng buộc `mang`, thêm `ke_hoach`, bỏ `daily_report`, dọn cột chết |
+| 3 | **chạy lại `rls.sql`** — bảng `ke_hoach` vừa tạo chưa có policy nào |
+
+> **Chưa chạy `doi-6` thì `/report` sẽ hỏng.** Hai chỗ: `agent_runs.phien` là `not null`
+> mà code mới không còn ghi cột đó, và `tasks.ngay` vẫn có khoá ngoại trỏ sang
+> `daily_report` mà code mới không còn tạo dòng ở đó. `/lam` và `/chot` không ảnh hưởng.
+
+## Kiểm bộ nhãn — ra đúng **bốn số `7 · 0 · 0 · 0`**:
 
 ```sql
 select
@@ -82,7 +93,8 @@ Khi deploy lên Netlify thì không dùng file `.env`: đặt `SUPABASE_URL` và
 
 ## Trạng thái hiện tại
 
-Ba file này **đã chạy xong** trên project `dwissbrcqrbknaxniwhz` ngày 13/09/2026.
+Database dựng ngày 13/09/2026 trên project `dwissbrcqrbknaxniwhz`, đã qua `doi-5`.
+**Chưa chạy `doi-6-don-nen.sql`** — xem mục trên.
 Trong database thật, `la_chu_nhan()` đang gắn với email đăng nhập thật —
 ở file này để `YOUR_EMAIL_HERE` cho khỏi lộ email ra repo.
 
