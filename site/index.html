@@ -438,13 +438,20 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
 .fab{flex:0 0 auto; width:52px; height:52px; border-radius:50%; display:flex;
   align-items:center; justify-content:center; position:relative}
 .fab:active{transform:scale(.93)}
-/* Robot Milo thay cho nút chat (22/09). Ảnh tĩnh hiện ngay; bản 3D (robot/mascot.js, 2 MB)
-   tải khi máy rảnh rồi thay vào chỗ này. Robot cao hơn thanh — nhô lên trên là cố ý. */
-.fab.robot, .bar .fab.robot{width:64px; height:64px; margin:-14px -4px 0 -2px; padding:0;
-  background:none !important; border:0 !important; box-shadow:none !important; border-radius:22px}
-.fab.robot img{width:84px; height:84px; object-fit:contain; margin-top:-16px; pointer-events:none;
-  filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
-robot-mascot.fab-3d{flex:0 0 auto; width:64px; height:64px; margin:-14px -4px 0 -2px}
+/* Robot Milo thay cho nút chat. Đứng GHIM ở góc phải, CHÂN CHẠM ĐÁY MÀN — không nằm
+   trong hàng của thanh tab; thanh chỉ chừa một khoảng trống (.cho-robot) để viên tab
+   không chui xuống dưới robot. Ảnh tĩnh hiện ngay; bản 3D (robot/mascot.js) tải khi máy
+   rảnh rồi thay vào đúng chỗ đó.
+   --robot-ha: khung vẽ 3D chừa khoảng trống dưới chân; kéo xuống đúng bấy nhiêu. */
+:root{--robot-ha:7px}     /* đo 23/09: khung 3D chừa 7,5px dưới chân khi đứng yên */
+.bar .cho-robot{flex:0 0 auto; width:62px; height:56px}
+.fab.robot, robot-mascot.fab-3d{position:fixed; z-index:31; bottom:0;
+  right:max(2px, calc((100vw - 480px) / 2 + 2px)); width:84px; height:84px}
+.fab.robot, .bar .fab.robot{padding:0; margin:0; background:none !important; border:0 !important;
+  box-shadow:none !important; border-radius:22px; display:block}
+.fab.robot img{width:84px; height:84px; object-fit:contain; pointer-events:none;
+  transform:translateY(7px)}      /* robot.png: chân ở 468/512 → trống 7px khi cao 84px */
+robot-mascot.fab-3d{transform:translateY(var(--robot-ha))}
 .fab svg{width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2.4;
   stroke-linecap:round; stroke-linejoin:round}
 .fab .noti{position:absolute; top:-3px; right:-3px; min-width:20px; height:20px; border-radius:10px;
@@ -1755,6 +1762,7 @@ function thanhDuoi(){
       ${tab('food','an','Ăn',0)}
       ${tab('kehoach','kh','Kế hoạch',0)}
     </div>
+    <span class="cho-robot" aria-hidden="true"></span>
     <button class="fab robot" data-chat="mo" aria-label="Mở trợ lý chat"><img src="robot/robot.png" alt=""></button>
   </div>`;
 }
@@ -2219,6 +2227,20 @@ function ganRobot(){
     requestAnimationFrame(()=>document.getElementById('cIn')?.focus());
   });
   nut.replaceWith(r);
+  r.viewer?.ready?.then(()=>setTimeout(dienTiep,3000));   // để nó vẫy chào xong đã
+}
+/* Diễn lần lượt mọi động tác rồi quay vòng — sếp muốn robot luôn cử động, không đứng
+   im chờ 20–30 giây như bản gốc. Đang mở chat hay app vào nền thì chờ. Thời lượng lấy
+   từ assets/manifest.json của robot-demo 2; cộng 1,2 giây đứng thở giữa hai động tác. */
+const DONG_TAC=[['hop',1.25],['dance',4.2],['wave',1.8],['celebrate',3.25],['idle_look',2.6],
+  ['thinking',2.6],['success',1.5],['sleep',5]];
+let dongTacSo=0;
+function dienTiep(){
+  const r=robot(); if(!r) return;
+  if(S.chatMo||document.hidden){ setTimeout(dienTiep,1500); return; }
+  const [ten,giay]=DONG_TAC[dongTacSo++ % DONG_TAC.length];
+  r.play?.(ten);
+  setTimeout(dienTiep,(giay+1.2)*1000);
 }
 function taiRobot(){
   if(customElements.get('robot-mascot')) return ganRobot();
