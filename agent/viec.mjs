@@ -7,7 +7,7 @@
 //   node viec.mjs lam  <id>                         đánh dấu đang làm
 //   node viec.mjs xong <id> "kỳ vọng kết quả"       soát · đẩy link · ghi kết quả
 //   node viec.mjs hoi  <id> "hỏi" "1" "2" "3"       chưa chắc thì hỏi, đừng đoán
-//   node viec.mjs tinh-trang [--ghi-danh-sach]      bảng số liệu, nguồn duy nhất
+//   node viec.mjs tinh-trang                        bảng số liệu, nguồn duy nhất
 //   node viec.mjs dong-phien <id> "tóm tắt"         đóng phiên ngày
 //
 // Gộp từ bảy file rời (mo-phien · doc-viec · ghi-phieu · ghi-ket-qua · hoi-sep ·
@@ -22,7 +22,7 @@ import {
   đượcChuyển, chạmTrần, cầnSếpSửa, đangVướng, agentNhậnĐược, vìSaoKhôngNhận,
   trễHạn, làViệcTồn,
 } from './nhan.mjs';
-import { PHÒNG, THƯ_MỤC_NHÁP, gốcCủaPhòng } from './phong.mjs';
+import { PHÒNG, gốcCủaPhòng } from './phong.mjs';
 import { phạmViTừSkill } from './pham-vi.mjs';
 import { đưaLên } from './dua-len.mjs';
 
@@ -39,7 +39,7 @@ const DÙNG = `Dùng: node viec.mjs <lệnh>
   lam  <id>                       đánh dấu đang làm
   xong <id> "kỳ vọng kết quả"     soát · đẩy link · ghi kết quả
   hoi  <id> "hỏi" "1" "2" "3"     hỏi sếp, đúng 3 gợi ý
-  tinh-trang [--ghi-danh-sach]    bảng số liệu
+  tinh-trang                      bảng số liệu
   dong-phien <id> "tóm tắt"       đóng phiên ngày`;
 
 const ngày = hômNay();
@@ -376,8 +376,9 @@ function xếpRổ(việc, hỏiCủa) {
   const chờGhi = sống.filter(t => t.trang_thai === 'da_duyet');
   const đangLàm = sống.filter(t =>
     ['da_chot', 'dang_lam'].includes(t.trang_thai) && !chờSếp.includes(t));
-  return { sống, chờSếp, chờGhi, đangLàm,
-           đóngĐược: !chờSếp.length && !chờGhi.length && !đangLàm.length };
+  // Chỉ việc sếp ĐÃ DUYỆT mà chưa ghi mới giữ phiên lại: đó là việc của /chot, phải xong
+  // trong ngày. Việc chờ sếp hay đang làm dở thì cứ đóng — mai nó lên đầu bảng là việc tồn.
+  return { sống, chờSếp, chờGhi, đangLàm, đóngĐược: !chờGhi.length };
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -411,13 +412,7 @@ async function tinhTrang() {
   const hômNayLàm = sống.filter(t => t.ngay === ngày || làViệcTồn(t, ngày));
   const đãDuyệt = hômNayLàm.filter(t => t.trang_thai === 'da_duyet').map(t => t.id);
   const cònChờ = hômNayLàm.filter(chờSếp).map(t => t.id);
-
-  // Lệnh /chot đọc file này. Còn việc chờ sếp thì nhap.mjs ghi-het sẽ từ chối.
-  if (đối.includes('--ghi-danh-sach')) {
-    mkdirSync(THƯ_MỤC_NHÁP, { recursive: true });
-    writeFileSync(join(THƯ_MỤC_NHÁP, 'da-duyet.json'),
-      JSON.stringify({ ngay: ngày, da_duyet: đãDuyệt, con_cho: cònChờ }, null, 2));
-  }
+  // `nhap.mjs ghi-het` tự hỏi Supabase việc nào đang da_duyet — không còn file danh sách.
 
   in_({
     ngày,
@@ -446,7 +441,7 @@ async function tinhTrang() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// ĐÓNG PHIÊN — chỉ đóng khi mọi việc đã ghi vào file gốc hoặc bị bỏ.
+// ĐÓNG PHIÊN — chỉ chặn khi còn việc sếp đã duyệt mà chưa ghi. Việc dở dang sang mai.
 // ══════════════════════════════════════════════════════════════════════════
 async function dongPhien() {
   const [id, tómTắt = ''] = đối;
@@ -461,22 +456,20 @@ async function dongPhien() {
 
   if (!đóngĐược) {
     in_({
-      chặn: true, lý_do: 'Chưa đóng được phiên ngày.',
-      còn_chờ_sếp: chờSếp.map(t => ({ id: t.id, nhãn: NHÃN[t.trang_thai]?.tên })),
+      chặn: true, lý_do: 'Còn việc sếp đã duyệt mà chưa ghi vào file gốc.',
       đã_duyệt_chưa_ghi: chờGhi.map(t => t.id),
-      đang_làm: đangLàm.map(t => t.id),
-      nhắc: chờGhi.length ? 'Chạy nhap.mjs ghi-het rồi nhap.mjs kiem trước.'
-                          : 'Việc còn lại sẽ thành việc tồn sang mai. Không đóng phiên.',
+      nhắc: 'Chạy nhap.mjs ghi-het. Việc nào trượt thì báo sếp, không tự chạy lại.',
     });
     process.exit(1);
   }
+  const sangMai = [...chờSếp, ...đangLàm].map(t => ({ id: t.id, tên: t.tieu_de, nhãn: NHÃN[t.trang_thai]?.tên }));
 
   const đãGhi = việc.filter(t => t.trang_thai === 'da_ghi' && t.ngay === ngày).length;
   await db.sửa('agent_runs', `id=eq.${id}`, {
     ket_thuc: new Date().toISOString(),
     so_viec_da_ghi: đãGhi, tom_tat: tómTắt,
   });
-  in_({ chặn: false, phien: id, so_viec_da_ghi: đãGhi, tom_tat: tómTắt });
+  in_({ chặn: false, phien: id, so_viec_da_ghi: đãGhi, sang_mai: sangMai, tom_tat: tómTắt });
 }
 
 // ══════════════════════════════════════════════════════════════════════════

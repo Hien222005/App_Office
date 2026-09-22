@@ -50,8 +50,10 @@ writeFileSync(fileBrief, JSON.stringify(brief, null, 2));
 // VP_NHAT_KY: script con ghi và đọc nhật ký trong thư mục thử, không đụng nhật ký thật.
 // VP_BAT_PHONG: mảng elearn đang TẠM DỪNG ngoài đời thật (agent/phong.mjs). Bài thử vẫn
 // phải diễn được trọn vòng trên nó, nên bật riêng đích danh mảng này cho bài thử.
+// VP_NHAN_FILE: bảng tasks giả để thử cổng nhãn của `nhap.mjs ghi` mà không cần Supabase.
+const FILE_NHAN = join(thử, 'nhan.json');
 const môi = { ...process.env, DIR_ELEARNING: gốc, VP_NHAT_KY: join(thử, 'nhat-ky'),
-              VP_BAT_PHONG: 'elearn' };
+              VP_BAT_PHONG: 'elearn', VP_NHAN_FILE: FILE_NHAN };
 const chạy = (tệp, ...args) => execFileSync('node', [join(agent, tệp), ...args], { encoding: 'utf8', env: môi });
 const chạyCóLỗi = (tệp, ...args) => {
   try { return { ma: 0, ra: chạy(tệp, ...args), loi: '' }; }
@@ -217,27 +219,25 @@ kiểm('Thư mục thật chưa bị đụng trước khi duyệt',
 }
 
 // ── tinh-trang và dong-phien phải nói GIỐNG NHAU về "đóng được phiên" ────
-// Lỗi agent tìm ra: tinh-trang quên đếm da_chot và dang_lam nên báo đóng được,
-// trong khi dong-phien vẫn chặn. Hai nguồn thì sẽ lệch.
+// Luật từ 22/09: chỉ việc sếp ĐÃ DUYỆT mà chưa ghi mới giữ phiên lại (đó là việc của
+// /chot). Việc chờ sếp hay đang làm dở thì phiên vẫn đóng — mai nó thành việc tồn.
+// Phép tính dưới đây phải khớp xếpRổ() trong viec.mjs.
 {
-  const hỏiKhông = () => [];
   const bộ = [
-    [[{ id: 'a', trang_thai: 'dang_lam', so_lan_lam_lai: 0 }], false, 'còn việc đang làm'],
-    [[{ id: 'a', trang_thai: 'da_chot',  so_lan_lam_lai: 0 }], false, 'còn việc đã chốt chưa làm'],
-    [[{ id: 'a', trang_thai: 'cho_duyet',so_lan_lam_lai: 0 }], false, 'còn việc chờ duyệt'],
-    [[{ id: 'a', trang_thai: 'da_duyet', so_lan_lam_lai: 0 }], false, 'còn việc chờ ghi'],
-    [[{ id: 'a', trang_thai: 'da_ghi',   so_lan_lam_lai: 0 },
-      { id: 'b', trang_thai: 'bo',       so_lan_lam_lai: 0 }], true, 'mọi việc đã kết thúc'],
+    [[{ id: 'a', trang_thai: 'dang_lam' }], true,  'việc đang làm sang mai'],
+    [[{ id: 'a', trang_thai: 'da_chot'  }], true,  'việc đã chốt chưa làm sang mai'],
+    [[{ id: 'a', trang_thai: 'cho_duyet'}], true,  'việc chờ duyệt sang mai'],
+    [[{ id: 'a', trang_thai: 'da_duyet' }], false, 'còn việc đã duyệt chưa ghi'],
+    [[{ id: 'a', trang_thai: 'da_ghi'   },
+      { id: 'b', trang_thai: 'bo'       }], true,  'mọi việc đã kết thúc'],
   ];
   const sai = bộ.filter(([ds, mong]) => {
     const sống = ds.filter(t => !NHÃN[t.trang_thai]?.kết_thúc);
-    const chờSếp = sống.filter(t => CHỜ_SẾP.includes(t.trang_thai)
-      || đangVướng(hỏiKhông()) || chạmTrần(t.so_lan_lam_lai));
-    const chờGhi = sống.filter(t => t.trang_thai === 'da_duyet');
-    const đangLàm = sống.filter(t => ['da_chot','dang_lam'].includes(t.trang_thai) && !chờSếp.includes(t));
-    return (!chờSếp.length && !chờGhi.length && !đangLàm.length) !== mong;
+    return !sống.some(t => t.trang_thai === 'da_duyet') !== mong;
   });
+  const xếp = readFileSync(join(agent, 'viec.mjs'), 'utf8');
   kiểm('Đóng được phiên: tính đúng cho cả 5 tình huống', !sai.length, sai[0]?.[2] ?? '5/5');
+  kiểm('viec.mjs dùng đúng luật đóng phiên này', /đóngĐược: !chờGhi\.length/.test(xếp));
 }
 
 // ── bản nháp trỏ sai thư mục gốc thì phải bị chặn ────────────────────────
@@ -339,72 +339,94 @@ kiểm('Sửa lấn: thư mục thật vẫn nguyên trạng',
 const lấn = soát('Sửa lấn ra ngoài phạm vi → trượt', false, 'SỬA LẤN');
 kiểm('Chỉ ra đúng 2 file sửa lấn', (lấn.file_ngoai_pham_vi ?? []).length === 2);
 
-// ── sếp duyệt: chỉ phần trong phạm vi được chép về ────────────────────────
-// Sếp tự sửa file log trong lúc chờ duyệt → phải báo xung đột, không đè.
+// ── sếp duyệt rồi GHI: cổng nhãn, xung đột → hoàn tác riêng việc đó ─────────
+// Bảng tasks giả (VP_NHAN_FILE): cổng nhãn được thử thật mà không cần Supabase.
+const nhãn = (o) => writeFileSync(FILE_NHAN, JSON.stringify({ ...đọcNhãn(), ...o }));
+const đọcNhãn = () => (existsSync(FILE_NHAN) ? JSON.parse(readFileSync(FILE_NHAN, 'utf8')) : {});
+rmSync(FILE_NHAN, { force: true });
+
+nhãn({ [ID]: 'cho_duyet' });
+const chưaDuyệt = chạyCóLỗi('nhap.mjs', 'ghi', ID);
+kiểm('Ghi: việc chưa duyệt thì không được ghi',
+  chưaDuyệt.ma === 1 && /chỉ việc sếp đã duyệt/.test(chưaDuyệt.ra) &&
+  !readFileSync(join(gốc, M4, '02_html/shared/core.css'), 'utf8').includes('32px'));
+
+// Sếp tự sửa file log trong lúc chờ duyệt → xung đột → cả việc này hoàn tác, không đè file sếp.
 writeFileSync(join(gốc, 'bugs-con-lai-can-fix-2026-09-18.md'), '# Bug (sếp tự ghi trước)\n');
-const duyệt = JSON.parse(chạy('nhap.mjs', 'duyet', ID));
-kiểm('Duyệt: chép về đúng file CSS', duyệt.da_chep_ve.some(x => x.file.endsWith('core.css')) &&
-  readFileSync(join(gốc, M4, '02_html/shared/core.css'), 'utf8').includes('32px'));
-kiểm('Duyệt: không đè file sếp vừa sửa', duyệt.xung_dot_khong_chep.length === 1 &&
+nhãn({ [ID]: 'da_duyet' });
+const g1 = JSON.parse(chạyCóLỗi('nhap.mjs', 'ghi', ID).ra).ket_qua[0];
+kiểm('Ghi: xung đột thì việc trượt, nhãn giữ da_duyet', !g1.dat && đọcNhãn()[ID] === 'da_duyet',
+  g1.sai?.[0]?.lý_do ?? '');
+kiểm('Ghi: không đè file sếp vừa sửa',
   readFileSync(join(gốc, 'bugs-con-lai-can-fix-2026-09-18.md'), 'utf8').includes('sếp tự ghi'));
-kiểm('Duyệt: template và Module 4 vẫn nguyên trạng',
+kiểm('Ghi: file CSS đã chép được hoàn tác về như cũ',
+  băm(join(gốc, M4, '02_html/shared/core.css')) !== băm(join(nháp, M4, '02_html/shared/core.css')) &&
+  g1.da_hoan_tac?.some(x => x.file.endsWith('core.css')));
+kiểm('Ghi: template và Module 4 vẫn nguyên trạng',
   băm(join(gốc, '.claude/skills/elearning-md-to-html/templates/interactive/accordion.css')) === bămTrước.tpl &&
   băm(join(gốc, 'courses/Module 4/02_html/shared/core.css')) === bămTrước.m4);
-// ── chặng 3 · ghi cả loạt cuối ngày, kiểm sau khi ghi, hoàn tác khi xung đột ──
+
+// ── chặng 3 · ghi-het: việc chờ duyệt KHÔNG chặn việc đã duyệt ──────────────
 const ID2 = 't-thu-2';
 rmSync(join(resolve(agent, '..', '_nhap'), ID2), { recursive: true, force: true });
-const brief2 = { ...brief, id: ID2, file_duoc_sua: [`${M4}/**`], file_phai_doi: [`${M4}/**`] };
+const brief2 = { ...brief, id: ID2, chi_sua: [`${M4}/**`], phai_doi: [`${M4}/**`] };
 const fileBrief2 = join(thử, 'brief2.json');
 writeFileSync(fileBrief2, JSON.stringify(brief2, null, 2));
 const mở2 = JSON.parse(chạy('nhap.mjs', 'mo', fileBrief2));
 writeFileSync(join(mở2.ban_nhap, M4, '02_html/unit-8-quiz.html'),
   '<section class="quiz-review" data-sua="cuoi-ngay"></section>\n');
 
-// Dọn biên nhận của chặng trước để kiem-sau-ghi chỉ xét loạt ghi cuối ngày.
-rmSync(join(resolve(agent, '..', '_nhap'), ID, 'bien-nhan-ghi.json'), { force: true });
-
-const dsFile = join(resolve(agent, '..', '_nhap'), 'da-duyet.json');
-// ghi-het từ chối danh sách không phải của hôm nay, nên việc thử cũng phải ghi ngày hôm nay.
-const HÔM_NAY = new Date().toLocaleDateString('sv-SE');
-writeFileSync(dsFile, JSON.stringify({ ngay: HÔM_NAY, da_duyet: [ID2], con_cho: ['t-con-cho'] }));
-const r1 = chạyCóLỗi('nhap.mjs', 'ghi-het');
-kiểm('ghi-het bị chặn khi còn việc sếp chưa duyệt',
-  r1.ma === 1 && /chưa duyệt/.test(r1.loi + r1.ra),
-  (r1.loi || '').trim().slice(0, 60));
-
-writeFileSync(dsFile, JSON.stringify({ ngay: HÔM_NAY, da_duyet: [ID2], con_cho: [] }));
-const ghiHết = JSON.parse(chạy('nhap.mjs', 'ghi-het'));
-kiểm('ghi-het chép về đúng 1 việc', ghiHết.so_viec === 1 && ghiHết.ket_qua[0].da_chep_ve.length === 1);
-kiểm('File gốc đã nhận nội dung mới',
+nhãn({ [ID]: 'bo', [ID2]: 'da_duyet', 't-con-cho': 'cho_duyet' });
+const hết = JSON.parse(chạy('nhap.mjs', 'ghi-het'));
+kiểm('ghi-het: còn việc chờ duyệt vẫn ghi việc đã duyệt',
+  hết.so_viec === 1 && hết.dat === 1 && hết.ket_qua[0].id === ID2);
+kiểm('ghi-het: file gốc đã nhận nội dung mới',
   readFileSync(join(gốc, M4, '02_html/unit-8-quiz.html'), 'utf8').includes('cuoi-ngay'));
-const rk = chạyCóLỗi('nhap.mjs', 'kiem');
-const kiểmGhi = JSON.parse(rk.ra);
-kiểm('kiem-sau-ghi: đạt khi ghi đúng', rk.ma === 0 && kiểmGhi.dat === true,
-  `${kiểmGhi.so_file_da_ghi} file · ${(kiểmGhi.sai[0]?.lý_do) ?? 'không lỗi'}`);
+kiểm('ghi-het: đóng nhãn da_ghi ngay khi đạt', đọcNhãn()[ID2] === 'da_ghi');
+kiểm('ghi-het: việc chờ duyệt giữ nguyên nhãn', đọcNhãn()['t-con-cho'] === 'cho_duyet');
+kiểm('ghi-het: không còn file danh sách trung gian',
+  !existsSync(join(resolve(agent, '..', '_nhap'), 'loat-ghi.json')));
 
-// Đạt rồi thì dấu loạt ghi phải mất, để không ai kiểm lại một loạt đã xong.
-const rk0 = chạyCóLỗi('nhap.mjs', 'kiem');
-kiểm('kiem-sau-ghi: loạt đã xong thì không kiểm lại được',
-  rk0.ma === 1 && /loat-ghi/.test(rk0.loi + rk0.ra), (rk0.loi || '').trim().slice(0, 48));
+const lần2 = JSON.parse(chạy('nhap.mjs', 'ghi', ID2)).ket_qua[0];
+kiểm('Ghi lần hai: việc đã ghi thì bỏ qua, không chép lại', lần2.dat && lần2.bo_qua === 'đã ghi từ trước');
 
-// ── chặng 4 · ghi xong mà file gốc bị sửa tay → hoàn tác cả loạt ──────────
-// Dùng file trong 02_html: Skill sua-bug-elearn chỉ cho sửa courses/**/02_html/**,
-// nên file 01_md sẽ bị cổng phạm vi từ chối — đúng luật, không phải lỗi.
-const ID3 = 't-thu-3', MD = `${M4}/02_html/shared/core.css`;
-rmSync(join(resolve(agent, '..', '_nhap'), ID3), { recursive: true, force: true });
-const brief3 = { ...brief, id: ID3, chi_sua: [`${M4}/**`], phai_doi: [`${M4}/**`] };
-writeFileSync(join(thử, 'brief3.json'), JSON.stringify(brief3, null, 2));
+// Chép xong mà chưa kịp đóng nhãn (mất mạng) → ghi lại chỉ kiểm rồi đóng, không báo xung đột oan.
+nhãn({ [ID2]: 'da_duyet' });
+const phụcHồi = JSON.parse(chạy('nhap.mjs', 'ghi', ID2)).ket_qua[0];
+kiểm('Phục hồi: đã chép từ trước thì chỉ đóng nhãn', phụcHồi.dat && phụcHồi.phuc_hoi && đọcNhãn()[ID2] === 'da_ghi');
+
+// kiem <id>: sếp sửa tay sau khi ghi → báo sai, KHÔNG hoàn tác (hoàn tác là xoá phần sếp sửa).
+writeFileSync(join(gốc, M4, '02_html/unit-8-quiz.html'), 'sếp sửa tay sau khi ghi\n');
+const rk = chạyCóLỗi('nhap.mjs', 'kiem', ID2);
+kiểm('kiem: bắt được file khác bản nháp', rk.ma === 1 && JSON.parse(rk.ra).sai.length === 1);
+kiểm('kiem: không hoàn tác phần sếp sửa tay',
+  readFileSync(join(gốc, M4, '02_html/unit-8-quiz.html'), 'utf8').includes('sếp sửa tay'));
+
+// ── chặng 4 · hai việc cùng loạt: một trượt thì hoàn tác riêng, việc kia vẫn ghi ──
+const ID3 = 't-thu-3', ID4 = 't-thu-4', CSS3 = `${M4}/02_html/shared/core.css`, MOI3 = `${M4}/02_html/shared/them.css`;
+for (const i of [ID3, ID4]) rmSync(join(resolve(agent, '..', '_nhap'), i), { recursive: true, force: true });
+writeFileSync(join(thử, 'brief3.json'), JSON.stringify({ ...brief2, id: ID3 }));
+writeFileSync(join(thử, 'brief4.json'), JSON.stringify({ ...brief2, id: ID4 }));
 const mở3 = JSON.parse(chạy('nhap.mjs', 'mo', join(thử, 'brief3.json')));
-writeFileSync(join(mở3.ban_nhap, MD), '.quiz-review{--sua:"chang-4"}\n');
-writeFileSync(dsFile, JSON.stringify({ ngay: HÔM_NAY, da_duyet: [ID3], con_cho: [] }));
-chạy('nhap.mjs', 'ghi-het');
-writeFileSync(join(gốc, MD), 'ai đó sửa tay sau khi ghi\n');      // giả trường hợp sai
-const r2 = chạyCóLỗi('nhap.mjs', 'kiem');
-const kq2 = JSON.parse(r2.ra);
-kiểm('kiem-sau-ghi: bắt được nội dung khác bản nháp', r2.ma === 1 && kq2.sai.length > 0,
-  kq2.sai[0]?.lý_do ?? '');
-kiểm('kiem-sau-ghi: đã hoàn tác về bản trước khi ghi',
-  !readFileSync(join(gốc, MD), 'utf8').includes('sửa tay'));
+const mở4 = JSON.parse(chạy('nhap.mjs', 'mo', join(thử, 'brief4.json')));
+writeFileSync(join(mở3.ban_nhap, CSS3), '.quiz-review{--sua:"chang-4"}\n');
+writeFileSync(join(mở3.ban_nhap, MOI3), '.moi{}\n');                       // file mới — phải bị xoá khi hoàn tác
+writeFileSync(join(mở4.ban_nhap, 'courses/Module 4/02_html/shared/core.css'), '/* ngoài phạm vi */\n');   // thư mục NGUỒN
+writeFileSync(join(mở4.ban_nhap, M4, '02_html/unit-8-quiz.html'), '<section data-sua="viec-4"></section>\n');
+writeFileSync(join(gốc, CSS3), 'sếp sửa tay trong lúc chờ duyệt\n');       // → việc 3 xung đột
+nhãn({ [ID3]: 'da_duyet', [ID4]: 'da_duyet' });
+const hai = JSON.parse(chạyCóLỗi('nhap.mjs', 'ghi-het').ra);
+const kq3 = hai.ket_qua.find(k => k.id === ID3), kq4 = hai.ket_qua.find(k => k.id === ID4);
+kiểm('Hai việc: việc xung đột trượt, việc kia vẫn ghi', !kq3.dat && kq4.dat && hai.truot === 1);
+kiểm('Hai việc: file mới của việc trượt đã bị xoá khỏi gốc', !existsSync(join(gốc, MOI3)));
+kiểm('Hai việc: file sếp sửa tay vẫn nguyên',
+  readFileSync(join(gốc, CSS3), 'utf8').includes('sếp sửa tay'));
+kiểm('Hai việc: việc đạt đã vào gốc, nhãn đúng',
+  readFileSync(join(gốc, M4, '02_html/unit-8-quiz.html'), 'utf8').includes('viec-4') &&
+  đọcNhãn()[ID3] === 'da_duyet' && đọcNhãn()[ID4] === 'da_ghi');
+kiểm('Hai việc: file ngoài phạm vi không bị ghi',
+  băm(join(gốc, 'courses/Module 4/02_html/shared/core.css')) === bămTrước.m4 &&
+  kq4.bo_qua_vi_ngoai_pham_vi?.length === 1);
 
 const bỏ = JSON.parse(chạy('nhap.mjs', 'bo', ID));
 kiểm('Bỏ bản nháp', bỏ.da_bo_ban_nhap && !existsSync(nháp));

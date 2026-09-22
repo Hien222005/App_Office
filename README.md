@@ -74,7 +74,7 @@ gói Supabase Free không có sao lưu tự động, đó là bản sao duy nh�
 | File | Việc |
 |---|---|
 | **`viec.mjs`** | mọi thao tác với công việc — `mo-phien` · `ke-hoach` · `doc` · `phieu` · `lam` · `xong` · `hoi` · `tinh-trang` · `dong-phien` |
-| **`nhap.mjs`** | bản nháp — `mo` · `xem` · `duyet` · `ghi-het` · `kiem` · `bo` |
+| **`nhap.mjs`** | bản nháp — `mo` · `xem` · `ghi` · `ghi-het` · `kiem` · `bo` |
 
 | Nhóm | File |
 |---|---|
@@ -168,8 +168,10 @@ hook, tự đẩy link. Hệ quả: **khai man và giấu file không còn bị 
 **mở lại file sau lần sửa cuối**. Luật cũ là "chấm 5/5 thì phải viết ô đã-tự-kiểm dài
 hơn 10 chữ" — agent viết bừa 11 chữ là qua. Luật mới không mở lại thì không qua được.
 
-**So mã băm sau khi ghi.** `nhap.mjs kiem` so từng file vừa chép; sai một file thì
-hoàn tác cả loạt.
+**Ghi từng việc, so mã băm ngay lúc ghi.** `nhap.mjs ghi` chỉ nhận việc đang ở nhãn
+"Đã duyệt", chép trong phạm vi rồi so mã băm từng file; sai thì hoàn tác **riêng việc đó**,
+đạt thì đóng nhãn "Đã ghi". Việc chờ duyệt không chặn việc đã duyệt. `nhap.mjs kiem <id>`
+soát lại về sau — chỉ báo, không hoàn tác, để không xoá phần bạn đã sửa tay.
 
 **Câu hỏi phải có sẵn phương án.** `viec.mjs hoi` bắt buộc đúng **3 gợi ý** (app thêm
 ô thứ tư để bạn tự gõ). Trả lời bằng một cú chạm thì bạn sẽ trả lời; phải gõ một đoạn

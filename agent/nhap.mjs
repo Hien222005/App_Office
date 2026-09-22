@@ -2,9 +2,9 @@
 //
 //   node nhap.mjs mo    <brief.json>   → in đường dẫn bản nháp
 //   node nhap.mjs xem   <id-việc>      → file nào đổi, cái nào sẽ chép về
-//   node nhap.mjs duyet <id-việc>      → chép phần trong phạm vi về thư mục thật
-//   node nhap.mjs ghi-het              → cuối ngày: chép cả loạt mọi việc sếp đã duyệt
-//   node nhap.mjs kiem                 → so mã băm sau khi ghi, sai thì hoàn tác cả loạt
+//   node nhap.mjs ghi   <id-việc>      → ghi MỘT việc sếp đã duyệt: chép, so mã băm, đóng nhãn
+//   node nhap.mjs ghi-het              → ghi từng việc đang ở da_duyet, việc nào độc lập việc nấy
+//   node nhap.mjs kiem  <id-việc>      → soát lại một việc đã ghi · chỉ báo, không hoàn tác
 //   node nhap.mjs bo    <id-việc>      → vứt bản nháp
 //
 // PHẠM VI LẤY TỪ SKILL, không lấy từ brief: sửa bug E-learning thì lần nào cũng đụng
@@ -21,7 +21,7 @@ import { spawnSync } from 'node:child_process';
 import { phạmViTừSkill, xétFile } from './pham-vi.mjs';
 import { nhânBản, chépMột, kêKhai, soSánh, băm } from './anh-chup.mjs';
 import { gốcCủaPhòng, THƯ_MỤC_NHÁP, kiểmGốc } from './phong.mjs';
-import { db, hômNay } from './lib.mjs';
+import { db } from './lib.mjs';
 import { đượcChuyển } from './nhan.mjs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -33,9 +33,9 @@ const nhậtKý = (mã, việc, kq, lý) => {
 };
 
 const [lệnh, thamSố] = process.argv.slice(2);
-const DÙNG = 'Dùng: node nhap.mjs mo <brief.json> | xem|duyet|bo <id-việc> | ghi-het | kiem';
-if (!['mo', 'xem', 'duyet', 'bo', 'ghi-het', 'kiem'].includes(lệnh)) { console.error(DÙNG); process.exit(1); }
-if (!['ghi-het', 'kiem'].includes(lệnh) && !thamSố) { console.error(DÙNG); process.exit(1); }
+const DÙNG = 'Dùng: node nhap.mjs mo <brief.json> | xem|ghi|kiem|bo <id-việc> | ghi-het';
+if (!['mo', 'xem', 'ghi', 'kiem', 'bo', 'ghi-het'].includes(lệnh)) { console.error(DÙNG); process.exit(1); }
+if (lệnh !== 'ghi-het' && !thamSố) { console.error(DÙNG); process.exit(1); }
 
 const in_ = (x) => console.log(JSON.stringify(x, null, 2));
 const t0 = performance.now(), ms = () => Math.round(performance.now() - t0);
@@ -79,7 +79,7 @@ if (lệnh === 'mo') {
 }
 
 
-// ── hàm dùng chung cho cả `xem`, `duyet` và `ghi-het` ────────────────────
+// ── hàm dùng chung cho cả `xem` và `ghi` ─────────────────────────────────
 function thayĐổiCủa(id) {
   const sổ = đọcSổ(id), nháp = đườngNháp(id);
   const pv = { goc: sổ.goc, duoc_sua: sổ.duoc_sua, chi_sua: sổ.chi_sua };
@@ -91,7 +91,7 @@ function thayĐổiCủa(id) {
 }
 
 // Chép phần trong phạm vi từ bản nháp về thư mục thật.
-// Ghi biên nhận ra kho để kiem-sau-ghi.mjs so lại và hoàn tác được nếu sai.
+// Ghi biên nhận để `ghi` so lại ngay sau khi chép và hoàn tác được nếu sai.
 function chépVề(id) {
   const { sổ, nháp, trong, ngoài } = thayĐổiCủa(id);
   const đãChép = [], xungĐột = [];
@@ -108,7 +108,7 @@ function chépVề(id) {
       mkdirSync(dirname(giữLại), { recursive: true });
       renameSync(thật, giữLại);
     } else {
-      // Sao lưu bản cũ trước khi đè, để kiem-sau-ghi.mjs hoàn tác được nguyên trạng.
+      // Sao lưu bản cũ trước khi đè, để hoàn tác được nguyên trạng.
       if (existsSync(thật)) chépMột(thật, join(thưMụcViệc(id), 'truoc', file));
       chépMột(join(nháp, file), thật);
     }
@@ -120,40 +120,122 @@ function chépVề(id) {
   return { id, da_chep_ve: đãChép, xung_dot_khong_chep: xungĐột, bo_qua_vi_ngoai_pham_vi: ngoài };
 }
 
-// ── ghi-het ───────────────────────────────────────────────────────────────
-// Cổng G7: chỉ chạy khi MỌI việc trong ngày đã được sếp duyệt kết quả.
-// Danh sách việc được duyệt do tinh-trang.mjs quyết, script này không tự đọc DB.
-if (lệnh === 'ghi-het') {
-  const dsFile = join(THƯ_MỤC_NHÁP, 'da-duyet.json');
-  if (!existsSync(dsFile)) {
-    console.error('Thiếu ' + dsFile + '. Chạy `node agent/viec.mjs tinh-trang --ghi-danh-sach` trước.');
-    process.exit(1);
+// ══════════════════════════════════════════════════════════════════════════
+// GHI TỪNG VIỆC — cổng G7 (chép) + G8 (kiểm) gộp làm một, chạy riêng cho TỪNG việc.
+//
+// Trước đây ghi cả loạt: đọc danh sách từ da-duyet.json, chép hết, ghi loat-ghi.json, rồi
+// `kiem` so cả loạt — sai một file là hoàn tác cả loạt, còn một việc chờ duyệt là không
+// việc nào được ghi. Ngày 22/09 vỡ hai lần đúng ở đó: danh sách cũ của 18/09 còn nằm lại,
+// và không bước nào đóng nhãn da_ghi nên phiên không đóng được.
+//
+// Nay mỗi việc tự đi trọn: nhãn phải là da_duyet → chép → so mã băm → sai thì hoàn tác
+// RIÊNG việc đó → đạt thì đóng nhãn da_ghi. Việc khác chờ duyệt hay trượt không liên quan.
+// ══════════════════════════════════════════════════════════════════════════
+
+// Nhãn đọc từ bảng tasks. Bài thử (thu-nhanh.mjs) không có Supabase thì đặt VP_NHAN_FILE:
+// một file JSON {id: nhãn} đóng vai bảng tasks — cổng nhãn vẫn được thử thật.
+const FILE_NHÃN = process.env.VP_NHAN_FILE;
+const nhãnGiả = () => (existsSync(FILE_NHÃN) ? JSON.parse(readFileSync(FILE_NHÃN, 'utf8')) : {});
+async function đọcNhãn(id) {
+  if (FILE_NHÃN) return nhãnGiả()[id] ?? null;
+  const [v] = await db.đọc('tasks', `id=eq.${encodeURIComponent(id)}&select=trang_thai`);
+  return v?.trang_thai ?? null;
+}
+async function đóngNhãn(id) {
+  if (FILE_NHÃN) { writeFileSync(FILE_NHÃN, JSON.stringify({ ...nhãnGiả(), [id]: 'da_ghi' })); return; }
+  await db.sửa('tasks', `id=eq.${encodeURIComponent(id)}`,
+    { trang_thai: 'da_ghi', cap_nhat_luc: new Date().toISOString() });
+}
+async function việcĐãDuyệt() {
+  if (FILE_NHÃN) return Object.entries(nhãnGiả()).filter(([, n]) => n === 'da_duyet').map(([i]) => i);
+  return (await db.đọc('tasks', 'trang_thai=eq.da_duyet&select=id&order=ngay.asc,thu_tu.asc')).map(v => v.id);
+}
+
+const fileBiênNhận = (id) => join(thưMụcViệc(id), 'bien-nhan-ghi.json');
+
+// So từng file trong biên nhận với bản nháp. Trả về danh sách sai (rỗng = đạt).
+function kiểmViệc(id, bn) {
+  const sổ = JSON.parse(readFileSync(fileSổ(id), 'utf8'));
+  const pv = { goc: sổ.goc, duoc_sua: sổ.duoc_sua, chi_sua: sổ.chi_sua };
+  const sai = [];
+  for (const { file, loai, bam_nhap } of bn.da_chep) {
+    const thật = join(bn.goc, file);
+    if (loai === 'xoá') {
+      if (existsSync(thật)) sai.push({ file, lý_do: 'lẽ ra đã xoá mà vẫn còn' });
+      continue;
+    }
+    if (!existsSync(thật)) { sai.push({ file, lý_do: 'không thấy file sau khi ghi' }); continue; }
+    if (băm(thật) !== bam_nhap) sai.push({ file, lý_do: 'nội dung khác bản nháp' });
+    if (!xétFile(pv, thật).được) sai.push({ file, lý_do: 'nằm ngoài phạm vi mà vẫn được ghi' });
   }
-  const ds = JSON.parse(readFileSync(dsFile, 'utf8'));
-  // Danh sách cũ còn nằm lại thì sẽ chép nhầm việc của ngày khác — chặn ngay.
-  if (ds.ngay !== hômNay()) {
-    console.error(`da-duyet.json là của ngày ${ds.ngay}, không phải hôm nay (${hômNay()}). `
-                + 'Chạy `node agent/viec.mjs tinh-trang --ghi-danh-sach` trước.');
-    process.exit(1);
+  for (const { file } of bn.xung_dot) sai.push({ file, lý_do: 'xung đột: sếp đã tự sửa file này' });
+  return sai;
+}
+
+// Trả mọi file việc này vừa chép về trạng thái trước khi ghi. Chỉ việc này, không đụng việc khác.
+function hoànTácViệc(id, bn) {
+  const đã = [];
+  for (const { file, loai } of bn.da_chep) {
+    const thật = join(bn.goc, file);
+    const cũ = join(thưMụcViệc(id), 'truoc', file);       // bản trước khi đè
+    const đãXoá = join(thưMụcViệc(id), 'da-xoa', file);   // file bị dời đi
+    if (loai === 'xoá' && existsSync(đãXoá)) { chépMột(đãXoá, thật); đã.push({ file, cách: 'trả lại file đã dời' }); }
+    else if (existsSync(cũ)) { chépMột(cũ, thật); đã.push({ file, cách: 'chép bản cũ về' }); }
+    else if (loai === 'thêm' && existsSync(thật)) { rmSync(thật); đã.push({ file, cách: 'xoá file mới vừa ghi' }); }
+    else đã.push({ file, cách: 'không có bản cũ — sếp xem lại tay', loai });
   }
-  if (!Array.isArray(ds.da_duyet) || !ds.da_duyet.length) { console.error('Không có việc nào đã duyệt.'); process.exit(1); }
-  if (ds.con_cho?.length) {
-    nhậtKý('G7', '-', 'truot', `còn ${ds.con_cho.length} việc sếp chưa duyệt`);
-    console.error(`Còn ${ds.con_cho.length} việc sếp chưa duyệt: ${ds.con_cho.join(', ')}. Chưa ghi được.`);
-    process.exit(1);
+  return đã;
+}
+
+async function ghiMột(id) {
+  const nhãn = await đọcNhãn(id);
+  if (nhãn === 'da_ghi') return { id, dat: true, bo_qua: 'đã ghi từ trước' };
+  if (!đượcChuyển(nhãn, 'da_ghi', 'script')) {
+    return { id, dat: false, ly_do: `đang ở "${nhãn ?? 'không thấy việc'}" — chỉ việc sếp đã duyệt mới được ghi` };
   }
+  if (!existsSync(fileSổ(id))) return { id, dat: false, ly_do: 'không có bản nháp để chép' };
+
+  // Lần trước đã chép đạt nhưng chưa kịp đóng nhãn (mất mạng, tắt máy) → chỉ kiểm lại rồi
+  // đóng nhãn. Chép lần nữa sẽ tự đụng file của chính mình và báo xung đột oan.
+  if (existsSync(fileBiênNhận(id))) {
+    const cũ = JSON.parse(readFileSync(fileBiênNhận(id), 'utf8'));
+    if (cũ.da_chep.length && !kiểmViệc(id, cũ).length) {
+      await đóngNhãn(id);
+      nhậtKý('G8', id, 'qua', 'phục hồi: đã chép từ trước, nay đóng nhãn');
+      return { id, dat: true, phuc_hoi: true, so_file: cũ.da_chep.length };
+    }
+  }
+
+  const kq = chépVề(id);
+  const bn = JSON.parse(readFileSync(fileBiênNhận(id), 'utf8'));
+  const sai = kiểmViệc(id, bn);
+  if (sai.length) {
+    const đãHoànTác = hoànTácViệc(id, bn);
+    nhậtKý('G8', id, 'truot', sai[0].lý_do);
+    return { id, dat: false, sai, da_hoan_tac: đãHoànTác, bo_qua_vi_ngoai_pham_vi: kq.bo_qua_vi_ngoai_pham_vi };
+  }
+  await đóngNhãn(id);
+  nhậtKý('G8', id, 'qua', `${bn.da_chep.length} file ghi đúng`);
+  return { id, dat: true, da_chep_ve: kq.da_chep_ve, bo_qua_vi_ngoai_pham_vi: kq.bo_qua_vi_ngoai_pham_vi };
+}
+
+// ── ghi <id> · ghi-het ────────────────────────────────────────────────────
+if (lệnh === 'ghi' || lệnh === 'ghi-het') {
+  const ds = lệnh === 'ghi' ? [thamSố] : await việcĐãDuyệt();
+  if (!ds.length) { in_({ lenh: lệnh, so_viec: 0, nhac: 'Không có việc nào sếp đã duyệt.', ms: ms() }); process.exit(0); }
   const kq = [];
-  for (const idViệc of ds.da_duyet) kq.push(chépVề(idViệc));
-  const xungĐột = kq.flatMap(k => k.xung_dot_khong_chep);
-  // Ghi rõ loạt này gồm việc nào. kiem-sau-ghi.mjs CHỈ xét đúng danh sách này,
-  // không quét cả _nhap — biên nhận cũ của việc thử từng làm nó hoàn tác oan việc thật.
-  writeFileSync(join(THƯ_MỤC_NHÁP, 'loat-ghi.json'), JSON.stringify({
-    luc: new Date().toISOString(), ids: ds.da_duyet,
-  }, null, 2));
-  nhậtKý('G7', '-', xungĐột.length ? 'truot' : 'qua', `${kq.length} việc, ${xungĐột.length} xung đột`);
-  in_({ lenh: 'ghi-het', so_viec: kq.length, ket_qua: kq,
-        co_xung_dot: xungĐột.length > 0, ms: ms() });
-  process.exit(xungĐột.length ? 1 : 0);       // có xung đột thì kiem-sau-ghi sẽ hoàn tác
+  for (const i of ds) {
+    // Một việc hỏng (bản nháp mất, lỗi mạng) không được kéo cả loạt dừng theo.
+    try { kq.push(await ghiMột(i)); }
+    catch (e) { kq.push({ id: i, dat: false, ly_do: String(e.message).split('\n')[0] }); }
+  }
+  const trượt = kq.filter(k => !k.dat);
+  in_({ lenh: lệnh, so_viec: kq.length, dat: kq.length - trượt.length, truot: trượt.length, ket_qua: kq,
+        nhac: trượt.length
+          ? 'Việc trượt đã được hoàn tác riêng, nhãn vẫn là da_duyet. Báo sếp, KHÔNG tự chạy lại.'
+          : 'Ghi đúng cả, đã đóng nhãn da_ghi.',
+        ms: ms() });
+  process.exit(trượt.length ? 1 : 0);
 }
 
 const id = thamSố;
@@ -165,14 +247,6 @@ if (lệnh === 'xem') {
   process.exit(0);
 }
 
-// ── duyet · chép về một việc ──────────────────────────────────────────────
-// Dùng khi thử một việc lẻ. Cuối ngày thì chạy `ghi-het`.
-if (lệnh === 'duyet') {
-  const kq = chépVề(id);
-  in_({ ...kq, ms: ms() });
-  process.exit(0);
-}
-
 // ── bo ────────────────────────────────────────────────────────────────────
 if (lệnh === 'bo') {
   // Giữ sổ và phần đã dời (da-xoa) lại, chỉ vứt bản sao đang làm.
@@ -180,104 +254,16 @@ if (lệnh === 'bo') {
   in_({ id, da_bo_ban_nhap: true, ms: ms() });
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-// KIEM — cổng G8, chạy ngay sau `ghi-het`. So mã băm từng file vừa chép với bản
-// nháp. Sai một file thì HOÀN TÁC CẢ LOẠT, đưa mọi file về trạng thái trước khi
-// ghi, rồi báo sếp. Gộp từ file kiem-sau-ghi.mjs.
-// ══════════════════════════════════════════════════════════════════════════
+// ── kiem <id> · soát lại một việc đã ghi ──────────────────────────────────
+// CHỈ BÁO, KHÔNG HOÀN TÁC: lúc chạy lệnh này sếp có thể đã sửa tay file gốc sau khi
+// ghi, hoàn tác sẽ xoá mất phần sếp sửa. Hoàn tác chỉ xảy ra bên trong `ghi`, ngay lúc chép.
+// Việc còn ở da_duyet mà kiểm đạt (ghi xong chưa kịp đóng nhãn) thì đóng nhãn luôn.
 if (lệnh === 'kiem') {
-
-
-// Chỉ xét đúng loạt ghi vừa xong, không quét cả _nhap.
-const fileLoạt = join(THƯ_MỤC_NHÁP, 'loat-ghi.json');
-if (!existsSync(fileLoạt)) {
-  console.error('Không thấy loat-ghi.json. Chạy `node agent/nhap.mjs ghi-het` trước.');
-  process.exit(1);
-}
-const loạt = JSON.parse(readFileSync(fileLoạt, 'utf8'));
-const cầnKiểm = [];
-for (const id of loạt.ids ?? []) {
-  const f = join(THƯ_MỤC_NHÁP, id, 'bien-nhan-ghi.json');
-  if (!existsSync(f)) { console.error(`Việc ${id} trong loạt ghi mà không có biên nhận.`); process.exit(1); }
-  cầnKiểm.push({ id, bn: JSON.parse(readFileSync(f, 'utf8')) });
-}
-if (!cầnKiểm.length) { console.error('Loạt ghi trống.'); process.exit(1); }
-
-const sai = [];
-for (const { id, bn } of cầnKiểm) {
-  const sổ = JSON.parse(readFileSync(join(THƯ_MỤC_NHÁP, id, 'so.json'), 'utf8'));
-  const pv = { goc: sổ.goc, duoc_sua: sổ.duoc_sua, chi_sua: sổ.chi_sua };
-  for (const { file, loai, bam_nhap } of bn.da_chep) {
-    const thật = join(bn.goc, file);
-    if (loai === 'xoá') {
-      if (existsSync(thật)) sai.push({ id, file, lý_do: 'lẽ ra đã xoá mà vẫn còn' });
-      continue;
-    }
-    if (!existsSync(thật)) { sai.push({ id, file, lý_do: 'không thấy file sau khi ghi' }); continue; }
-    if (băm(thật) !== bam_nhap) sai.push({ id, file, lý_do: 'nội dung khác bản nháp' });
-    if (!xétFile(pv, thật).được) sai.push({ id, file, lý_do: 'nằm ngoài phạm vi mà vẫn được ghi' });
-  }
-  for (const { file } of bn.xung_dot) sai.push({ id, file, lý_do: 'xung đột: sếp đã tự sửa file này' });
-}
-
-// Sai thì trả mọi file về trạng thái trước khi ghi, lấy từ bản chụp lúc mở bản nháp.
-const đãHoànTác = [];
-if (sai.length) {
-  for (const { id, bn } of cầnKiểm) {
-    for (const { file, loai } of bn.da_chep) {
-      const thật = join(bn.goc, file);
-      const cũ = join(THƯ_MỤC_NHÁP, id, 'truoc', file);       // bản trước khi đè
-      const đãXoá = join(THƯ_MỤC_NHÁP, id, 'da-xoa', file);   // file bị dời đi
-      if (loai === 'xoá' && existsSync(đãXoá)) { chépMột(đãXoá, thật); đãHoànTác.push({ id, file, cách: 'trả lại file đã dời' }); }
-      else if (existsSync(cũ)) { chépMột(cũ, thật); đãHoànTác.push({ id, file, cách: 'chép bản cũ về' }); }
-      else if (loai === 'thêm' && existsSync(thật)) { rmSync(thật); đãHoànTác.push({ id, file, cách: 'xoá file mới vừa ghi' }); }
-      else đãHoànTác.push({ id, file, cách: 'không có bản cũ — sếp xem lại tay', loai });
-    }
-  }
-}
-
-nhậtKý('G8', '-', sai.length ? 'truot' : 'qua', sai[0]?.lý_do ?? `${cầnKiểm.length} việc ghi đúng`);
-
-// Đạt thì đóng nhãn da_duyet → da_ghi. Đây là bước của "script cuối ngày" trong
-// nhan.mjs — chỉ chạy sau khi mã băm khớp, nên nhãn da_ghi luôn có bằng chứng.
-// Việc đã ở da_ghi (chạy kiem lần hai) thì bỏ qua, không báo lỗi.
-// Việc không có trong bảng tasks (việc thử của thu-nhanh.mjs) thì chỉ ghi chú, không tính lỗi.
-const đãĐóngNhãn = [], lỗiNhãn = [], khôngCóTrongDb = [];
-if (!sai.length) {
-  for (const { id } of cầnKiểm) {
-    try {
-      const [v] = await db.đọc('tasks', `id=eq.${id}&select=id,trang_thai`);
-      if (!v) { khôngCóTrongDb.push(id); continue; }
-      if (v.trang_thai === 'da_ghi') continue;
-      if (!đượcChuyển(v.trang_thai, 'da_ghi', 'script')) {
-        lỗiNhãn.push({ id, lý_do: `đang ở "${v.trang_thai}", không sang da_ghi được` });
-        continue;
-      }
-      await db.sửa('tasks', `id=eq.${id}`, { trang_thai: 'da_ghi', cap_nhat_luc: new Date().toISOString() });
-      đãĐóngNhãn.push(id);
-    } catch (e) { lỗiNhãn.push({ id, lý_do: String(e.message).split('\n')[0] }); }
-  }
-}
-
-// Đạt và đóng nhãn xong thì bỏ dấu loạt ghi. Còn lỗi nhãn thì giữ lại để chạy kiem lần nữa.
-if (!sai.length && !lỗiNhãn.length) { try { rmSync(fileLoạt); } catch {} }
-
-in_({
-  so_viec: cầnKiểm.length,
-  loat_luc: loạt.luc,
-  so_file_da_ghi: cầnKiểm.reduce((a, c) => a + c.bn.da_chep.length, 0),
-  dat: sai.length === 0,
-  sai,
-  da_hoan_tac: đãHoànTác,
-  da_dong_nhan: đãĐóngNhãn,
-  loi_nhan: lỗiNhãn,
-  khong_co_trong_db: khôngCóTrongDb,
-  ms: ms(),
-  nhac: sai.length
-    ? 'Đã hoàn tác. Báo sếp, KHÔNG tự chạy ghi-het lại.'
-    : lỗiNhãn.length
-      ? 'File ghi đúng nhưng chưa đóng được nhãn. Sửa lỗi rồi chạy lại `nhap.mjs kiem`.'
-      : 'Ghi đúng, đã đóng nhãn. Chạy `viec.mjs dong-phien` để đóng phiên ngày.',
-});
-process.exit(sai.length || lỗiNhãn.length ? 1 : 0);
+  if (!existsSync(fileBiênNhận(id))) { console.error(`Việc ${id} chưa ghi lần nào — không có biên nhận.`); process.exit(1); }
+  const bn = JSON.parse(readFileSync(fileBiênNhận(id), 'utf8'));
+  const sai = kiểmViệc(id, bn);
+  let đóng = false;
+  if (!sai.length && (await đọcNhãn(id)) === 'da_duyet') { await đóngNhãn(id); đóng = true; }
+  in_({ id, so_file: bn.da_chep.length, dat: !sai.length, sai, da_dong_nhan: đóng, ms: ms() });
+  process.exit(sai.length ? 1 : 0);
 }

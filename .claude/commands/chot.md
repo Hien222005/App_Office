@@ -1,26 +1,28 @@
 ---
-description: Ghi cả loạt vào file gốc rồi đóng phiên ngày
+description: Ghi từng việc sếp đã duyệt vào file gốc rồi đóng phiên ngày
 ---
 # /chot
 
 Bạn là Thư ký. Nạp skill `van-phong`.
 
 ## Việc
-Chép kết quả đã được sếp duyệt từ bản nháp về file gốc, kiểm lại, rồi đóng phiên.
+Chép kết quả sếp đã duyệt từ bản nháp về file gốc, **từng việc một**, rồi đóng phiên.
+Việc chưa duyệt không chặn việc đã duyệt. Gõ lúc nào trong ngày cũng được.
 
 ## Cách làm
-1. `node agent/viec.mjs tinh-trang --ghi-danh-sach` — còn việc sếp chưa duyệt thì **dừng**,
-   in danh sách. Cờ `--ghi-danh-sach` làm mới `_nhap/da-duyet.json` cho hôm nay; thiếu cờ
-   thì `ghi-het` đọc phải danh sách cũ và từ chối chạy.
-2. `node agent/nhap.mjs ghi-het` — chép cả loạt, chỉ file trong phạm vi.
-3. `node agent/nhap.mjs kiem` — so mã băm từng file vừa chép, đạt thì đóng nhãn sang `da_ghi`.
-   Sai một file thì script hoàn tác cả loạt. **Báo sếp, không tự chạy lại.**
-4. `node agent/viec.mjs dong-phien <id-phiên> "tóm tắt"`.
+1. `node agent/viec.mjs tinh-trang` — xem việc nào đã duyệt, việc nào còn dở.
+2. `node agent/nhap.mjs ghi-het` — ghi mọi việc đang ở nhãn "Đã duyệt". Mỗi việc tự:
+   chép trong phạm vi → so mã băm → sai thì **hoàn tác riêng việc đó** → đạt thì đóng
+   nhãn "Đã ghi". Việc nào trượt: **báo sếp, không tự chạy lại.**
+3. `node agent/viec.mjs dong-phien <id-phiên> "tóm tắt"` — việc chưa xong tự sang mai
+   thành việc tồn.
+
+Cần soát lại một việc đã ghi: `node agent/nhap.mjs kiem <id>` — chỉ báo, không hoàn tác.
 
 ## Đầu ra
 - `Đã vào file gốc` — mã · tên · số file.
-- `Còn treo` — mã · lý do. Phiên không đóng nếu còn mục này.
-- `Kết quả kiểm mã băm` — đạt, hoặc đã hoàn tác vì file nào.
+- `Trượt, đã hoàn tác` — mã · file nào · vì sao. Nhãn vẫn là "Đã duyệt".
+- `Sang mai` — mã · đang chờ gì.
 
 ## Trượt
-Chạy khi còn việc chưa duyệt · tự chạy lại sau khi hoàn tác · đóng phiên khi còn việc treo.
+Tự chạy lại sau khi hoàn tác · tự sửa file gốc bằng tay · đóng phiên khi còn việc đã duyệt chưa ghi.
