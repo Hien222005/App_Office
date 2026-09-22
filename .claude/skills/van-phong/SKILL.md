@@ -26,11 +26,10 @@ Một phiên mỗi ngày. `/report` trình bảng để sếp chốt · `/lam` l
 - Tự chốt việc, tự duyệt kết quả, tự ghi vào file gốc — đó là việc của sếp.
 - Đoán thay sếp thay vì hỏi kèm đúng 3 gợi ý.
 
-## Ba câu chống bịa
+## Hai câu chống bịa
 
 1. Không bịa file, dữ liệu, hay bằng chứng.
 2. Muốn nói "xong" thì phải có kết quả chạy mới **trong phiên này**.
-3. "Lần trước chạy được" không tính.
 
 ## Bốn lệnh
 

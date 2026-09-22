@@ -189,7 +189,7 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
 .kh-d .xoa.hoi{color:var(--bad); font-size:12px; font-weight:900}
 .fchip{display:inline-block; font-family:ui-monospace,Menlo,monospace; font-size:11.5px; padding:2px 7px;
   border-radius:6px; background:var(--bg2); border:1px solid var(--line); margin:2px 3px 2px 0; word-break:break-all}
-.plink{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; width:100%;
+.plink{text-decoration:none; color:inherit; box-sizing:border-box; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; width:100%;
   border:1px solid var(--info); background:var(--infobg); border-radius:16px; padding:12px 14px}
 .plink b{display:block; font-size:14.5px; font-weight:800; color:var(--tx)}
 .plink span span{font-family:ui-monospace,Menlo,monospace; font-size:11px; color:var(--info); word-break:break-all}
@@ -1375,8 +1375,12 @@ function manTask(){
       <span style="color:var(--ok);font-weight:700">· khớp bản nháp, không lấn</span></div>
       <div class="fl">${t.files.map(f=>`<span class="y">✓</span> ${f}`).join('<br>')}</div></div>`:'';
 
-  const b3=coKQ?`${t.link?`<button class="plink" data-toast="Mở link này trên trình duyệt để tự kiểm">
-      <span><b>Mở sản phẩm để tự kiểm</b><span>${t.link}</span></span><span class="go">›</span></button>`:''}
+  // Link thật, mở ra tab mới (trên app ở màn hình chính: mở bằng trình duyệt trong app).
+  // Chỉ nhận http(s) — link lạ thì hiện chữ, không bấm được.
+  const hrefSP=/^https?:\/\//i.test(t.link||'')?t.link:(t.link&&!/^[a-z]+:/i.test(t.link)?'https://'+t.link:'');
+  const b3=coKQ?`${t.link?(hrefSP?`<a class="plink" href="${esc(hrefSP)}" target="_blank" rel="noopener">
+      <span><b>Mở sản phẩm ↗</b><span>${esc(t.link)}</span></span><span class="go">›</span></a>`
+      :`<div class="plink"><span><b>Link sản phẩm</b><span>${esc(t.link)}</span></span></div>`):''}
     <div class="fld"><div class="lb lbm">Kỳ vọng kết quả</div><div class="tx">${t.ket||'—'}</div></div>`:'';
 
   const b4=
