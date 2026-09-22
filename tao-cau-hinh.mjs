@@ -25,9 +25,13 @@ const anon = lấy('SUPABASE_ANON_KEY');
 
 // Mảng việc: một nguồn duy nhất là Skill. Mảng đang tạm dừng vẫn gửi sang app (kèm
 // `tat: true`) để việc cũ của mảng đó còn hiện đúng tên và đúng màu, thay vì thành ô trống.
+// `sua` = "File được sửa" của Skill, để màn chi tiết việc hiện đúng phạm vi agent được
+// đụng vào. Skill chưa khai (vd Kinh doanh đang chờ sếp điền) thì để trống.
 const { PHÒNG } = await import('./agent/phong.mjs');
+const { phạmViTừSkill } = await import('./agent/pham-vi.mjs');
+const sửaĐược = (skill) => { try { return phạmViTừSkill(skill).duoc_sua; } catch { return []; } };
 const mang = Object.fromEntries(Object.entries(PHÒNG).map(([mã, p]) =>
-  [mã, { ten: p.tên, mau: p.màu, tat: !!p.tắt, skill: p.skill }]));
+  [mã, { ten: p.tên, mau: p.màu, tat: !!p.tắt, skill: p.skill, sua: sửaĐược(p.skill) }]));
 
 const nội = `/* Sinh tự động bởi tao-cau-hinh.mjs — đừng sửa tay, đừng commit. */
 window.CAU_HINH = ${JSON.stringify({ url, anon, mang }, null, 2)};

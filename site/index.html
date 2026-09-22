@@ -195,6 +195,21 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
 .plink span span{font-family:ui-monospace,Menlo,monospace; font-size:11px; color:var(--info); word-break:break-all}
 .plink .go{color:var(--info); font-weight:900; font-size:19px}
 .lb.lbm{color:var(--lab)}
+.gon summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px; margin:0}
+.gon summary::-webkit-details-marker{display:none}
+.gon .dem{font-weight:600; color:var(--mut); font-size:12px}
+.gon .mui{margin-left:auto; font-size:18px; line-height:1; transition:transform .15s}
+.gon[open] .mui{transform:rotate(90deg)}
+.gon[open] .log{margin-top:8px}
+@media (prefers-reduced-motion:reduce){.gon .mui{transition:none}}
+/* Khung xem sản phẩm ngay trong app — nút Quay lại về đúng màn việc vừa mở */
+.xemov{position:fixed; inset:0; z-index:90; display:flex; flex-direction:column; background:var(--bg)}
+.xemov .xbar{display:flex; align-items:center; gap:10px; padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;
+  border-bottom:1px solid var(--line); background:var(--panel)}
+.xemov .xbar button,.xemov .xbar a{font:inherit; font-weight:800; font-size:15px; border:0; background:none; color:var(--info);
+  padding:8px 6px; text-decoration:none; cursor:pointer}
+.xemov .xbar .ten{flex:1; min-width:0; font-size:12px; color:var(--mut); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center}
+.xemov iframe{flex:1; width:100%; border:0; background:#fff}
 .log{font-family:ui-monospace,Menlo,monospace; font-size:12.5px; line-height:1.85; color:var(--mut)}
 .log b{color:var(--tx); font-weight:700}
 .log .gio{color:var(--lab); font-weight:700}
@@ -1340,6 +1355,19 @@ function manKeHoach(){
 `};
 }
 
+/* Xem sản phẩm trong app. Trên app ở màn hình chính, link mở ra ngoài là rời app hẳn,
+   muốn quay lại phải vuốt đổi app. Khung này đè lên màn việc; Quay lại là đóng nó. */
+function moXem(url){
+  dongXem();
+  const d=document.createElement('div'); d.className='xemov'; d.id='xemOv';
+  d.innerHTML=`<div class="xbar"><button type="button" data-dongxem>‹ Quay lại</button>
+    <span class="ten">${esc(url.replace(/^https?:\/\//,''))}</span>
+    <a href="${esc(url)}" target="_blank" rel="noopener" aria-label="Mở bằng trình duyệt">↗</a></div>
+    <iframe src="${esc(url)}" title="Sản phẩm"></iframe>`;
+  document.body.appendChild(d);
+}
+function dongXem(){ document.getElementById('xemOv')?.remove(); }
+
 /* Màn chi tiết một việc = dòng thời gian bốn bước, đúng bản đã chốt:
    ① kế hoạch → ② làm trong bản nháp → ③ kết quả → ④ bạn duyệt. */
 function manTask(){
@@ -1354,32 +1382,35 @@ function manTask(){
   const buoc=(cls,so,hd,sm,bd)=>`<div class="st-b ${cls}"><div class="dot">${cls==='xongb'?'✓':so}</div>
     <div><div class="hd">${hd}${sm?`<small>${sm}</small>`:''}</div><div class="bd">${bd||''}</div></div></div>`;
 
-  const b1=`<div class="fld"><div class="lb">Agent định làm</div><div class="tx">${b.nhiem_vu||t.chi_tiet||'—'}</div></div>
-    <div class="fld"><div class="lb">Chỉ được đụng vào</div><div class="tx">${chip(b.file_duoc_sua)}</div></div>
+  // Phạm vi lấy từ Skill của phòng (tao-cau-hinh.mjs gửi sang), brief không phải khai lại.
+  const suaSkill=((window.CAU_HINH&&window.CAU_HINH.mang)||{})[t.mang]?.sua;
+  const b1=`<div class="fld"><div class="lb">Agent định làm · hạn ${t.han}</div><div class="tx">${b.nhiem_vu||t.chi_tiet||'—'}</div></div>
+    <div class="fld"><div class="lb">Chỉ được đụng vào</div><div class="tx">${chip(b.file_duoc_sua?.length?b.file_duoc_sua:suaSkill)}</div></div>
     ${b.viec_khong_lam?.length?`<div class="fld"><div class="lb">Việc không được làm</div>
       <div class="tx" style="font-size:13px">${b.viec_khong_lam.map(x=>'· '+x).join('<br>')}</div></div>`:''}
-    <div class="fld"><div class="lb">Xong khi · hạn ${t.han}</div><div class="tx">${b.xong_khi||'—'}</div></div>
     ${t.tt==='cho_chot'?`<div class="btnrow"><button class="btn pri" data-act="da_chot">Chốt việc này</button>
       <button class="btn no" data-act="bo">Bỏ</button></div>`:''}`;
 
   // Nhật ký do hook ghi, agent không viết — nên không quên được.
-  const b2=daLam?`<div class="fld"><div class="lb lbm">Agent đã làm gì</div>
+  // Thu gọn mặc định: nhật ký dài, sếp ít khi cần đọc. Bấm mũi tên để mở.
+  const b2=daLam?`<details class="fld gon"><summary class="lb lbm">Agent đã làm gì
+      <span class="dem">${(t.nk||[]).length} bước</span><span class="mui">›</span></summary>
       <div class="log">${(t.nk&&t.nk.length)
         ? t.nk.map(x=>{const m=String(x).match(/^(\d{1,2}:\d{2}(?::\d{2})?)\s*·\s*(\S+)\s*·\s*(.*)$/);
             return m ? `<span class="gio">${m[1]}</span> ${m[2].toLowerCase()} <b>${m[3]}</b>`
                      : `<span class="gio">·</span> ${x}`;}).join('<br>')
-        : 'nhật ký chưa ghi bước nào'}</div></div>`:'';
+        : 'nhật ký chưa ghi bước nào'}</div></details>`:'';
 
   // File máy tự lấy bằng cách so bản nháp với bản gốc — không có lời khai nào để man.
   const bFile=(coKQ&&t.files?.length)?`<div class="fld"><div class="lb lbm">${t.files.length} file đã đụng
       <span style="color:var(--ok);font-weight:700">· khớp bản nháp, không lấn</span></div>
       <div class="fl">${t.files.map(f=>`<span class="y">✓</span> ${f}`).join('<br>')}</div></div>`:'';
 
-  // Link thật, mở ra tab mới (trên app ở màn hình chính: mở bằng trình duyệt trong app).
+  // Bấm là mở sản phẩm ngay trong app, có nút quay lại (moXem). href giữ làm dự phòng.
   // Chỉ nhận http(s) — link lạ thì hiện chữ, không bấm được.
   const hrefSP=/^https?:\/\//i.test(t.link||'')?t.link:(t.link&&!/^[a-z]+:/i.test(t.link)?'https://'+t.link:'');
-  const b3=coKQ?`${t.link?(hrefSP?`<a class="plink" href="${esc(hrefSP)}" target="_blank" rel="noopener">
-      <span><b>Mở sản phẩm ↗</b><span>${esc(t.link)}</span></span><span class="go">›</span></a>`
+  const b3=coKQ?`${t.link?(hrefSP?`<a class="plink" href="${esc(hrefSP)}" target="_blank" rel="noopener" data-xem="${esc(hrefSP)}">
+      <span><b>Mở sản phẩm</b><span>${esc(t.link)}</span></span><span class="go">›</span></a>`
       :`<div class="plink"><span><b>Link sản phẩm</b><span>${esc(t.link)}</span></span></div>`):''}
     <div class="fld"><div class="lb lbm">Kỳ vọng kết quả</div><div class="tx">${t.ket||'—'}</div></div>`:'';
 
@@ -1969,6 +2000,8 @@ document.getElementById('dev').addEventListener('click',e=>{
   const g=e.target.closest('[data-gram]'); if(g){doiGram(+g.dataset.gram); return;}
   const me=e.target.closest('[data-meal]'); if(me){go('food',{meal:+me.dataset.meal}); return;}
   if(e.target.closest('[data-cam]')){themBua(MENU[Math.floor(Math.random()*MENU.length)]); return;}
+  const xm=e.target.closest('[data-xem]'); if(xm){ e.preventDefault(); moXem(xm.dataset.xem); return; }
+  if(e.target.closest('[data-dongxem]')){ dongXem(); return; }
   const ts=e.target.closest('[data-toast]'); if(ts){toast(ts.dataset.toast); return;}
   const bar=e.target.closest('[data-bar]');
   if(bar){
