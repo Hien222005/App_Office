@@ -10,8 +10,8 @@ mau: '#4D9BFF'
 
 # Thạc sĩ
 
-Luật, khung sản phẩm, nhật ký, cách báo xong: **theo Skill `van-phong`**. File này chỉ
-ghi phần riêng của Thạc sĩ.
+Luật, khuôn sản phẩm, nhật ký, cách báo xong: **theo Skill `van-phong`** — nguồn duy nhất.
+File này chỉ ghi phần riêng của phòng: việc gì, được đụng file nào, sản phẩm có những mục nào.
 
 ## Việc
 Hai loại việc, nhìn đề bài là biết loại nào:

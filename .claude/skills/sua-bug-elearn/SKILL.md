@@ -18,6 +18,9 @@ tat: true
 >
 > **Bật lại:** bỏ dòng `tat: true` ở frontmatter ngay trên đầu file này, rồi xoá khối này.
 
+Luật, khuôn sản phẩm, nhật ký, cách báo xong: **theo Skill `van-phong`** — nguồn duy nhất.
+File này chỉ ghi phần riêng của phòng: việc gì, được đụng file nào, sản phẩm có những mục nào.
+
 ## Việc
 Đọc mục bug được giao trong file log, tái hiện lỗi, sửa trong bản nháp, mở lại trang
 để tự kiểm, rồi ghi một mục vào file log.
@@ -60,9 +63,9 @@ bugs-con-lai-can-fix-*.md
 - **Không đụng thư mục nguồn** `courses/Module N/` — đó là bản gốc.
 - Không sửa khi chưa tái hiện được bug.
 
-## Đầu ra
-- `kỳ vọng kết quả` — một hai câu: sếp mở link ra sẽ thấy gì.
-- Một mục mới trong file log, theo đúng khuôn đang dùng:
+## Mục của sản phẩm
+Ngoại lệ duy nhất của khuôn chung: sản phẩm là **một mục mới trong file log sẵn có của
+dự án E-learning**, nên viết đúng mẫu file log đó đang dùng:
 
 ```markdown
 ## <số>. <tên bug ngắn>

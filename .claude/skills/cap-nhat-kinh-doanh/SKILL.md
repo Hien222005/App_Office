@@ -14,6 +14,9 @@ tat: true
 > Không đề xuất, không nhận việc mảng `biz`. Lý do: chưa có luật.
 > **Bật lại:** sếp điền các mục ✎ dưới đây rồi xoá khối này.
 
+Luật, khuôn sản phẩm, nhật ký, cách báo xong: **theo Skill `van-phong`** — nguồn duy nhất.
+File này chỉ ghi phần riêng của phòng: việc gì, được đụng file nào, sản phẩm có những mục nào.
+
 ## Việc
 ✎ *(sếp điền: mảng này làm gì)*
 
@@ -31,8 +34,8 @@ $DIR_BIZ/**
 ## Không làm
 ✎ *(sếp điền)*
 
-## Đầu ra
-- `kỳ vọng kết quả` — một hai câu sếp mở link ra sẽ thấy gì.
+## Mục của sản phẩm
+Khuôn chung trong `van-phong`.
 - ✎ *(sếp điền: còn phải ra cái gì nữa)*
 
 ## Tham chiếu

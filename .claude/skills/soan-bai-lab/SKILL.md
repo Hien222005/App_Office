@@ -10,6 +10,9 @@ mau: '#22E5C4'
 
 # Soạn bài Lab Coach
 
+Luật, khuôn sản phẩm, nhật ký, cách báo xong: **theo Skill `van-phong`** — nguồn duy nhất.
+File này chỉ ghi phần riêng của phòng: việc gì, được đụng file nào, sản phẩm có những mục nào.
+
 ## Việc
 Đọc repo bài học của buổi, viết bản tóm tắt cho **người sắp đứng lớp, có background BA**
 — không phải cho học viên. Repo do Hiển chủ động gửi, mỗi buổi một repo.
@@ -40,11 +43,9 @@ san-pham/lab/*.html
 
 ## Không làm
 - Không sửa bất cứ gì trong `repo/`.
-- Không bịa bước hay số liệu không có trong tài liệu.
 - Không chép nguyên văn. Được nhắc **tên** chỉ số nội bộ, không ghi **con số** của tài liệu.
-- Chỗ nào tự suy ra thì phải ghi rõ là suy luận.
 
-## Đầu ra
+## Mục của sản phẩm
 Một file `san-pham/lab/<ngày>.html`, **dưới 700 chữ**.
 
 Dùng **khuôn sản phẩm chung** trong Skill `van-phong`
@@ -59,8 +60,7 @@ buộc `Chưa chắc` và `Nguồn`.
 | 4 · Nộp nhóm hay cá nhân | `<ul>`, hai dòng Nhóm / Cá nhân |
 | 5 · Giải thích thuật ngữ | `<dl>` — `<dt>` thuật ngữ, `<dd>` giải thích |
 
-Tên file, lệnh, đường dẫn bọc `<code>`. Còn lại (đánh dấu suy luận, kỳ vọng kết quả)
-theo khung chung.
+Tên file, lệnh, đường dẫn bọc `<code>`.
 
 ## Tham chiếu
 **Mọi mẫu đường dẫn trên đây tính từ GỐC PHÒNG**, tức `DIR_LAB` trong `agent/.env`.
