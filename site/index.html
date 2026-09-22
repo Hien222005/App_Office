@@ -438,6 +438,13 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
 .fab{flex:0 0 auto; width:52px; height:52px; border-radius:50%; display:flex;
   align-items:center; justify-content:center; position:relative}
 .fab:active{transform:scale(.93)}
+/* Robot Milo thay cho nút chat (22/09). Ảnh tĩnh hiện ngay; bản 3D (robot/mascot.js, 2 MB)
+   tải khi máy rảnh rồi thay vào chỗ này. Robot cao hơn thanh — nhô lên trên là cố ý. */
+.fab.robot, .bar .fab.robot{width:64px; height:64px; margin:-14px -4px 0 -2px; padding:0;
+  background:none !important; border:0 !important; box-shadow:none !important; border-radius:22px}
+.fab.robot img{width:84px; height:84px; object-fit:contain; margin-top:-16px; pointer-events:none;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+robot-mascot.fab-3d{flex:0 0 auto; width:64px; height:64px; margin:-14px -4px 0 -2px}
 .fab svg{width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2.4;
   stroke-linecap:round; stroke-linejoin:round}
 .fab .noti{position:absolute; top:-3px; right:-3px; min-width:20px; height:20px; border-radius:10px;
@@ -1748,7 +1755,7 @@ function thanhDuoi(){
       ${tab('food','an','Ăn',0)}
       ${tab('kehoach','kh','Kế hoạch',0)}
     </div>
-    <button class="fab" data-chat="mo" aria-label="Mở chat">${sv('chat')}</button>
+    <button class="fab robot" data-chat="mo" aria-label="Mở trợ lý chat"><img src="robot/robot.png" alt=""></button>
   </div>`;
 }
 
@@ -2078,10 +2085,11 @@ document.getElementById('dev').addEventListener('click',e=>{
   const ch=e.target.closest('[data-chat]');
   if(ch){
     const v=ch.dataset.chat;
-    if(v==='mo'){ S.chatMo=true; render();
+    if(v==='mo'){ S.chatMo=true; render(); robot()?.setOpen?.(true);
       requestAnimationFrame(()=>{const i=document.getElementById('cIn'); if(i) i.focus();}); return; }
     if(v==='dong'){ const i=document.getElementById('cIn'); if(i) S.chatNhap=i.value;
-      tatNghe(); dungDoc(); S.chatMo=false; S.nghe=false; render(); return; }
+      tatNghe(); dungDoc(); S.chatMo=false; S.nghe=false; render();
+      robot()?.setOpen?.(false); robot()?.play?.('wave'); return; }
     if(v==='mic'){ S.nghe ? tatNghe() : batNghe(); return; }
     if(v==='loa'){ S.doc=!S.doc; if(!S.doc) dungDoc(); render();
       toast(S.doc?'Đã bật đọc to':'Đã tắt đọc to'); return; }
@@ -2195,6 +2203,31 @@ document.getElementById('dev').addEventListener('focusout', () => {
 });
 // lưới an toàn: iOS có thể tính xong rất muộn, nhất là khi mở từ màn hình chính
 [0, 120, 350, 800, 1600].forEach(t => setTimeout(doVungAnToan, t));
+
+/* ── ROBOT 3D ─────────────────────────────────────────────────────────────
+   Tải SAU khi app đã hiện: mascot.js gói cả Three.js lẫn model (2 MB), để nó chặn lần
+   vẽ đầu là mở app chậm thêm vài giây. Chưa tải xong, hỏng WebGL hay mạng yếu thì nút
+   ảnh tĩnh vẫn mở chat bình thường. Bản prototype nhét sẵn mascot vào trang thì dùng luôn. */
+const robot=()=>document.querySelector('robot-mascot.fab-3d');
+function ganRobot(){
+  const nut=document.querySelector('.bar .fab.robot');
+  if(!nut||robot()||!customElements.get('robot-mascot')) return;
+  const r=document.createElement('robot-mascot'); r.className='fab-3d';
+  r.addEventListener('robot-open',()=>{
+    if(S.chatMo) return;
+    S.chatMo=true; render(); r.setOpen?.(true);
+    requestAnimationFrame(()=>document.getElementById('cIn')?.focus());
+  });
+  nut.replaceWith(r);
+}
+function taiRobot(){
+  if(customElements.get('robot-mascot')) return ganRobot();
+  import('./robot/mascot.js').then(ganRobot).catch(()=>{});   // hỏng thì giữ ảnh tĩnh
+}
+window.addEventListener('load',()=>{
+  const cho=window.requestIdleCallback||((f)=>setTimeout(f,1200));
+  cho(taiRobot,{timeout:3000});
+});
 
 (function nguonKhoiDong(){
   const n=window.NGUON; if(!n) return;
