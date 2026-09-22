@@ -1856,7 +1856,7 @@ async function taiTuNguon(ngam){
     // Kế hoạch tải riêng: hỏng bảng này thì việc vẫn phải hiện, đừng để một bảng
     // kéo sập cả màn hình.
     if(n.cheDo==='that'){
-      try{ S.kehoach=await n.taiKeHoach(); }
+      try{ S.kehoach=d?.kehoach ?? await n.taiKeHoach(); }
       catch(e){ if(!ngam) toast('Không tải được kế hoạch: '+e.message,true); }
       n.batNghe?.(taiNgam);
     }
@@ -1962,7 +1962,10 @@ function capNhatBar(){
     void gl.offsetWidth;                         // ép vẽ mốc cũ trước khi bay
     gl.style.transition='';
     khungKeTiep(()=>{ gl.style.width=w+'px'; gl.style.transform=`translateX(${x}px)`; });
-  }else{
+  }else if(!glidePrev || glidePrev.w!==w || glidePrev.x!==x){
+    // Chỉ đặt thẳng khi kích thước thật sự đổi (xoay máy, font tải xong). Cùng tab, cùng
+    // chỗ thì ĐỪNG đụng: go() vừa cho viên trượt bay, render() ngay sau đó gọi lại hàm
+    // này — tắt transition ở đây là cắt ngang cú bay, hiệu ứng mất hẳn.
     gl.style.transition='none';
     gl.style.width=w+'px'; gl.style.transform=`translateX(${x}px)`;
     void gl.offsetWidth;

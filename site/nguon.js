@@ -49,7 +49,17 @@
   // `xoáNếuHỏng`: chỉ ĐÚNG khi đây là phiên đang lưu và nó đã chết — xoá cho sạch.
   // Khi chuỗi refresh do NGƯỜI GÕ VÀO (mã chuyển) thì tuyệt đối KHÔNG xoá: gõ nhầm một
   // chữ mà bị đăng xuất khỏi phiên đang dùng tốt là mất dữ liệu của người ta.
-  async function làmMớiPhiên(refresh, xoáNếuHỏng = true) {
+  // Nhiều yêu cầu cùng gặp 401 (tai() gửi bốn cái một lúc) → chỉ xin thẻ MỘT lần, các cái
+  // kia chờ chung. Supabase thu hồi refresh_token sau lần dùng đầu; xin lần hai bằng chính
+  // token đó sẽ hỏng, và nhánh xoáNếuHỏng sẽ đăng xuất sếp oan.
+  const đangXin = new Map();
+  function làmMớiPhiên(refresh, xoáNếuHỏng = true) {
+    if (!đangXin.has(refresh)) {
+      đangXin.set(refresh, xinThẻ(refresh, xoáNếuHỏng).finally(() => đangXin.delete(refresh)));
+    }
+    return đangXin.get(refresh);
+  }
+  async function xinThẻ(refresh, xoáNếuHỏng) {
     try {
       const r = await fetch(`${C.url}/auth/v1/token?grant_type=refresh_token`, {
         method: 'POST',
@@ -180,20 +190,28 @@
   NG.tai = async () => {
     if (!C.url || !C.anon) { NG.cheDo = 'mau'; return null; }
     if (!NG.daDangNhap()) { NG.cheDo = 'chua-dang-nhap'; return null; }
-    try {
-      const [ai] = await Promise.all([gọi('/auth/v1/user')]);
-      NG.email = ai?.email ?? null;
-    } catch { NG.email = null; }
+    // Bốn yêu cầu gửi CÙNG LÚC, không nối đuôi nhau: trước đây mỗi yêu cầu chờ cái trước
+    // xong, mở app mất bốn vòng mạng (~3 giây trên 4G). Nay chỉ còn một vòng.
+    const [ai, việcR, hỏiR, khR] = await Promise.allSettled([
+      gọi('/auth/v1/user'),
+      gọi(`/rest/v1/tasks?select=*&order=ngay.asc,thu_tu.asc`),
+      gọi(`/rest/v1/questions?select=*&order=tao_luc.desc&limit=20`),
+      gọi('/rest/v1/ke_hoach?select=*&order=thu.asc,thu_tu.asc,tao_luc.asc'),
+    ]);
+    NG.email = ai.status === 'fulfilled' ? ai.value?.email ?? null : null;
 
     // Thử đọc kèm cột mới. Thiếu cột nghĩa là chưa chạy doi-2-workflow.sql.
     try {
-      const việc = await gọi(`/rest/v1/tasks?select=*&order=ngay.asc,thu_tu.asc`);
+      if (việcR.status === 'rejected') throw việcR.reason;
+      if (hỏiR.status === 'rejected') throw hỏiR.reason;
+      const việc = việcR.value, hỏi = hỏiR.value;
       const thiếu = việc.length ? COT_MOI.filter((c) => !(c in việc[0])) : [];
       if (thiếu.length) { NG.cheDo = 'chua-doi'; NG.loi = `Database còn thiếu cột: ${thiếu.join(', ')}`; return null; }
-      const hỏi = await gọi(`/rest/v1/questions?select=*&order=tao_luc.desc&limit=20`);
       NG.cheDo = 'that';
       NG.loi = null;
-      return { viec: việc.map(doiSangApp), hoi: hỏi.filter((h) => !h.tra_loi).map(doiHoi)[0] ?? null };
+      return { viec: việc.map(doiSangApp), hoi: hỏi.filter((h) => !h.tra_loi).map(doiHoi)[0] ?? null,
+               // Kế hoạch hỏng thì để null — index.html tải lại riêng, việc vẫn phải hiện.
+               kehoach: khR.status === 'fulfilled' ? khR.value : null };
     } catch (e) {
       NG.cheDo = 'chua-doi';
       NG.loi = e.chiTiet?.message || e.message || 'không đọc được dữ liệu';
