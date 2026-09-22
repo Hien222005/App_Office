@@ -271,5 +271,107 @@
 
   NG.xoaKeHoach = async (id) => gọi(`/rest/v1/ke_hoach?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
 
+  /* ── TỰ CẬP NHẬT · Supabase Realtime ─────────────────────────────────────
+   * Trước đây app chỉ tải lúc mở và lúc bấm nút Cập nhật, nên Mac nộp bài xong mà điện
+   * thoại vẫn hiện bảng cũ. Database đã bật Realtime cho tasks, questions, ke_hoach
+   * (schema.sql) — nay app nghe thẳng, có thay đổi thì gọi `khiĐổi()`.
+   *
+   * Đi thẳng WebSocket theo giao thức Phoenix của Realtime, không thêm thư viện: cùng
+   * cách nguon.js vốn gọi REST trần. Gửi kèm access_token nên RLS vẫn áp — chỉ chủ nhân
+   * nhận được sự kiện.
+   *
+   * iOS cắt socket khi app vào nền. Nên: ẩn app thì tự đóng, hiện lại thì nối lại —
+   * phần thay đổi lỡ mất lúc ẩn do index.html tải lại một lần khi app hiện lên.
+   */
+  const BẢNG_NGHE = ['tasks', 'questions', 'ke_hoach'];
+  const CHỦ_ĐỀ = 'realtime:van-phong';
+  const nghe = { ws: null, khiĐổi: null, nhịp: null, hẹnNối: null, hẹnThẻ: null, chờ: null, lầnLỗi: 0, ref: 0, tắt: true, lượt: 0 };
+
+  const hạnThẻ = (jwt) => {
+    try { return JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp * 1000; }
+    catch { return 0; }
+  };
+
+  // Thẻ còn dưới 1 phút thì xin thẻ mới trước khi nối — Realtime từ chối thẻ hết hạn.
+  async function thẻCònHạn() {
+    const p = phiên();
+    if (!p?.access_token) return null;
+    if (hạnThẻ(p.access_token) - Date.now() > 60e3) return p.access_token;
+    if (!p.refresh_token || !(await làmMớiPhiên(p.refresh_token))) return null;
+    return phiên()?.access_token ?? null;
+  }
+
+  const gửi = (topic, event, payload) => {
+    if (nghe.ws?.readyState !== 1) return;
+    const ref = String(++nghe.ref);
+    nghe.ws.send(JSON.stringify({ topic, event, payload, ref, join_ref: topic === CHỦ_ĐỀ ? '1' : undefined }));
+  };
+
+  function dọn() {
+    clearInterval(nghe.nhịp); clearTimeout(nghe.hẹnNối); clearTimeout(nghe.hẹnThẻ);
+    nghe.nhịp = nghe.hẹnNối = nghe.hẹnThẻ = null;
+    if (nghe.ws) { nghe.ws.onclose = null; try { nghe.ws.close(); } catch {} nghe.ws = null; }
+  }
+
+  // Nhiều dòng đổi liền nhau (xong = đổi nhãn + ghi link + ghi nhật ký) → gộp thành một lần tải.
+  const báoĐổi = () => { clearTimeout(nghe.chờ); nghe.chờ = setTimeout(() => nghe.khiĐổi?.(), 400); };
+
+  async function nối() {
+    dọn();
+    if (nghe.tắt || !C.url || !C.anon) return;
+    // Hai lần nối chồng nhau (đang chờ xin thẻ thì bị gọi lại) → chỉ lần mới nhất được mở socket.
+    const lượt = ++nghe.lượt;
+    nghe.đangNối = true;
+    const thẻ = await thẻCònHạn().finally(() => { if (lượt === nghe.lượt) nghe.đangNối = false; });
+    if (!thẻ || nghe.tắt || lượt !== nghe.lượt) return;
+
+    const ws = new WebSocket(`${C.url.replace(/^http/, 'ws')}/realtime/v1/websocket?apikey=${C.anon}&vsn=1.0.0`);
+    nghe.ws = ws;
+    ws.onopen = () => {
+      gửi(CHỦ_ĐỀ, 'phx_join', {
+        config: {
+          broadcast: { self: false }, presence: { key: '' },
+          postgres_changes: BẢNG_NGHE.map((table) => ({ event: '*', schema: 'public', table })),
+        },
+        access_token: thẻ,
+      });
+      nghe.nhịp = setInterval(() => gửi('phoenix', 'heartbeat', {}), 25e3);
+      // Đổi thẻ cho kênh trước khi thẻ hết hạn, khỏi phải cắt nối lại.
+      nghe.hẹnThẻ = setTimeout(async () => {
+        const mới = await thẻCònHạn();
+        if (mới) gửi(CHỦ_ĐỀ, 'access_token', { access_token: mới });
+      }, Math.max(30e3, hạnThẻ(thẻ) - Date.now() - 120e3));
+    };
+    ws.onmessage = (e) => {
+      let m; try { m = JSON.parse(e.data); } catch { return; }
+      if (m.topic !== CHỦ_ĐỀ) return;
+      if (m.event === 'phx_reply' && m.payload?.status === 'ok') nghe.lầnLỗi = 0;
+      if (m.event === 'postgres_changes') báoĐổi();
+      // Server đóng kênh (thẻ hết hạn, lỗi cấu hình) → nối lại từ đầu.
+      if (m.event === 'phx_close' || m.event === 'phx_error' ||
+          (m.event === 'system' && m.payload?.status === 'error')) ws.close();
+    };
+    ws.onclose = () => {
+      clearInterval(nghe.nhịp);
+      if (nghe.tắt) return;
+      // Lỗi liên tiếp thì giãn dần: 2s, 4s, 8s… tối đa 60s.
+      const chờ = Math.min(60e3, 2e3 * 2 ** nghe.lầnLỗi++);
+      nghe.hẹnNối = setTimeout(nối, chờ);
+    };
+  }
+
+  NG.batNghe = (khiĐổi) => {
+    nghe.khiĐổi = khiĐổi;
+    if (!nghe.tắt && nghe.ws) return;       // đang nghe rồi thì thôi
+    if (!nghe.tắt && nghe.đangNối) return;   // đang chờ xin thẻ để nối
+    nghe.tắt = false; nghe.lầnLỗi = 0;
+    nối();
+  };
+  NG.tatNghe = () => { nghe.tắt = true; clearTimeout(nghe.chờ); dọn(); };
+  NG.dangNghe = () => nghe.ws?.readyState === 1;
+
+  const dangXuatCu = NG.dangXuat;
+  NG.dangXuat = () => { NG.tatNghe(); dangXuatCu(); };
+
   window.NGUON = NG;
 })();

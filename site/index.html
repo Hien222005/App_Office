@@ -1819,9 +1819,12 @@ function manDangNhap(){
         <div class="btnrow"><button class="btn gh" data-xacnhan="1">Vào bằng mã</button></div>`}`};
 }
 
-async function taiTuNguon(){
+/* `ngam` = tải lại do Realtime báo có thay đổi: không hiện vòng xoay, không bật thông báo
+   lỗi (lần sau tự thử lại), và giữ nguyên chữ sếp đang gõ dở. */
+async function taiTuNguon(ngam){
   const n=NG(); if(!n) return;
-  S.dangTai=true; render();
+  if(!ngam){ S.dangTai=true; render(); }
+  const go=giuChuDangGo();
   try{
     const d=await n.tai();
     S.nguon=n.cheDo;
@@ -1830,10 +1833,39 @@ async function taiTuNguon(){
     // kéo sập cả màn hình.
     if(n.cheDo==='that'){
       try{ S.kehoach=await n.taiKeHoach(); }
-      catch(e){ toast('Không tải được kế hoạch: '+e.message,true); }
+      catch(e){ if(!ngam) toast('Không tải được kế hoạch: '+e.message,true); }
+      n.batNghe?.(taiNgam);
     }
-  }catch(e){ toast('Không tải được dữ liệu: '+e.message,true); }
+  }catch(e){ if(!ngam) toast('Không tải được dữ liệu: '+e.message,true); }
+  traChuDangGo(go);
   S.dangTai=false; render();
+}
+
+/* ── TỰ CẬP NHẬT ─────────────────────────────────────────────────────────
+   Realtime báo có dòng đổi → tải lại ngầm. Đang gõ dở thì HOÃN tới lúc rời ô nhập:
+   render() ghi lại cả màn hình, vẽ lại giữa chừng là mất con trỏ và mất chữ. */
+let dangTaiNgam=false;
+const oDangGo=()=>{
+  const a=document.activeElement;
+  return !!(a&&a.closest&&a.closest('#dev')&&
+    a.matches('input:not([type=range]):not([readonly]),textarea:not([readonly])'));
+};
+async function taiNgam(){
+  if(S.dangTai||dangTaiNgam||oDangGo()){ S.choTai=true; return; }
+  S.choTai=false; dangTaiNgam=true;
+  try{ await taiTuNguon(true); } finally{ dangTaiNgam=false; }
+  if(S.choTai) setTimeout(taiNgam,0);   // có thay đổi mới đến trong lúc đang tải
+}
+// Chụp chữ đang nằm trong ô nhập trước khi thay dữ liệu, rồi trả lại sau.
+function giuChuDangGo(){
+  const v=(id)=>document.getElementById(id)?.value;
+  return {task:S.taskId, title:v('fTitle'), note:v('fNote'), hoi:S.hoi?.id, tuGo:v('qTu'), chat:v('cIn')};
+}
+function traChuDangGo(g){
+  if(g.chat!=null) S.chatNhap=g.chat;
+  const t=S.tasks.find(x=>x.id===g.task);
+  if(t){ if(g.title!=null) t.tieu_de=g.title.trim()||t.tieu_de; if(g.note!=null) t.phan_hoi=g.note; }
+  if(g.tuGo!=null&&S.hoi&&S.hoi.id===g.hoi) S.hoi.tuGo=g.tuGo;
 }
 
 function manHienTai(){
@@ -2126,6 +2158,18 @@ function doVungAnToan(){
   .forEach(e => window.addEventListener(e, doVungAnToan));
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'visible') setTimeout(doVungAnToan, 60);
+});
+/* iOS cắt socket khi app vào nền. Ẩn thì chủ động tắt nghe; hiện lại thì tải một lần
+   để bắt kịp phần đã lỡ, rồi nghe tiếp. */
+document.addEventListener('visibilitychange', () => {
+  const n=NG(); if(!n?.batNghe||S.nguon!=='that') return;
+  if(document.visibilityState==='hidden') n.tatNghe();
+  else taiNgam();          // taiTuNguon tự bật nghe lại sau khi tải xong
+});
+window.addEventListener('online', () => { if(S.nguon==='that') taiNgam(); });
+// Rời ô nhập mà có thay đổi đang hoãn → tải luôn.
+document.getElementById('dev').addEventListener('focusout', () => {
+  setTimeout(() => { if(S.choTai&&!oDangGo()) taiNgam(); }, 150);
 });
 // lưới an toàn: iOS có thể tính xong rất muộn, nhất là khi mở từ màn hình chính
 [0, 120, 350, 800, 1600].forEach(t => setTimeout(doVungAnToan, t));
