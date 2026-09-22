@@ -1364,6 +1364,9 @@ function moXem(url){
     <span class="ten">${esc(url.replace(/^https?:\/\//,''))}</span>
     <a href="${esc(url)}" target="_blank" rel="noopener" aria-label="Mở bằng trình duyệt">↗</a></div>
     <iframe src="${esc(url)}" title="Sản phẩm"></iframe>`;
+  // Khung gắn vào body, nằm NGOÀI #dev — nơi bộ bắt click chung đang nghe — nên nút
+  // Quay lại phải tự gắn sự kiện. Lần đầu gắn qua data-dongxem, bấm không ăn.
+  d.querySelector('[data-dongxem]').addEventListener('click',dongXem);
   document.body.appendChild(d);
 }
 function dongXem(){ document.getElementById('xemOv')?.remove(); }
@@ -2001,7 +2004,6 @@ document.getElementById('dev').addEventListener('click',e=>{
   const me=e.target.closest('[data-meal]'); if(me){go('food',{meal:+me.dataset.meal}); return;}
   if(e.target.closest('[data-cam]')){themBua(MENU[Math.floor(Math.random()*MENU.length)]); return;}
   const xm=e.target.closest('[data-xem]'); if(xm){ e.preventDefault(); moXem(xm.dataset.xem); return; }
-  if(e.target.closest('[data-dongxem]')){ dongXem(); return; }
   const ts=e.target.closest('[data-toast]'); if(ts){toast(ts.dataset.toast); return;}
   const bar=e.target.closest('[data-bar]');
   if(bar){
