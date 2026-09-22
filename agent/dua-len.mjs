@@ -131,8 +131,11 @@ export async function đưaLên(id) {
     đã.push({ file: f, url: `${URL_APP}/xem/${mãHoá(trong)}` });
   }
 
-  // Link chính: file HTML đã đổi đầu tiên, không thì file đã đổi đầu tiên.
-  const chính = đã.find(x => x.file.endsWith('.html') && đổi.includes(x.file)) ?? đã[0];
+  // Link chính: ưu tiên file trong san-pham/ (chỗ sếp duyệt), rồi tới .html, rồi file
+  // đầu tiên. Trước 22/09 chỉ xét .html, nên việc Thạc sĩ nộp .md bị trỏ link vào
+  // nhật ký — "nhat-ky/" đứng trước "san-pham/" theo thứ tự chữ cái.
+  const điểm = (f) => (/(^|\/)san-pham\//.test(f) ? 2 : 0) + (f.endsWith('.html') ? 1 : 0);
+  const chính = đã.filter(x => đổi.includes(x.file)).sort((a, b) => điểm(b.file) - điểm(a.file))[0] ?? đã[0];
   return { link: chính?.url ?? null, da_dua_len: đã, file_phu: [...phụ] };
 }
 
