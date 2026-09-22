@@ -13,7 +13,7 @@
 //
 // <mã-phòng> là chuỗi ngẫu nhiên đặt MỘT LẦN, giữ trong agent/.env. Bucket để công
 // khai nên ai có link đều mở được; mã khó đoán là thứ giữ cho link không bị dò ra.
-import { readFileSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, existsSync, statSync, appendFileSync } from 'node:fs';
 import { join, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
@@ -39,16 +39,21 @@ const KHOÁ = env('SUPABASE_SERVICE_KEY');
 // nơi file được trả về đúng kiểu. Đổi APP_URL nếu đổi tên site.
 const URL_APP = env('APP_URL') || 'https://courageous-sprite-17c1ff.netlify.app';
 
-// Mã bí mật của từng phòng. Chưa có thì in ra dòng cần thêm vào .env rồi dừng —
-// không tự ghi vào .env, để sếp thấy và giữ được nó.
+// Mã bí mật của từng phòng. Phòng mới chưa có thì TỰ TẠO và ghi thêm vào cuối .env,
+// rồi in to ra màn hình để sếp thấy. Trước đây script dừng lại bắt sếp tự dán — nên
+// thêm một phòng (chỉ cần một thư mục Skill) vẫn làm kẹt việc đầu tiên của phòng đó.
+// Chỉ THÊM dòng mới, không bao giờ sửa dòng cũ: đổi mã là link cũ chết hết.
 export function mãPhòng(mảng) {
   const tên = `XEM_THU_MA_${String(mảng).toUpperCase()}`;
-  const mã = env(tên);
-  if (!mã) {
-    console.error(`Thiếu ${tên} trong agent/.env. Thêm dòng này rồi chạy lại:\n`
-                + `${tên}=${randomBytes(8).toString('hex')}`);
-    process.exit(1);
-  }
+  const có = env(tên);
+  if (có) return có;
+  const mã = randomBytes(8).toString('hex');
+  const tệp = join(here, '.env');
+  const cũ = existsSync(tệp) ? readFileSync(tệp, 'utf8') : '';
+  appendFileSync(tệp, `${cũ && !cũ.endsWith('\n') ? '\n' : ''}${tên}=${mã}\n`);
+  process.env[tên] = mã;
+  console.error(`⚑ Phòng "${mảng}" chưa có mã xem thử — đã tạo ${tên} trong agent/.env. `
+              + `Đừng đổi hay xoá dòng đó: đổi là link cũ chết.`);
   return mã;
 }
 

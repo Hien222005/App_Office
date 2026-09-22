@@ -47,11 +47,9 @@ san-pham/lab/*.html
 ## Đầu ra
 Một file `san-pham/lab/<ngày>.html`, **dưới 700 chữ**.
 
-**Chép [references/khuon-tom-tat.html](references/khuon-tom-tat.html) rồi điền vào.**
-Đừng tự viết HTML từ đầu — khuôn đã lo phần nhìn: đọc được trên điện thoại, sáng
-và tối, năm mục đánh số màu riêng, ô riêng cho các bước và cho thuật ngữ.
-
-Chỉ thay chỗ `{{…}}`. Giữ nguyên phần `<style>`.
+Dùng **khuôn sản phẩm chung** trong Skill `van-phong`
+(`van-phong/references/khuon-san-pham.html`), với năm mục dưới đây, rồi hai mục bắt
+buộc `Chưa chắc` và `Nguồn`.
 
 | Mục | Thẻ dùng trong khuôn |
 |---|---|
@@ -61,10 +59,8 @@ Chỉ thay chỗ `{{…}}`. Giữ nguyên phần `<style>`.
 | 4 · Nộp nhóm hay cá nhân | `<ul>`, hai dòng Nhóm / Cá nhân |
 | 5 · Giải thích thuật ngữ | `<dl>` — `<dt>` thuật ngữ, `<dd>` giải thích |
 
-Tên file, lệnh, đường dẫn bọc `<code>`. Chỗ tự suy ra thì mở đầu bằng
-`<span class="suy">suy luận</span>`.
-
-Cộng `kỳ vọng kết quả` — một hai câu sếp mở link ra sẽ thấy gì.
+Tên file, lệnh, đường dẫn bọc `<code>`. Còn lại (đánh dấu suy luận, kỳ vọng kết quả)
+theo khung chung.
 
 ## Tham chiếu
 **Mọi mẫu đường dẫn trên đây tính từ GỐC PHÒNG**, tức `DIR_LAB` trong `agent/.env`.

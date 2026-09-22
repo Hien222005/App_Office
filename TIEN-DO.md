@@ -88,6 +88,12 @@ Bốn chỗ đầu chỉ để khai một cái tên, trong đó có một lần 
 | Bảng trong database | 8 | **8** (bỏ `daily_report`, thêm `ke_hoach`) |
 | Ca thử | 53 | **62/62** |
 
+- **22/09 · Hai chỗ còn sót khiến Thạc sĩ kẹt việc đầu tiên.** (1) `dua-len.mjs` dừng khi
+  thiếu `XEM_THU_MA_<MẢNG>` và bắt sếp tự dán vào `.env` — nay tự tạo và in thông báo.
+  (2) Luật chung `van-phong` vẫn ghi cứng ba phòng cũ, và khuôn sản phẩm chỉ Lab có.
+  Nay `van-phong` là **khung chung cho mọi phòng**: nguồn · sản phẩm HTML từ
+  `van-phong/references/khuon-san-pham.html` (bắt buộc mục Chưa chắc + Nguồn có link) ·
+  nhật ký bốn mục · báo xong. Skill của phòng chỉ ghi phạm vi và tên các mục.
 - **Mảng khai trong frontmatter của Skill.** `mang` · `ten_mang` · `thu_muc` · `mau` · `tat`.
   `phong.mjs` quét ra, `tao-cau-hinh.mjs` gửi sang app. Đo: thêm mảng giả `thacsi` vào
   cấu hình, app dựng đủ tên và màu **không sửa dòng nào**.

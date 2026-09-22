@@ -1,8 +1,13 @@
 <!doctype html>
+<!--
+  KHUÔN SẢN PHẨM DÙNG CHUNG CHO MỌI PHÒNG · nguồn duy nhất, đừng chép ra bản riêng.
+  Chép file này thành san-pham/…html rồi điền. Chỉ thay chỗ {{…}}, giữ nguyên <style>.
+  Số mục và tên mục do Skill của phòng quy định; thêm bớt <section> tuỳ ý.
+-->
 <html lang="vi">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>{{TÊN BUỔI}} — tóm tắt cho người đứng lớp</title>
+<title>{{TÊN VIỆC}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap">
@@ -38,11 +43,11 @@ section>h2{display:flex;align-items:baseline;gap:10px;margin:0 0 12px;
 section>h2 .n{flex:0 0 auto;width:26px;height:26px;border-radius:8px;display:grid;
   place-items:center;font-family:"JetBrains Mono",monospace;font-size:12px;
   font-weight:700;color:#fff;align-self:center}
-section:nth-of-type(1)>h2 .n{background:var(--m1)}
-section:nth-of-type(2)>h2 .n{background:var(--m2)}
-section:nth-of-type(3)>h2 .n{background:var(--m3)}
-section:nth-of-type(4)>h2 .n{background:var(--m4)}
-section:nth-of-type(5)>h2 .n{background:var(--m5)}
+section:nth-of-type(5n+1)>h2 .n{background:var(--m1)}
+section:nth-of-type(5n+2)>h2 .n{background:var(--m2)}
+section:nth-of-type(5n+3)>h2 .n{background:var(--m3)}
+section:nth-of-type(5n+4)>h2 .n{background:var(--m4)}
+section:nth-of-type(5n)>h2 .n{background:var(--m5)}
 
 p{margin:0 0 10px}
 p:last-child{margin-bottom:0}
@@ -54,7 +59,7 @@ li b{font-weight:700}
 code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--accent-bg);
   color:var(--accent);padding:1px 6px;border-radius:5px;word-break:break-word}
 
-/* Các bước nối tiếp nhau — dùng cho mục "Flow toàn bộ" */
+/* Các bước nối tiếp nhau */
 .flow{list-style:none;padding:0;counter-reset:b}
 .flow li{counter-increment:b;position:relative;padding-left:32px;margin-bottom:10px}
 .flow li::before{content:counter(b);position:absolute;left:0;top:1px;
@@ -62,7 +67,7 @@ code{font-family:"JetBrains Mono",monospace;font-size:.86em;background:var(--acc
   font-family:"JetBrains Mono",monospace;font-size:11.5px;font-weight:700;
   display:grid;place-items:center}
 
-/* Thuật ngữ — mục 5 */
+/* Thuật ngữ: <dt> tên, <dd> giải thích đời thường */
 dl{margin:0}
 dt{font-weight:800;margin-top:12px;font-size:15px}
 dt:first-child{margin-top:0}
@@ -73,51 +78,65 @@ dd{margin:2px 0 0;color:var(--ink2);font-size:15px}
   font-weight:700;letter-spacing:.06em;color:var(--m3);border:1px solid var(--m3);
   border-radius:5px;padding:0 5px;margin-right:6px;vertical-align:1px}
 
+/* Nguồn: mỗi ý lấy từ ngoài tài liệu của sếp phải có link ở đây */
+.nguon{font-size:13.5px;color:var(--ink2)}
+.nguon a{color:var(--accent);word-break:break-word}
+/* Chỗ còn chưa chắc — sếp đọc phần này trước khi dùng */
+.chua-chac{border-left:3px solid var(--m3);padding-left:12px;color:var(--ink2)}
+
 footer{margin-top:20px;color:var(--ink3);font-size:12.5px;text-align:center}
 </style>
 
 <div class="wrap">
 <header>
-  <p class="eyebrow">Tóm tắt cho người đứng lớp</p>
-  <h1>{{TÊN BUỔI}}</h1>
-  <p class="meta">Buổi {{NGÀY}} · nguồn <code>{{THƯ MỤC REPO}}</code> · {{SỐ}} chữ</p>
+  <p class="eyebrow">{{TÊN PHÒNG}}</p>
+  <h1>{{TÊN VIỆC}}</h1>
+  <p class="meta">{{NGÀY}} · mã <code>{{MÃ VIỆC}}</code> · nguồn <code>{{FILE HOẶC THƯ MỤC ĐÃ ĐỌC}}</code></p>
 </header>
 
+<!-- Mỗi mục một <section>. Tên và số mục: xem Skill của phòng. -->
 <section>
-  <h2><span class="n">1</span>Mục tiêu bài</h2>
-  <p>{{Học viên làm ra cái gì, trong một đoạn ngắn.}}</p>
+  <h2><span class="n">1</span>{{Tên mục}}</h2>
+  <p>{{Đoạn văn ngắn.}}</p>
 </section>
 
 <section>
-  <h2><span class="n">2</span>Flow toàn bộ của bài</h2>
+  <h2><span class="n">2</span>{{Mục dạng các bước}}</h2>
   <ol class="flow">
-    <li>{{Bước 1 — làm gì, ra cái gì}}</li>
+    <li>{{Bước 1}}</li>
     <li>{{Bước 2}}</li>
   </ol>
 </section>
 
 <section>
-  <h2><span class="n">3</span>Các kỹ thuật cần áp dụng</h2>
+  <h2><span class="n">3</span>{{Mục dạng danh sách}}</h2>
   <ul>
-    <li><b>{{Tên kỹ thuật}}</b> — {{một câu giải thích}}</li>
+    <li><b>{{Tên}}</b> — {{một câu}}</li>
+    <li><span class="suy">suy luận</span>{{Ý tự suy ra, không có trong nguồn}}</li>
   </ul>
 </section>
 
 <section>
-  <h2><span class="n">4</span>Nộp nhóm hay cá nhân</h2>
-  <ul>
-    <li><b>Nhóm</b> — {{nộp gì, ở đâu}}</li>
-    <li><b>Cá nhân</b> — {{nộp gì, ở đâu}}</li>
-  </ul>
-</section>
-
-<section>
-  <h2><span class="n">5</span>Giải thích các thuật ngữ về code</h2>
+  <h2><span class="n">4</span>{{Mục thuật ngữ}}</h2>
   <dl>
     <dt>{{Thuật ngữ}}</dt>
-    <dd>{{Giải thích bằng lời đời thường, không dùng thuật ngữ khác để giải thích.}}</dd>
+    <dd>{{Giải thích bằng lời đời thường.}}</dd>
   </dl>
 </section>
 
-<footer>Agent soạn từ repo bài học · sếp duyệt trước khi dùng</footer>
+<!-- Hai mục cuối BẮT BUỘC, luôn đứng cuối, không đánh số. -->
+<section>
+  <h2>Chưa chắc</h2>
+  <p class="chua-chac">{{Chỗ còn mơ hồ. Không có thì ghi "Không có."}}</p>
+</section>
+
+<section>
+  <h2>Nguồn</h2>
+  <ul class="nguon">
+    <li><code>{{file đã đọc}}</code></li>
+    <li><a href="{{link}}">{{tên trang}}</a> — xem ngày {{NGÀY}}</li>
+  </ul>
+</section>
+
+<footer>Agent soạn · sếp duyệt trước khi dùng</footer>
 </div>

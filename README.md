@@ -209,8 +209,8 @@ kèm `otp_expired`.
 cp agent/.env.example agent/.env
 ```
 
-Mở `agent/.env` điền: khoá Supabase · ba mã bí mật cho link xem thử (`XEM_THU_MA_*`,
-script in sẵn cho bạn nếu thiếu) · và đường dẫn của mảng nào đang trỏ bằng `$DIR_…`.
+Mở `agent/.env` điền: khoá Supabase · mã bí mật cho link xem thử (`XEM_THU_MA_*`,
+phòng nào chưa có thì script tự tạo và ghi thêm vào cuối file — đừng đổi dòng đó) · và đường dẫn của mảng nào đang trỏ bằng `$DIR_…`.
 
 > **Đường dẫn thư mục thuộc về Skill, không thuộc `.env`.** Skill khai `thu_muc:` trong
 > frontmatter — ghi thẳng đường dẫn (`~/Documents/Thac si`) hoặc trỏ sang `.env` bằng

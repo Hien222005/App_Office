@@ -1,6 +1,6 @@
 ---
 name: hoc-thac-si
-description: Làm bài và tóm tắt tài liệu cho chương trình thạc sĩ. Dùng cho việc mảng thacsi.
+description: Việc mảng Thạc sĩ — tìm chương trình, học bổng, hồ sơ; làm bài và tóm tắt tài liệu. Dùng cho việc mảng thacsi.
 mang: thacsi
 ten_mang: Thạc sĩ
 thu_muc: $DIR_THACSI
@@ -10,22 +10,29 @@ mau: '#4D9BFF'
 
 # Thạc sĩ
 
-## Việc
-Đọc đề bài sếp đặt trong `viec/`, làm ra một sản phẩm trong `san-pham/`, và ghi lại
-mình đã làm gì trong `nhat-ky/`.
+Luật, khung sản phẩm, nhật ký, cách báo xong: **theo Skill `van-phong`**. File này chỉ
+ghi phần riêng của Thạc sĩ.
 
-Sếp là **người học**, không phải người chấm. Sản phẩm phải để sếp đọc xong là **hiểu và
+## Việc
+Hai loại việc, nhìn đề bài là biết loại nào:
+
+| Loại | Ví dụ | Nguồn |
+|---|---|---|
+| **Tìm hiểu** | tìm trường, học bổng, hạn nộp hồ sơ | đề bài trong `viec/` + **tra web** |
+| **Làm bài** | tóm tắt chương, dàn ý tiểu luận | đề bài và tài liệu trong `viec/` |
+
+Sếp là **người học và người nộp hồ sơ**. Sản phẩm để sếp đọc xong là **quyết được hoặc
 dùng được**, không phải để nộp thay sếp.
 
-## Cách làm
-1. Mở file đề bài trong `viec/` mà brief chỉ tới. Không thấy thì **hỏi**, đừng đoán.
-2. Đọc hết đề bài trước khi viết chữ nào. Ghi ra: phải nộp cái gì, hạn nào, dài bao nhiêu.
-3. Viết sản phẩm vào `san-pham/<mã-việc>.md`.
-4. Viết nhật ký vào `nhat-ky/<mã-việc>.md` — xem mục **Đầu ra**.
-5. Mở lại cả hai file để tự kiểm, rồi mới báo xong.
+## Nguồn
+- Đọc **hết** `viec/`, kể cả `DOC-TRUOC.md`. Đề bài, background và yêu cầu của sếp
+  thường ghi ở đó.
+- Việc tìm hiểu: tra web, **ưu tiên trang chính thức** của trường hoặc quỹ học bổng.
+  Trang tổng hợp, diễn đàn chỉ dùng để tìm ra tên, rồi mở trang chính thức kiểm lại.
+- Con số (học phí, % học bổng, hạn nộp, điểm IELTS) phải thấy tận mắt trên trang có
+  link. Không thấy thì ghi "chưa tìm thấy trên trang chính thức".
 
 ## File được xem
-Tài liệu gốc của sếp. **Chỉ đọc.**
 ```
 viec/**
 san-pham/**
@@ -34,46 +41,44 @@ nhat-ky/**
 
 ## File được sửa
 ```
-san-pham/**
-nhat-ky/**
+san-pham/*.html
+nhat-ky/*.md
 ```
 
 ## Phải đổi
 ```
-san-pham/**
-nhat-ky/**
+san-pham/*.html
+nhat-ky/*.md
 ```
 
 ## Không làm
 - **Không sửa bất cứ gì trong `viec/`** — đó là tài liệu gốc của sếp.
-- Không bịa số liệu, trích dẫn, tên tác giả hay tên bài báo. Không chắc thì ghi là không chắc.
-- Không chép nguyên văn tài liệu quá một câu. Diễn đạt lại bằng lời mình.
-- Không nộp bài thay sếp, không viết như thể sếp là tác giả.
-- Chỗ nào tự suy ra thì phải ghi rõ **(suy luận)** ngay tại chỗ đó.
+- Không nộp hồ sơ, không điền form, không gửi email thay sếp.
+- Không chép nguyên văn tài liệu quá một câu.
+- Không viết như thể sếp là tác giả.
 
-## Đầu ra
+## Mục của sản phẩm
+File `san-pham/<mã-việc>.html` từ khuôn chung.
 
-**`san-pham/<mã-việc>.md`** — mở đầu bằng ba dòng:
+**Việc tìm hiểu** — ví dụ tìm trường:
 
-```
-# <tên việc>
-Nguồn: <file nào trong viec/>
-Ngày: <ngày>
-```
+| Mục | Thẻ |
+|---|---|
+| 1 · Kết luận | `<p>` — 2–3 lựa chọn đáng nộp nhất và vì sao, trong một đoạn |
+| 2 · Bảng so sánh | `<ul>`, mỗi lựa chọn một `<li>`: **tên**, nước, học bổng %, hạn nộp, yêu cầu đầu vào |
+| 3 · Hợp với sếp ở chỗ nào | `<ul>` — đối chiếu với background sếp ghi trong `viec/` |
+| 4 · Việc sếp cần làm tiếp | `<ol class="flow">` — theo thứ tự hạn nộp |
 
-Rồi tới nội dung. Thuật ngữ chuyên môn nào cũng giải thích bằng một câu đời thường
-ngay lần đầu xuất hiện.
+**Việc làm bài** — ví dụ tóm tắt chương:
 
-**`nhat-ky/<mã-việc>.md`** — bốn mục, mỗi mục vài dòng:
+| Mục | Thẻ |
+|---|---|
+| 1 · Ý chính | `<p>` |
+| 2 · Các bước / lập luận | `<ol class="flow">` |
+| 3 · Thuật ngữ | `<dl>` |
+| 4 · Câu hỏi để tự kiểm | `<ol>` |
 
-```
-## Đã đọc gì        file nào, phần nào
-## Đã làm gì        các bước, theo thứ tự
-## Tự suy ra        chỗ nào không có trong tài liệu mà mình tự suy
-## Chưa chắc        chỗ nào còn mơ hồ — nếu có thì phải HỎI, đừng chỉ ghi vào đây
-```
-
-Cộng `kỳ vọng kết quả` khi chạy `viec.mjs xong` — một hai câu: sếp mở link ra sẽ thấy gì.
+Rồi hai mục bắt buộc `Chưa chắc` và `Nguồn`.
 
 ## Tham chiếu
 **Mọi mẫu đường dẫn trên đây tính từ GỐC PHÒNG**, tức `DIR_THACSI` trong `agent/.env`:
@@ -84,5 +89,3 @@ Cộng `kỳ vọng kết quả` khi chạy `viec.mjs xong` — một hai câu: 
 ├── nhat-ky/     agent ghi lại đã làm gì
 └── san-pham/    kết quả · chỗ sếp mở ra duyệt
 ```
-
-Thư mục còn trống thì đừng bịa ra việc — báo lại là `viec/` chưa có đề bài nào.
