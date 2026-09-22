@@ -128,14 +128,28 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
 .kh-go .ngay.co{border-color:var(--ok); color:var(--ok)}
 .kh-go .ngay:active{transform:scale(.95)}
 
-/* tấm lịch trượt lên từ đáy */
-.lop{position:absolute; inset:0; z-index:40; background:rgba(4,8,14,.62);
-  display:flex; flex-direction:column; justify-content:flex-end; animation:hienlop .18s ease-out}
-@keyframes hienlop{from{opacity:0}to{opacity:1}}
-.tam{background:var(--panel2); border-top:1px solid var(--line2); border-radius:20px 20px 0 0;
-  padding:10px 14px calc(16px + var(--sab)); animation:truotlen .24s cubic-bezier(.2,.9,.3,1)}
-@keyframes truotlen{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.tam .keo{width:36px; height:4px; border-radius:2px; background:var(--line2); margin:0 auto 12px}
+/* dải ngày mở ngay trong ô gõ (bản B, 22/09) — không còn lớp phủ nào để thanh dưới
+   đè lên. Trước đây tấm lịch nằm trong .body; trên iOS -webkit-overflow-scrolling
+   nhốt nó vào lớp xếp chồng riêng nên thanh dưới luôn nằm trên. */
+.kh-go.mo{border-color:var(--line2); background:var(--bg2)}
+.kh-dai{grid-column:1 / -1; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none;
+  margin:4px -11px 0; padding:9px 11px 2px; border-top:1px solid var(--line)}
+.kh-dai::-webkit-scrollbar{display:none}
+.kh-dai button{flex:0 0 auto; min-width:52px; height:56px; border-radius:13px; border:1px solid var(--line2);
+  background:var(--panel); color:var(--tx); display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:1px; padding:0 10px; text-align:center}
+.kh-dai small{font-size:10.5px; font-weight:800; color:var(--mut); text-transform:uppercase; letter-spacing:.02em}
+.kh-dai b{font-size:15px; font-weight:900; line-height:1.1}
+.kh-dai .chu b{font-size:13px}
+.kh-dai .chon{background:var(--ok); border-color:var(--ok); color:#052015}
+.kh-dai .chon small{color:#052015}
+.kh-dai .co::after{content:""; width:4px; height:4px; border-radius:50%; background:var(--mut); margin-top:2px}
+.kh-dai .chon.co::after{background:#052015}
+.kh-dai button:active{transform:scale(.95)}
+.kh-lap{grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between;
+  font-size:12.5px; font-weight:700; color:var(--mut); padding:0 2px}
+.kh-lap button{font-size:12.5px; font-weight:800; color:var(--tx); padding:10px 4px; min-height:44px}
+.kh-lichnho{grid-column:1 / -1; padding-top:4px}
 .lich .dau{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px}
 .lich .dau b{font-size:15px; font-weight:900}
 .lich .dau button{border:0; background:transparent; color:var(--mut); font:inherit; font-size:21px;
@@ -396,7 +410,7 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
 .bar{position:fixed; left:0; right:0; bottom:0; margin:0 auto;
   width:100%; max-width:480px; z-index:30;
   display:flex; align-items:center; gap:9px;
-  padding:10px 12px calc(8px + var(--sab));
+  padding:10px 12px max(0px, calc(8px + var(--sab)));
   background:linear-gradient(180deg, transparent, var(--bg) 42%)}
 .tabs{position:relative; display:flex; align-items:center; flex:1 1 auto; min-width:0;
   height:56px; gap:4px; padding:6px 8px; border-radius:28px}
@@ -560,7 +574,7 @@ const SEED=()=>({
   chatMo:false, chatBan:false, chatTin:[], chatNhap:'', nghe:false, doc:true, chinhBar:false,
   nguon:'mau', dangTai:false, emailGui:'', dangNhapXong:false, maNhap:'',
   kehoach:[], khNhap:'', khMang:null, khThu:null, khLoc:null, khXoa:null,
-  khNgay:null, lichMo:false, lichThang:null,
+  khNgay:null, lichMo:false, lichNho:false, lichThang:null,
   tasks:[
     {id:'t-0147',mang:'elearn',ngay:'2026-09-18',han:'14:00 hôm nay',lan:0,
      tieu_de:'Fix bug #13 — khoảng cách câu hỏi khi xem lại quiz',
@@ -1286,15 +1300,24 @@ function veLich(){
     </table></div>`;
 }
 
-function tamLich(){
-  if(!S.lichMo) return '';
-  return `<div class="lop"><div class="tam">
-    <div class="keo"></div>
-    ${veLich()}
-    <div class="btnrow" style="margin-top:12px">
-      <button class="btn gh" data-chonngay="">Mọi ngày</button>
-      <button class="btn pri" data-dongtam="1">${S.khNgay?'Chọn '+ngayDoc(S.khNgay):'Xong'}</button>
-    </div></div></div>`;
+/* Dải ngày: "Mọi ngày" rồi 14 ngày tới. Việc hầu như luôn rơi vào vài ngày gần — một
+   lần chạm là xong. Ngày xa hơn thì mở lịch tháng ngay trong ô gõ. */
+function daiNgay(){
+  const coViec=new Set(S.kehoach.filter(k=>k.ngay).map(k=>k.ngay));
+  const h=new Date(); h.setHours(0,0,0,0);
+  const o=[];
+  for(let i=0;i<14;i++){
+    const d=new Date(h); d.setDate(h.getDate()+i); const iso=ngayISO(d);
+    const tren=i===0?'Hôm nay':i===1?'Mai':['CN','T2','T3','T4','T5','T6','T7'][d.getDay()];
+    const cls=[iso===S.khNgay?'chon':'', coViec.has(iso)?'co':''].filter(Boolean).join(' ');
+    o.push(`<button class="${cls}" data-chonngay="${iso}"><small>${tren}</small><b>${d.getDate()}</b></button>`);
+  }
+  return `<div class="kh-dai">
+      <button class="chu ${S.khNgay?'':'chon'}" data-chonngay=""><small>Lặp</small><b>Mọi ngày</b></button>
+      ${o.join('')}</div>
+    <div class="kh-lap"><span>${S.khNgay?'Chỉ lên bảng '+ngayDoc(S.khNgay).toLowerCase():'Hôm nào cũng lên bảng'}</span>
+      <button data-lichnho="1">${S.lichNho?'Thu lịch ▴':'Ngày xa hơn ›'}</button></div>
+    ${S.lichNho?`<div class="kh-lichnho">${veLich()}</div>`:''}`;
 }
 
 /* ══════════ MÀN KẾ HOẠCH TUẦN ══════════
@@ -1331,15 +1354,17 @@ function manKeHoach(){
     head:`<h1>Kế hoạch</h1><span class="sub">${S.kehoach.length} việc · tuần này</span>
       <button class="kh" data-tailai="1" aria-label="Cập nhật dữ liệu" title="Cập nhật">${sv('taiLai')}</button>`,
     body:`
-      <div class="kh-go">
+      <div class="kh-go ${S.lichMo?'mo':''}">
         <button class="pick" data-khmang="1" style="color:${(NEON[S.khMang]||NEON.lab).c}"
           >${S.khMang?TEN[S.khMang]:'—'}</button>
         <input id="khIn" placeholder="Việc mới…" value="${esc(S.khNhap)}" autocomplete="off">
-        <button class="ngay ${S.khNgay?'co':''}" data-molich="1" aria-label="Chọn ngày">
+        <button class="ngay ${S.khNgay?'co':''}" data-molich="1" aria-label="Chọn ngày"
+          aria-expanded="${S.lichMo?'true':'false'}">
           <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3.2"/>
             <path d="M3.5 9.5h17M8 3.5v3M16 3.5v3"/></svg>${ngayDoc(S.khNgay)}</button>
         <button class="gui" aria-label="Thêm việc" data-khthem="1">
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+        ${S.lichMo?daiNgay():''}
       </div>
 
       ${bat.length>1?`<div class="kh-loc">
@@ -1347,7 +1372,6 @@ function manKeHoach(){
         ${bat.map(m=>`<button class="${loc===m?'on':''}" data-khloc="${m}">${TEN[m]}</button>`).join('')}
       </div>`:''}
 
-      ${tamLich()}
       ${ds.length?ds.map(dong).join('')
         :`<div class="empty"><b>Chưa có việc nào</b>
           <p>Gõ vào ô trên rồi bấm <b>+</b>. Chạm nút thứ để chọn ngày — để <b>mọi ngày</b>
@@ -1977,7 +2001,8 @@ document.getElementById('dev').addEventListener('click',e=>{
   if(e.target.closest('[data-molich]')){
     khLuuNhap();
     S.lichThang=(S.khNgay||homNay()).slice(0,7);
-    S.lichMo=true; render(); return; }
+    S.lichMo=!S.lichMo; S.lichNho=false; render(); return; }
+  if(e.target.closest('[data-lichnho]')){ khLuuNhap(); S.lichNho=!S.lichNho; render(); return; }
   const lt=e.target.closest('[data-lichthang]');
   if(lt){
     const [n,t]=S.lichThang.split('-').map(Number);
@@ -1985,16 +2010,8 @@ document.getElementById('dev').addEventListener('click',e=>{
     S.lichThang=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     render(); return; }
   const cn=e.target.closest('[data-chonngay]');
-  if(cn){ S.khNgay=cn.dataset.chonngay||null; S.lichMo=false; render();
+  if(cn){ khLuuNhap(); S.khNgay=cn.dataset.chonngay||null; S.lichMo=false; S.lichNho=false; render();
     document.getElementById('khIn')?.focus(); return; }
-  if(S.lichMo){
-    // Nút Xong thì đóng. Chạm nền tối (ngoài tấm) thì đóng. Chạm trong tấm thì thôi,
-    // đừng để rơi xuống các nhánh phía dưới.
-    if(e.target.closest('[data-dongtam]') || !e.target.closest('.tam')){
-      S.lichMo=false; render(); return;
-    }
-    return;
-  }
   const klc=e.target.closest('[data-khloc]');
   if(klc){ khLuuNhap(); S.khLoc=klc.dataset.khloc||null; render(); return; }
   const kx=e.target.closest('[data-khxoa]');
@@ -2045,14 +2062,14 @@ document.getElementById('dev').addEventListener('click',e=>{
       const r=document.getElementById('pRange');
       if(r) apTayChinh(parseInt(r.value,10));
       S.chinhBar=false; glidePrev=null; render();
-      toast('Đã khoá · thanh dưới cách đáy ' + sabHienTai() + 'px'); return;
+      toast('Đã khoá · thanh dưới ' + (sabHienTai()<=-8?'sát đáy':'cách đáy '+sabHienTai()+'px')); return;
     }
     if(v==='auto'){
       boTayChinh();
       const r=document.getElementById('pRange'), o=document.getElementById('pVal');
-      const nv=sabHienTai(); if(r) r.value=nv; if(o) o.textContent=nv+'px';
+      const nv=sabHienTai(); if(r) r.value=nv; if(o) o.textContent=nhanSab(nv);
       glidePrev=null; datGlide();
-      toast('Đã trả về tự động · ' + nv + 'px'); return;
+      toast('Đã trả về tự động · ' + nhanSab(nv)); return;
     }
   }
   const ch=e.target.closest('[data-chat]');
@@ -2084,7 +2101,7 @@ document.getElementById('dev').addEventListener('input', e=>{
   if(e.target.id!=='pRange') return;
   const px=parseInt(e.target.value,10);
   document.documentElement.style.setProperty('--sab', px+'px');
-  const o=document.getElementById('pVal'); if(o) o.textContent=px+'px';
+  const o=document.getElementById('pVal'); if(o) o.textContent=nhanSab(px);
   glidePrev=null; datGlide();
 });
 
@@ -2110,6 +2127,8 @@ function boTayChinh(){
   try{ localStorage.removeItem(KHOA_LS); }catch{}
   sabCu = -1; doVungAnToan();
 }
+// −8 là mức thấp nhất: thanh dưới vốn chừa 8px đệm, trừ hết là viên tab chạm đáy màn.
+const nhanSab=(v)=>v<=-8?'sát đáy':v+'px';
 function sabHienTai(){
   const v = tayChinh();
   if(v !== null) return v;
@@ -2121,10 +2140,10 @@ function bangChinh(){
   if(!S.chinhBar) return '';
   const v = sabHienTai();
   return `<div class="panel-ch" id="pCh">
-    <div class="ph"><b>Vị trí thanh dưới</b><i id="pVal">${v}px</i></div>
-    <div class="mo-ta">Kéo cho thanh nằm vừa trên vạch home của máy bạn.
+    <div class="ph"><b>Vị trí thanh dưới</b><i id="pVal">${nhanSab(v)}</i></div>
+    <div class="mo-ta">Kéo cho thanh nằm vừa trên vạch home của máy bạn — kéo hết bên trái là sát đáy màn.
       Giá trị được lưu lại, lần sau mở app vẫn giữ nguyên.</div>
-    <input type="range" id="pRange" min="0" max="80" step="1" value="${v}">
+    <input type="range" id="pRange" min="-8" max="80" step="1" value="${v}">
     <div class="nut">
       <button data-bar="auto">Tự động</button>
       <button class="chot" data-bar="khoa">Khoá lại</button>
