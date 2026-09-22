@@ -21,6 +21,8 @@ import { spawnSync } from 'node:child_process';
 import { phạmViTừSkill, xétFile } from './pham-vi.mjs';
 import { nhânBản, chépMột, kêKhai, soSánh, băm } from './anh-chup.mjs';
 import { gốcCủaPhòng, THƯ_MỤC_NHÁP, kiểmGốc } from './phong.mjs';
+import { db, hômNay } from './lib.mjs';
+import { đượcChuyển } from './nhan.mjs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -128,6 +130,12 @@ if (lệnh === 'ghi-het') {
     process.exit(1);
   }
   const ds = JSON.parse(readFileSync(dsFile, 'utf8'));
+  // Danh sách cũ còn nằm lại thì sẽ chép nhầm việc của ngày khác — chặn ngay.
+  if (ds.ngay !== hômNay()) {
+    console.error(`da-duyet.json là của ngày ${ds.ngay}, không phải hôm nay (${hômNay()}). `
+                + 'Chạy `node agent/viec.mjs tinh-trang --ghi-danh-sach` trước.');
+    process.exit(1);
+  }
   if (!Array.isArray(ds.da_duyet) || !ds.da_duyet.length) { console.error('Không có việc nào đã duyệt.'); process.exit(1); }
   if (ds.con_cho?.length) {
     nhậtKý('G7', '-', 'truot', `còn ${ds.con_cho.length} việc sếp chưa duyệt`);
@@ -230,8 +238,29 @@ if (sai.length) {
 
 nhậtKý('G8', '-', sai.length ? 'truot' : 'qua', sai[0]?.lý_do ?? `${cầnKiểm.length} việc ghi đúng`);
 
-// Đạt thì bỏ dấu loạt ghi, để không ai kiểm lại một loạt đã xong.
-if (!sai.length) { try { rmSync(fileLoạt); } catch {} }
+// Đạt thì đóng nhãn da_duyet → da_ghi. Đây là bước của "script cuối ngày" trong
+// nhan.mjs — chỉ chạy sau khi mã băm khớp, nên nhãn da_ghi luôn có bằng chứng.
+// Việc đã ở da_ghi (chạy kiem lần hai) thì bỏ qua, không báo lỗi.
+// Việc không có trong bảng tasks (việc thử của thu-nhanh.mjs) thì chỉ ghi chú, không tính lỗi.
+const đãĐóngNhãn = [], lỗiNhãn = [], khôngCóTrongDb = [];
+if (!sai.length) {
+  for (const { id } of cầnKiểm) {
+    try {
+      const [v] = await db.đọc('tasks', `id=eq.${id}&select=id,trang_thai`);
+      if (!v) { khôngCóTrongDb.push(id); continue; }
+      if (v.trang_thai === 'da_ghi') continue;
+      if (!đượcChuyển(v.trang_thai, 'da_ghi', 'script')) {
+        lỗiNhãn.push({ id, lý_do: `đang ở "${v.trang_thai}", không sang da_ghi được` });
+        continue;
+      }
+      await db.sửa('tasks', `id=eq.${id}`, { trang_thai: 'da_ghi', cap_nhat_luc: new Date().toISOString() });
+      đãĐóngNhãn.push(id);
+    } catch (e) { lỗiNhãn.push({ id, lý_do: String(e.message).split('\n')[0] }); }
+  }
+}
+
+// Đạt và đóng nhãn xong thì bỏ dấu loạt ghi. Còn lỗi nhãn thì giữ lại để chạy kiem lần nữa.
+if (!sai.length && !lỗiNhãn.length) { try { rmSync(fileLoạt); } catch {} }
 
 in_({
   so_viec: cầnKiểm.length,
@@ -240,10 +269,15 @@ in_({
   dat: sai.length === 0,
   sai,
   da_hoan_tac: đãHoànTác,
+  da_dong_nhan: đãĐóngNhãn,
+  loi_nhan: lỗiNhãn,
+  khong_co_trong_db: khôngCóTrongDb,
   ms: ms(),
   nhac: sai.length
     ? 'Đã hoàn tác. Báo sếp, KHÔNG tự chạy ghi-het lại.'
-    : 'Ghi đúng. Chạy `viec.mjs dong-phien` để đóng phiên ngày.',
+    : lỗiNhãn.length
+      ? 'File ghi đúng nhưng chưa đóng được nhãn. Sửa lỗi rồi chạy lại `nhap.mjs kiem`.'
+      : 'Ghi đúng, đã đóng nhãn. Chạy `viec.mjs dong-phien` để đóng phiên ngày.',
 });
-process.exit(sai.length ? 1 : 0);
+process.exit(sai.length || lỗiNhãn.length ? 1 : 0);
 }

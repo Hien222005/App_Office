@@ -364,13 +364,15 @@ writeFileSync(join(mở2.ban_nhap, M4, '02_html/unit-8-quiz.html'),
 rmSync(join(resolve(agent, '..', '_nhap'), ID, 'bien-nhan-ghi.json'), { force: true });
 
 const dsFile = join(resolve(agent, '..', '_nhap'), 'da-duyet.json');
-writeFileSync(dsFile, JSON.stringify({ ngay: '2026-09-18', da_duyet: [ID2], con_cho: ['t-con-cho'] }));
+// ghi-het từ chối danh sách không phải của hôm nay, nên việc thử cũng phải ghi ngày hôm nay.
+const HÔM_NAY = new Date().toLocaleDateString('sv-SE');
+writeFileSync(dsFile, JSON.stringify({ ngay: HÔM_NAY, da_duyet: [ID2], con_cho: ['t-con-cho'] }));
 const r1 = chạyCóLỗi('nhap.mjs', 'ghi-het');
 kiểm('ghi-het bị chặn khi còn việc sếp chưa duyệt',
   r1.ma === 1 && /chưa duyệt/.test(r1.loi + r1.ra),
   (r1.loi || '').trim().slice(0, 60));
 
-writeFileSync(dsFile, JSON.stringify({ ngay: '2026-09-18', da_duyet: [ID2], con_cho: [] }));
+writeFileSync(dsFile, JSON.stringify({ ngay: HÔM_NAY, da_duyet: [ID2], con_cho: [] }));
 const ghiHết = JSON.parse(chạy('nhap.mjs', 'ghi-het'));
 kiểm('ghi-het chép về đúng 1 việc', ghiHết.so_viec === 1 && ghiHết.ket_qua[0].da_chep_ve.length === 1);
 kiểm('File gốc đã nhận nội dung mới',
@@ -394,7 +396,7 @@ const brief3 = { ...brief, id: ID3, chi_sua: [`${M4}/**`], phai_doi: [`${M4}/**`
 writeFileSync(join(thử, 'brief3.json'), JSON.stringify(brief3, null, 2));
 const mở3 = JSON.parse(chạy('nhap.mjs', 'mo', join(thử, 'brief3.json')));
 writeFileSync(join(mở3.ban_nhap, MD), '.quiz-review{--sua:"chang-4"}\n');
-writeFileSync(dsFile, JSON.stringify({ ngay: '2026-09-18', da_duyet: [ID3], con_cho: [] }));
+writeFileSync(dsFile, JSON.stringify({ ngay: HÔM_NAY, da_duyet: [ID3], con_cho: [] }));
 chạy('nhap.mjs', 'ghi-het');
 writeFileSync(join(gốc, MD), 'ai đó sửa tay sau khi ghi\n');      // giả trường hợp sai
 const r2 = chạyCóLỗi('nhap.mjs', 'kiem');
