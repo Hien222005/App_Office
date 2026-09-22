@@ -55,9 +55,13 @@ Mọi phòng làm theo cùng một khung. Skill của phòng **chỉ thêm** ph�
 - Chép [khuon-san-pham.html](references/khuon-san-pham.html) rồi điền. Đừng tự viết
   HTML từ đầu. Khuôn đọc được trên điện thoại, sáng và tối.
 - File `.md` mở trên điện thoại chỉ ra chữ trơn, nên sản phẩm luôn là `.html`.
-- Tên mục và số mục: Skill của phòng quy định.
-- Hai mục cuối **bắt buộc**: `Chưa chắc` và `Nguồn`.
-- Ý nào tự suy ra thì mở đầu bằng `<span class="suy">suy luận</span>`.
+- Đầu trang: khối **dòng chính** `<dl class="tom">`, 2–4 dòng nhãn : giá trị — sếp
+  đọc xong khối này là biết kết quả. Nhãn nào: Skill của phòng quy định.
+- Sau đó các mục `<section class="muc">`. Tên và số mục: Skill quy định. Màu nền tự
+  xoay vòng, **không tự đặt màu**.
+- Hai mục cuối **bắt buộc**: `<section class="muc cc">` Chưa chắc, rồi
+  `<section class="muc ng">` Nguồn.
+- Ý nào tự suy ra thì mở đầu bằng `<span class="suy">Suy luận ·</span>`.
 - Ý nào lấy từ ngoài tài liệu của sếp (trang web…) thì **phải có link** trong mục
   `Nguồn`. Không có link = không được viết ý đó.
 

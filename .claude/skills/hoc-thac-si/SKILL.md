@@ -62,21 +62,24 @@ File `san-pham/<mã-việc>.html` từ khuôn chung.
 
 **Việc tìm hiểu** — ví dụ tìm trường:
 
+**Dòng chính**: `Nên làm` — một câu · `Hạn gấp nhất` — ngày, còn bao nhiêu ngày ·
+`Đáng nộp` — mấy lựa chọn.
+
 | Mục | Thẻ |
 |---|---|
-| 1 · Kết luận | `<p>` — 2–3 lựa chọn đáng nộp nhất và vì sao, trong một đoạn |
-| 2 · Bảng so sánh | `<ul>`, mỗi lựa chọn một `<li>`: **tên**, nước, học bổng %, hạn nộp, yêu cầu đầu vào |
-| 3 · Hợp với sếp ở chỗ nào | `<ul>` — đối chiếu với background sếp ghi trong `viec/` |
-| 4 · Việc sếp cần làm tiếp | `<ol class="flow">` — theo thứ tự hạn nộp |
+| Các lựa chọn | `<ul>`, mỗi lựa chọn một `<li>`: **tên**, nước, học bổng %, hạn nộp, yêu cầu đầu vào |
+| Hợp với sếp ở chỗ nào | `<ul>` — đối chiếu với background sếp ghi trong `viec/` |
+| Việc cần làm tiếp | `<ol class="flow">` — theo thứ tự hạn nộp |
 
 **Việc làm bài** — ví dụ tóm tắt chương:
 
+**Dòng chính**: `Ý chính` — một câu · `Hạn nộp` · `Dài` — số chữ hoặc số trang yêu cầu.
+
 | Mục | Thẻ |
 |---|---|
-| 1 · Ý chính | `<p>` |
-| 2 · Các bước / lập luận | `<ol class="flow">` |
-| 3 · Thuật ngữ | `<dl>` |
-| 4 · Câu hỏi để tự kiểm | `<ol>` |
+| Các bước / lập luận | `<ol class="flow">` |
+| Thuật ngữ | `<dl class="tn">` |
+| Câu hỏi để tự kiểm | `<ol>` |
 
 Rồi hai mục bắt buộc `Chưa chắc` và `Nguồn`.
 

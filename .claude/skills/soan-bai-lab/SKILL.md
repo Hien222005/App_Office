@@ -49,16 +49,18 @@ san-pham/lab/*.html
 Một file `san-pham/lab/<ngày>.html`, **dưới 700 chữ**.
 
 Dùng **khuôn sản phẩm chung** trong Skill `van-phong`
-(`van-phong/references/khuon-san-pham.html`), với năm mục dưới đây, rồi hai mục bắt
-buộc `Chưa chắc` và `Nguồn`.
+(`van-phong/references/khuon-san-pham.html`).
+
+**Dòng chính** (`<dl class="tom">`): `Mục tiêu` — học viên làm ra cái gì · `Nộp nhóm` ·
+`Nộp cá nhân`.
 
 | Mục | Thẻ dùng trong khuôn |
 |---|---|
-| 1 · Mục tiêu bài | `<p>` |
-| 2 · Flow toàn bộ | `<ol class="flow">` — mỗi bước một `<li>` |
-| 3 · Kỹ thuật cần áp dụng | `<ul>`, tên kỹ thuật bọc `<b>` |
-| 4 · Nộp nhóm hay cá nhân | `<ul>`, hai dòng Nhóm / Cá nhân |
-| 5 · Giải thích thuật ngữ | `<dl>` — `<dt>` thuật ngữ, `<dd>` giải thích |
+| Flow toàn bộ | `<ol class="flow">` — mỗi bước một `<li>` |
+| Kỹ thuật cần áp dụng | `<ul>`, tên kỹ thuật bọc `<b>` |
+| Giải thích thuật ngữ | `<dl class="tn">` — `<dt>` thuật ngữ, `<dd>` giải thích |
+
+Rồi hai mục bắt buộc `Chưa chắc` và `Nguồn`.
 
 Tên file, lệnh, đường dẫn bọc `<code>`.
 
