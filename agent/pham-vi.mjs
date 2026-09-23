@@ -60,6 +60,9 @@ export function xétFile(phạmVi, file, cwd = process.cwd()) {
 // Đọc ba mục trong .claude/skills/<tên>/SKILL.md, mỗi mục là một khối ```…```:
 //   ## File được xem · ## File được sửa · ## Phải đổi
 // Mục để trống hoặc còn dấu ✎ (sếp chưa điền) thì coi như danh sách rỗng.
+// KHÔNG khai "Phải đổi" thì mặc định BẰNG "File được sửa" — hai mục đó ở hầu hết phòng
+// chép y nhau, khai lại chỉ tạo thêm một chỗ để lệch. Khai riêng khi được sửa nhiều
+// nhưng bắt buộc phải đổi ít hơn (E-learning: sửa khoá học, bắt buộc ghi log).
 import { readFileSync as đọcFile, existsSync as có } from 'node:fs';
 import { dirname as thưCha, join as nối } from 'node:path';
 import { fileURLToPath as từURL } from 'node:url';
@@ -87,6 +90,6 @@ export function phạmViTừSkill(tênSkill) {
     skill: tênSkill,
     duoc_xem: khốiSau(md, 'File được xem'),
     duoc_sua: được_sua,
-    phai_doi: khốiSau(md, 'Phải đổi'),
+    phai_doi: md.includes('\n## Phải đổi') ? khốiSau(md, 'Phải đổi') : được_sua,
   };
 }

@@ -18,8 +18,7 @@ tat: true
 >
 > **Bật lại:** bỏ dòng `tat: true` ở frontmatter ngay trên đầu file này, rồi xoá khối này.
 
-Luật, khuôn sản phẩm, nhật ký, cách báo xong: **theo Skill `van-phong`** — nguồn duy nhất.
-File này chỉ ghi phần riêng của phòng: việc gì, được đụng file nào, sản phẩm có những mục nào.
+Luật và khuôn: **theo `van-phong`**. Đây chỉ là phần riêng của phòng.
 
 ## Việc
 Đọc mục bug được giao trong file log, tái hiện lỗi, sửa trong bản nháp, mở lại trang
@@ -60,7 +59,6 @@ bugs-con-lai-can-fix-*.md
   chung; sửa vào đó là đổi mọi khoá học cùng lúc.
 - **Không sửa sang module khác.** Mỗi file log tự khai `**Phạm vi sửa**` ở đầu — theo
   đúng dòng đó. Brief dùng `chi_sua` để chặn bằng code.
-- **Không đụng thư mục nguồn** `courses/Module N/` — đó là bản gốc.
 - Không sửa khi chưa tái hiện được bug.
 
 ## Mục của sản phẩm
@@ -76,8 +74,6 @@ dự án E-learning**, nên viết đúng mẫu file log đó đang dùng:
 ```
 
 ## Tham chiếu
-Gốc phòng: `DIR_ELEARNING` trong `agent/.env`.
-
 - File log lấy bản **mới nhất theo ngày trong tên**.
 - CSS và JS của từng tính năng nằm trong `02_html/` chia theo thư mục:
   `questions/` (`sequential-quiz.css`, `radio-quiz.css`, `review-quiz.css`, `noi-tu.css`),

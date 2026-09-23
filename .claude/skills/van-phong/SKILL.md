@@ -11,25 +11,18 @@ Một phiên mỗi ngày. `/report` trình bảng để sếp chốt · `/lam` l
 > Phiên phải mở trong thư mục `agent-app`, không phải thư mục cha — nếu không thì
 > hook không ghi nhật ký và không lệnh `xong` nào qua được.
 
-## Đạt
+## Luật
 
-- Chỉ làm việc mà `viec.mjs doc` giao. Việc nằm trong `việc_không_giao` thì bỏ qua.
-- Chỉ sửa file trong bản nháp, trong phạm vi Skill của việc đó.
-- Sau lần sửa cuối, **mở lại file để tự kiểm** rồi mới báo xong.
-- Báo xong bằng một lệnh, một câu: `viec.mjs xong <id> "kỳ vọng kết quả"`.
-- Chưa chắc thì **hỏi**, đừng đoán: `viec.mjs hoi <id> "câu hỏi" "1" "2" "3"`.
+| Đạt | Trượt |
+|---|---|
+| Chỉ làm việc `viec.mjs doc` giao; việc trong `việc_không_giao` thì bỏ qua | Tự nhận thêm việc |
+| Chỉ sửa file trong bản nháp, trong phạm vi Skill của việc | Sửa file thật ngoài bản nháp |
+| Sửa xong **mở lại file để tự kiểm** rồi mới báo xong | Báo xong khi chưa mở lại file |
+| Chưa chắc thì **hỏi**, kèm đúng 3 gợi ý | Đoán thay sếp |
+| Chốt việc, duyệt kết quả, ghi vào file gốc là việc của sếp | Tự làm ba thứ đó |
 
-## Trượt
-
-- Sửa file thật ngoài bản nháp.
-- Báo xong khi chưa mở lại file.
-- Tự chốt việc, tự duyệt kết quả, tự ghi vào file gốc — đó là việc của sếp.
-- Đoán thay sếp thay vì hỏi kèm đúng 3 gợi ý.
-
-## Hai câu chống bịa
-
-1. Không bịa file, dữ liệu, hay bằng chứng.
-2. Muốn nói "xong" thì phải có kết quả chạy mới **trong phiên này**.
+Hai câu chống bịa: **không bịa file, dữ liệu hay bằng chứng**; muốn nói "xong" thì phải
+có kết quả chạy mới **trong phiên này**.
 
 ## Bốn lệnh
 
@@ -64,6 +57,9 @@ Mọi phòng làm theo cùng một khung. Skill của phòng **chỉ thêm** ph�
 - Ý nào tự suy ra thì mở đầu bằng `<span class="suy">Suy luận ·</span>`.
 - Ý nào lấy từ ngoài tài liệu của sếp (trang web…) thì **phải có link** trong mục
   `Nguồn`. Không có link = không được viết ý đó.
+- **Không chép nguyên văn nguồn quá một câu**, diễn đạt lại bằng lời mình.
+- **Không đụng vào thư mục tài liệu gốc của sếp** (`viec/`, `repo/`, `courses/Module N/`…):
+  đọc thì được, sửa thì không. "File được sửa" của Skill là danh sách đóng.
 
 **3 · Nhật ký — để sếp biết agent đã làm gì**
 Skill có thư mục nhật ký thì ghi `<mã-việc>.md`, đúng bốn mục:
@@ -74,14 +70,21 @@ Skill có thư mục nhật ký thì ghi `<mã-việc>.md`, đúng bốn mục:
 ## Chưa chắc        còn mơ hồ thì phải HỎI, đừng chỉ ghi vào đây
 ```
 
-**4 · Báo xong**
+**4 · Đường dẫn**
+Mọi mẫu đường dẫn trong Skill của phòng tính từ **gốc phòng** — thư mục khai ở
+`thu_muc` của Skill đó. Skill chỉ vẽ lại cây thư mục bên trong.
+
+**5 · Báo xong**
 `kỳ vọng kết quả` một hai câu: sếp mở link ra sẽ thấy gì.
 
 ## Thêm một phòng mới
 
 Tạo `.claude/skills/<tên>/SKILL.md` với frontmatter `mang`, `ten_mang`, `thu_muc`,
 `mau`. Thân Skill chỉ cần: **Việc** · **File được xem** · **File được sửa** ·
-**Phải đổi** · **Không làm** · **Mục của sản phẩm**. Còn lại lấy từ khung trên.
+**Không làm** · **Mục của sản phẩm**. Còn lại lấy từ khung trên.
+
+Thêm mục **Phải đổi** chỉ khi danh sách bắt buộc phải đổi *hẹp hơn* danh sách được sửa;
+không khai thì nó bằng "File được sửa".
 
 ## Tham chiếu
 

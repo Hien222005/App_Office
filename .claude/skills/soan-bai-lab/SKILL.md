@@ -10,18 +10,15 @@ mau: '#22E5C4'
 
 # Soạn bài Lab Coach
 
-Luật, khuôn sản phẩm, nhật ký, cách báo xong: **theo Skill `van-phong`** — nguồn duy nhất.
-File này chỉ ghi phần riêng của phòng: việc gì, được đụng file nào, sản phẩm có những mục nào.
+Luật và khuôn: **theo `van-phong`**. Đây chỉ là phần riêng của phòng.
 
 ## Việc
 Đọc repo bài học của buổi, viết bản tóm tắt cho **người sắp đứng lớp, có background BA**
 — không phải cho học viên. Repo do Hiển chủ động gửi, mỗi buổi một repo.
 
 Mặc định viết **trước một ngày**. Repo chỉ có sáng cùng ngày thì sáng viết.
-
-## Thiết kế
-Đơn giản, ngắn gọn, tập trung điểm chính. Người đọc biết nghiệp vụ nhưng **không rành code**
-— thuật ngữ kỹ thuật nào cũng phải giải thích bằng một câu đời thường.
+Người đọc biết nghiệp vụ nhưng **không rành code** — thuật ngữ kỹ thuật nào cũng giải
+thích bằng một câu đời thường. Ngắn gọn, chỉ điểm chính.
 
 ## File được xem
 `repo/` là bản sao repo bài học, **thay mỗi buổi**. Đọc từ đó, không đọc ở đâu khác.
@@ -31,19 +28,12 @@ san-pham/lab/*.html
 ```
 
 ## File được sửa
-Chỉ ghi bản tóm tắt. **Không đụng vào `repo/`** — đó là tài liệu gốc.
-```
-san-pham/lab/*.html
-```
-
-## Phải đổi
 ```
 san-pham/lab/*.html
 ```
 
 ## Không làm
-- Không sửa bất cứ gì trong `repo/`.
-- Không chép nguyên văn. Được nhắc **tên** chỉ số nội bộ, không ghi **con số** của tài liệu.
+- Được nhắc **tên** chỉ số nội bộ của tài liệu, không ghi **con số**.
 
 ## Mục của sản phẩm
 Một file `san-pham/lab/<ngày>.html`, **dưới 700 chữ**.
@@ -64,9 +54,7 @@ Rồi hai mục bắt buộc `Chưa chắc` và `Nguồn`.
 
 Tên file, lệnh, đường dẫn bọc `<code>`.
 
-## Tham chiếu
-**Mọi mẫu đường dẫn trên đây tính từ GỐC PHÒNG**, tức `DIR_LAB` trong `agent/.env`.
-Gốc đó chứa hai thư mục:
+## Gốc phòng
 
 ```
 <DIR_LAB>/

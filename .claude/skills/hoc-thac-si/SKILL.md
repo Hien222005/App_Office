@@ -10,8 +10,7 @@ mau: '#4D9BFF'
 
 # Thạc sĩ
 
-Luật, khuôn sản phẩm, nhật ký, cách báo xong: **theo Skill `van-phong`** — nguồn duy nhất.
-File này chỉ ghi phần riêng của phòng: việc gì, được đụng file nào, sản phẩm có những mục nào.
+Luật và khuôn: **theo `van-phong`**. Đây chỉ là phần riêng của phòng.
 
 ## Việc
 Hai loại việc, nhìn đề bài là biết loại nào:
@@ -24,10 +23,8 @@ Hai loại việc, nhìn đề bài là biết loại nào:
 Sếp là **người học và người nộp hồ sơ**. Sản phẩm để sếp đọc xong là **quyết được hoặc
 dùng được**, không phải để nộp thay sếp.
 
-## Nguồn
-- Đọc **hết** `viec/`, kể cả `DOC-TRUOC.md`. Đề bài, background và yêu cầu của sếp
-  thường ghi ở đó.
-- Việc tìm hiểu: tra web, **ưu tiên trang chính thức** của trường hoặc quỹ học bổng.
+## Tra web
+- Chỉ việc tìm hiểu mới tra web, **ưu tiên trang chính thức** của trường hoặc quỹ học bổng.
   Trang tổng hợp, diễn đàn chỉ dùng để tìm ra tên, rồi mở trang chính thức kiểm lại.
 - Con số (học phí, % học bổng, hạn nộp, điểm IELTS) phải thấy tận mắt trên trang có
   link. Không thấy thì ghi "chưa tìm thấy trên trang chính thức".
@@ -45,16 +42,8 @@ san-pham/*.html
 nhat-ky/*.md
 ```
 
-## Phải đổi
-```
-san-pham/*.html
-nhat-ky/*.md
-```
-
 ## Không làm
-- **Không sửa bất cứ gì trong `viec/`** — đó là tài liệu gốc của sếp.
 - Không nộp hồ sơ, không điền form, không gửi email thay sếp.
-- Không chép nguyên văn tài liệu quá một câu.
 - Không viết như thể sếp là tác giả.
 
 ## Mục của sản phẩm
@@ -83,8 +72,7 @@ File `san-pham/<mã-việc>.html` từ khuôn chung.
 
 Rồi hai mục bắt buộc `Chưa chắc` và `Nguồn`.
 
-## Tham chiếu
-**Mọi mẫu đường dẫn trên đây tính từ GỐC PHÒNG**, tức `DIR_THACSI` trong `agent/.env`:
+## Gốc phòng
 
 ```
 <DIR_THACSI>/
