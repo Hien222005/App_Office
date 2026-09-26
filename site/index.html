@@ -1087,7 +1087,7 @@ function theTask(t,click){
   ].filter(Boolean).join(' · ');
   return `<button class="tcard ${NHAN[t.tt]?.het?'gone':''}" ${click?`data-task="${t.id}"`:''}>
     <div class="stripe">${vach}</div>
-    <div><span class="ti">${t.tieu_de}</span>
+    <div><span class="ti">${esc(t.tieu_de)}</span>
       <div class="crit">${meta}</div></div>
     <span class="st ${n.cls}">${n.ten}</span></button>`;
 }
@@ -1425,7 +1425,7 @@ function manTask(){
 
   // Phạm vi lấy từ Skill của phòng (tao-cau-hinh.mjs gửi sang), brief không phải khai lại.
   const suaSkill=((window.CAU_HINH&&window.CAU_HINH.mang)||{})[t.mang]?.sua;
-  const b1=`<div class="fld"><div class="lb">Agent định làm · hạn ${t.han}</div><div class="tx">${b.nhiem_vu||t.chi_tiet||'—'}</div></div>
+  const b1=`<div class="fld"><div class="lb">Agent định làm · hạn ${t.han}</div><div class="tx">${esc(b.nhiem_vu||t.chi_tiet||'—')}</div></div>
     <div class="fld"><div class="lb">Chỉ được đụng vào</div><div class="tx">${chip(b.file_duoc_sua?.length?b.file_duoc_sua:suaSkill)}</div></div>
     ${b.viec_khong_lam?.length?`<div class="fld"><div class="lb">Việc không được làm</div>
       <div class="tx" style="font-size:13px">${b.viec_khong_lam.map(x=>'· '+x).join('<br>')}</div></div>`:''}
@@ -1438,14 +1438,16 @@ function manTask(){
       <span class="dem">${(t.nk||[]).length} bước</span><span class="mui">›</span></summary>
       <div class="log">${(t.nk&&t.nk.length)
         ? t.nk.map(x=>{const m=String(x).match(/^(\d{1,2}:\d{2}(?::\d{2})?)\s*·\s*(\S+)\s*·\s*(.*)$/);
-            return m ? `<span class="gio">${m[1]}</span> ${m[2].toLowerCase()} <b>${m[3]}</b>`
-                     : `<span class="gio">·</span> ${x}`;}).join('<br>')
+            // Bước Bash chép nguyên câu lệnh, có thể chứa "<style>" hay "<h2>": không escape
+            // thì trình duyệt coi là thẻ thật, nuốt mất phần dưới (cả nút Duyệt).
+            return m ? `<span class="gio">${m[1]}</span> ${esc(m[2].toLowerCase())} <b>${esc(m[3])}</b>`
+                     : `<span class="gio">·</span> ${esc(x)}`;}).join('<br>')
         : 'nhật ký chưa ghi bước nào'}</div></details>`:'';
 
   // File máy tự lấy bằng cách so bản nháp với bản gốc — không có lời khai nào để man.
   const bFile=(coKQ&&t.files?.length)?`<div class="fld"><div class="lb lbm">${t.files.length} file đã đụng
       <span style="color:var(--ok);font-weight:700">· khớp bản nháp, không lấn</span></div>
-      <div class="fl">${t.files.map(f=>`<span class="y">✓</span> ${f}`).join('<br>')}</div></div>`:'';
+      <div class="fl">${t.files.map(f=>`<span class="y">✓</span> ${esc(f)}`).join('<br>')}</div></div>`:'';
 
   // Bấm là mở sản phẩm ngay trong app, có nút quay lại (moXem). href giữ làm dự phòng.
   // Chỉ nhận http(s) — link lạ thì hiện chữ, không bấm được.
@@ -1453,17 +1455,17 @@ function manTask(){
   const b3=coKQ?`${t.link?(hrefSP?`<a class="plink" href="${esc(hrefSP)}" target="_blank" rel="noopener" data-xem="${esc(hrefSP)}">
       <span><b>Mở sản phẩm</b><span>${esc(t.link)}</span></span><span class="go">›</span></a>`
       :`<div class="plink"><span><b>Link sản phẩm</b><span>${esc(t.link)}</span></span></div>`):''}
-    <div class="fld"><div class="lb lbm">Kỳ vọng kết quả</div><div class="tx">${t.ket||'—'}</div></div>`:'';
+    <div class="fld"><div class="lb lbm">Kỳ vọng kết quả</div><div class="tx">${esc(t.ket||'—')}</div></div>`:'';
 
   const b4=
     t.tt==='cho_duyet' ? `<div class="fld hi"><div class="lb">◆ Nhận xét nếu trả lại</div>
-        <textarea id="fNote" rows="3" placeholder="Sai ở đâu, muốn thế nào… agent đọc khi làm lại">${t.phan_hoi}</textarea></div>`
+        <textarea id="fNote" rows="3" placeholder="Sai ở đâu, muốn thế nào… agent đọc khi làm lại">${esc(t.phan_hoi)}</textarea></div>`
   : t.tt==='da_ghi' ? `<div class="fld okb"><div class="tx">Đã chép từ bản nháp về file gốc, kiểm mã băm đạt.</div></div>`
   : t.tt==='da_duyet' ? `<div class="fld okb"><div class="tx">Bạn đã duyệt. Chờ chốt ngày để ghi cả loạt vào file gốc.</div></div>`
   : canBanSua(t) ? `<div class="fld" style="border-color:var(--bad)"><div class="lb" style="color:var(--bad)">Đã trả lại ${t.lan} lần</div>
         <div class="tx" style="font-size:13.5px">Agent không chạm vào việc này nữa. Sửa tên việc hoặc nhận xét bên trên rồi giao lại.</div></div>
       <div class="fld hi"><div class="lb">◆ Nhận xét của bạn</div>
-        <textarea id="fNote" rows="3">${t.phan_hoi}</textarea></div>`
+        <textarea id="fNote" rows="3">${esc(t.phan_hoi)}</textarea></div>`
   : '';
 
   const nut=
