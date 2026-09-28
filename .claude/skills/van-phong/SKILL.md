@@ -1,12 +1,12 @@
 ---
 name: van-phong
-description: Luật chung và khung sản phẩm của Văn Phòng Agent, áp cho MỌI phòng. Nạp khi chạy /report, /lam hoặc /chot, hoặc khi làm bất kỳ việc nào của bất kỳ phòng nào.
+description: Luật chung và khung sản phẩm của Văn Phòng Agent, áp cho MỌI phòng. Nạp khi chạy /lam hoặc /chot, hoặc khi làm bất kỳ việc nào của bất kỳ phòng nào.
 ---
 
 # Văn Phòng Agent
 
-Một phiên mỗi ngày. `/report` trình bảng để sếp chốt · `/lam` làm việc đã chốt ·
-`/chot` ghi vào file gốc rồi đóng phiên.
+Một phiên mỗi ngày. `/lam` lấy việc từ Kế hoạch sếp ghi rồi làm luôn ·
+`/chot` ghi vào file gốc rồi đóng phiên. Sếp ghi vào Kế hoạch tức là đã chốt.
 
 > Phiên phải mở trong thư mục `agent-app`, không phải thư mục cha — nếu không thì
 > hook không ghi nhật ký và không lệnh `xong` nào qua được.
@@ -19,7 +19,7 @@ Một phiên mỗi ngày. `/report` trình bảng để sếp chốt · `/lam` l
 | Chỉ sửa file trong bản nháp, trong phạm vi Skill của việc | Sửa file thật ngoài bản nháp |
 | Sửa xong **mở lại file để tự kiểm** rồi mới báo xong | Báo xong khi chưa mở lại file |
 | Chưa chắc thì **hỏi**, kèm đúng 3 gợi ý | Đoán thay sếp |
-| Chốt việc, duyệt kết quả, ghi vào file gốc là việc của sếp | Tự làm ba thứ đó |
+| Ghi việc vào Kế hoạch, duyệt kết quả, ghi vào file gốc là việc của sếp | Tự làm ba thứ đó |
 
 Hai câu chống bịa: **không bịa file, dữ liệu hay bằng chứng**; muốn nói "xong" thì phải
 có kết quả chạy mới **trong phiên này**.

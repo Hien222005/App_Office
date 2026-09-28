@@ -21,3 +21,7 @@ nhat-ky/
 site/cau-hinh.js
 # thư mục làm việc mảng Thạc sĩ — tài liệu và sản phẩm, không phải mã nguồn
 thac-si/
+
+# thư mục làm việc mảng Qn và Khác — như thac-si/
+qn/
+khac/

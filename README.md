@@ -2,7 +2,7 @@
 
 Một agent làm việc dưới máy Mac, bạn duyệt trên điện thoại.
 
-Bạn gõ **ba lệnh** trên Mac và bấm **hai nút** trên điện thoại. Mọi thứ khác là máy làm.
+Bạn ghi việc vào tab Kế hoạch, gõ **hai lệnh** trên Mac và bấm **một nút duyệt** trên điện thoại. Mọi thứ khác là máy làm.
 Agent không bao giờ tự ghi vào file thật: nó làm trong bản nháp, nộp kèm link để bạn tự
 mở ra xem, bạn bấm duyệt thì cuối ngày script mới chép về.
 
@@ -25,17 +25,15 @@ mở ra xem, bạn bấm duyệt thì cuối ngày script mới chép về.
 > Mở ở thư mục cha thì hook `PostToolUse` không nạp, nhật ký không ghi hành động nào,
 > và mọi lệnh `viec.mjs xong` đều bị từ chối vì không có bằng chứng tự kiểm.
 
-Một ngày **một phiên**, ba lệnh gõ trong Claude Code:
+Một ngày **một phiên**, hai lệnh gõ trong Claude Code:
 
-> **Việc hôm nay lấy từ bảng kế hoạch tuần bạn tự ghi trên điện thoại** — app → tab Việc
-> → **Kế hoạch tuần**. Agent không tự nghĩ ra việc. Dòng nào để trống ô tuần thì **lặp
+> **Việc hôm nay lấy từ bảng kế hoạch bạn tự ghi trên điện thoại** — app → tab
+> **Kế hoạch**. Ghi vào đó tức là đã chốt, không có bước chốt riêng. Agent không tự nghĩ ra việc. Dòng nào để trống ô tuần thì **lặp
 > mọi tuần**: ghi một lần, tuần nào cũng tự lên bảng.
 
 ```
-/report   Agent đọc kế hoạch tuần + việc tồn hôm qua → lập phiếu → trình bảng
-          → BẠN bấm Cập nhật ⟳ rồi chốt trên điện thoại (bấm nút)
-
-/lam      Agent mở bản nháp, làm, đẩy bản xem thử lên, nộp kèm link
+/lam      Agent mở phiên, lấy việc hôm nay từ Kế hoạch, làm trong bản nháp,
+          đẩy bản xem thử lên, nộp kèm link
           → BẠN bấm Cập nhật ⟳, mở link xem rồi duyệt hoặc trả lại (bấm nút)
           ↑ gõ lại lệnh này mỗi lần bạn trả việc về, tối đa 3 lần
 
@@ -47,7 +45,7 @@ Một ngày **một phiên**, ba lệnh gõ trong Claude Code:
 > chưa thấy gì thì bấm nó, chưa hỏng đâu.
 
 Chưa duyệt hết trong ngày thì **phiên không đóng**. Việc còn lại thành *việc tồn*,
-sáng hôm sau `/report` tự đưa lên đầu bảng.
+hôm sau `/lam` nhặt lại làm tiếp.
 
 **Không có subagent.** Phiên chính tự làm, gặp việc nào thì nạp Skill của việc đó.
 
@@ -57,7 +55,7 @@ sáng hôm sau `/report` tự đưa lên đầu bảng.
 
 | Thư mục | Là gì | Có commit? |
 |---|---|---|
-| [`.claude/`](.claude) | 4 Skill · 3 lệnh slash · hook nhật ký | ✅ |
+| [`.claude/`](.claude) | 4 Skill · 2 lệnh slash · hook nhật ký | ✅ |
 | [`agent/`](agent) | Bộ máy chạy trên Mac, 12 script `.mjs` | ✅ |
 | [`site/`](site) | App trên điện thoại | ✅ |
 | [`netlify/functions/`](netlify/functions) | `chat.mjs` nối Gemini · **`chi-dan.mjs` lời dặn cho trợ lý chat** · `xem.mjs` cầu xem bản nháp | ✅ |
@@ -131,9 +129,15 @@ không bao giờ nới rộng được, code chặn điều đó.
 Nguồn duy nhất: [`agent/nhan.mjs`](agent/nhan.mjs).
 
 ```
-cho_chot ──bạn──▶ da_chot ──agent──▶ dang_lam ──agent──▶ cho_duyet
-    └──bạn──▶ bo                                   ├──bạn──▶ da_duyet ──/chot──▶ da_ghi
+Kế hoạch ──/lam──▶ da_chot ──agent──▶ dang_lam ──agent──▶ cho_duyet
+                                                    ├──bạn──▶ da_duyet ──/chot──▶ da_ghi
                                                     └──bạn──▶ da_chot  (trả lại, đếm +1)
+```
+
+`cho_chot` không còn sinh ra từ 28/09 — ghi vào Kế hoạch là đã chốt. Nhãn còn giữ cho
+việc cũ đang nằm ở đó.
+
+```
 ```
 
 **Ba thứ KHÔNG phải nhãn** — tính từ số liệu, nên agent không thể quên đánh dấu:
@@ -263,15 +267,3 @@ trần chỉ hiện mã nguồn. Hàm này lấy file về rồi trả lại v�
 
 ---
 
-## Chạy tự động — để sau
-
-`agent/com.chihien.agent.plist` hẹn giờ 6h30 chạy `claude -p "/report"`. Chỉ hẹn giờ
-lệnh đọc; `lam` và `chot` phải gõ tay vì cần bạn chốt việc và duyệt kết quả ở giữa.
-
-```bash
-sudo pmset repeat wakeorpoweron MTWRFSU 06:25:00
-cp agent/com.chihien.agent.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.chihien.agent.plist
-```
-
-Giai đoạn này cứ gõ tay đã, để còn nhìn agent chạy mà chỉnh Skill.

@@ -48,8 +48,8 @@ create table if not exists food_db (
 
 
 -- 3 · KẾ HOẠCH TUẦN -------------------------------------------
--- Sếp ghi việc vào đây trên điện thoại. `/report` mỗi sáng đọc bảng này, lọc việc
--- của hôm nay rồi trình lên để sếp chốt. Trước đây agent phải TỰ ĐỌC NGUỒN TỪNG
+-- Sếp ghi việc vào đây trên điện thoại. `/lam` đọc bảng này, lọc việc
+-- của hôm nay rồi làm luôn — ghi vào đây là đã chốt. Trước đây agent phải TỰ ĐỌC NGUỒN TỪNG
 -- PHÒNG RỒI TỰ NGHĨ RA VIỆC — chỗ duy nhất agent được phán đoán tự do, và cũng là
 -- chỗ dễ sai nhất. Nay nó chỉ còn chép.
 --

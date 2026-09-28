@@ -1,11 +1,14 @@
 // Bộ nhãn trạng thái DUY NHẤT của Văn Phòng Agent.
 // Skill, script, database và app đều đọc từ đây — không nơi nào tự đặt nhãn riêng.
 //
-// Một ngày một phiên. Việc đi qua hai cổng của sếp:
+// Một ngày một phiên. Việc đi qua MỘT cổng của sếp — duyệt kết quả. Dòng sếp tự ghi
+// trong Kế hoạch đã là sự chốt, nên `/lam` lập phiếu thẳng vào `da_chot`:
 //
-//   cho_chot ──sếp──▶ da_chot ──agent──▶ dang_lam ──agent──▶ cho_duyet
-//      └───sếp──▶ bo                                  ├──sếp──▶ da_duyet ──cuối ngày──▶ da_ghi
+//   Kế hoạch ──/lam──▶ da_chot ──agent──▶ dang_lam ──agent──▶ cho_duyet
+//                                                      ├──sếp──▶ da_duyet ──cuối ngày──▶ da_ghi
 //                                                      └──sếp──▶ da_chot   (trả lại, đếm +1)
+//
+// `cho_chot` không còn sinh ra nữa (bỏ từ 28/09). Giữ nhãn lại cho việc cũ còn nằm đó.
 //
 // BẢY nhãn, không phải mười. Ba thứ trước đây là nhãn nay là ĐIỀU KIỆN tính từ dữ liệu,
 // vì chúng vốn không phải chỗ đứng của việc mà là chuyện đang xảy ra với việc:

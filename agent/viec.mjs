@@ -3,7 +3,7 @@
 //   node viec.mjs mo-phien                          mở phiên hôm nay, quét việc tồn
 //   node viec.mjs ke-hoach                          việc hôm nay theo kế hoạch tuần
 //   node viec.mjs doc [--kinh-nghiem]               lấy việc được giao
-//   cat phieu.json | node viec.mjs phieu            ghi phiếu việc, luôn chờ sếp chốt
+//   cat phieu.json | node viec.mjs phieu            ghi phiếu việc, vào thẳng nhãn đã chốt
 //   node viec.mjs lam  <id>                         đánh dấu đang làm
 //   node viec.mjs xong <id> "kỳ vọng kết quả"       soát · đẩy link · ghi kết quả
 //   node viec.mjs hoi  <id> "hỏi" "1" "2" "3"       chưa chắc thì hỏi, đừng đoán
@@ -68,7 +68,7 @@ async function moPhien() {
 // ══════════════════════════════════════════════════════════════════════════
 // KẾ HOẠCH — việc hôm nay, lấy từ bảng sếp tự ghi trên điện thoại.
 //
-// Đây là chỗ thay cho bước nguy hiểm nhất của workflow cũ: `/report` phải TỰ ĐỌC NGUỒN
+// Đây là chỗ thay cho bước nguy hiểm nhất của workflow cũ: agent phải TỰ ĐỌC NGUỒN
 // TỪNG PHÒNG RỒI TỰ NGHĨ RA VIỆC. Đó là chỗ duy nhất agent được phán đoán tự do — nên
 // cũng là chỗ dễ sai nhất, và không lần nào giống lần nào. Nay nó chỉ còn chép.
 //
@@ -110,8 +110,8 @@ async function keHoach() {
     if (k.thu != null && k.thu !== thứ)    { bỏQua.push({ id: k.id, viec: k.viec, lý_do: `xếp vào thứ ${k.thu}` }); return false; }
     if (k.tuan && k.tuan !== tuần)         { bỏQua.push({ id: k.id, viec: k.viec, lý_do: `của tuần ${k.tuan}` }); return false; }
     // ĐÃ LẬP PHIẾU RỒI THÌ THÔI. Mã việc suy ra từ mã kế hoạch + ngày, mà `phieu` ghi
-    // bằng upsert — không chặn ở đây thì gõ /report lần hai trong ngày sẽ ĐÈ NGƯỢC việc
-    // sếp đã chốt về lại `cho_chot`, và xoá cả link sản phẩm của việc đang chờ duyệt.
+    // bằng upsert — không chặn ở đây thì gõ /lam lần hai trong ngày sẽ ĐÈ NGƯỢC việc
+    // đang làm hay đang chờ duyệt về lại `da_chot`, và xoá cả link sản phẩm của nó.
     if (đãLập.has(mãViệc(k))) {
       bỏQua.push({ id: k.id, viec: k.viec, lý_do: `hôm nay đã lập phiếu rồi (đang ở "${NHÃN[đãLập.get(mãViệc(k))]?.tên ?? đãLập.get(mãViệc(k))}")` });
       return false;
@@ -133,7 +133,7 @@ async function keHoach() {
     ngay: ngày, thu: thứ, tuan: tuần,
     viec: dùngĐược.map((k, i) => ({
       // Mã việc suy ra từ mã dòng kế hoạch + ngày, KHÔNG sinh ngẫu nhiên. Nhờ vậy gõ
-      // /report hai lần trong ngày thì lần sau ghi đè đúng dòng cũ, không đẻ việc trùng.
+      // /lam hai lần trong ngày thì lần sau ghi đè đúng dòng cũ, không đẻ việc trùng.
       id: mãViệc(k),
       mang: k.mang, skill: k.skill, ten: k.viec,
       nhiem_vu: k.ghi_chu || k.viec,
@@ -162,14 +162,14 @@ async function doc() {
 
   // Cổng: đã mở phiên hôm nay chưa. Trước đây cổng này hỏi "đã có daily_report hôm nay
   // chưa" — nhưng bảng đó không ai đọc, lại đang là CHA của tasks, nên đã bỏ. Phiên ngày
-  // mới đúng là thứ /report mở ra.
+  // mới đúng là thứ /lam mở ra ở bước đầu.
   const [phiên] = await db.đọc('agent_runs', `ngay=eq.${ngày}`);
   if (!phiên) {
-    in_({ chặn: true, lý_do: 'Chưa mở phiên hôm nay. Chạy /report trước.' });
+    in_({ chặn: true, lý_do: 'Chưa mở phiên hôm nay. Chạy node agent/viec.mjs mo-phien trước.' });
     return;
   }
-  // KHÔNG có cổng duyệt cả phiếu một lần. Workflow này sếp chốt TỪNG VIỆC: nhãn
-  // `da_chot` của từng việc CHÍNH LÀ sự chốt, và bảng CHUYỂN chỉ cho sếp đặt nhãn đó.
+  // KHÔNG có cổng chốt. Dòng sếp tự ghi trong Kế hoạch CHÍNH LÀ sự chốt: `phieu` ghi
+  // thẳng vào `da_chot`. Cổng của sếp chỉ còn một — duyệt kết quả sau khi làm.
 
   const [việc, hỏi] = await Promise.all([
     db.đọc('tasks', `trang_thai=in.(${PHIÊN_NHẬN.join(',')})&order=ngay.asc,thu_tu.asc`),
@@ -204,7 +204,7 @@ async function doc() {
       chặn: true,
       lý_do: khôngGiao.length
         ? 'Có việc đã chốt nhưng không giao được. Xem việc_không_giao.'
-        : 'Sếp chưa chốt việc nào. Mở app, bấm "Chốt việc này" rồi gõ lại /lam.',
+        : 'Không có việc nào để làm. Sếp ghi việc ở tab Kế hoạch rồi gõ lại /lam.',
       việc_không_giao: khôngGiao,
     });
     return;
@@ -228,7 +228,8 @@ function đọcBriefFile(id) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// GHI PHIẾU — mọi việc luôn vào nhãn chờ sếp chốt. Agent không tự chốt được.
+// GHI PHIẾU — việc vào thẳng nhãn `da_chot`: sếp đã tự ghi nó trong Kế hoạch, thế là chốt.
+// Agent không tự nghĩ ra việc được — phiếu chỉ đến từ `ke-hoach`.
 // Brief chỉ còn NĂM mục: phạm vi file đã nằm trong Skill, không khai lại.
 // ══════════════════════════════════════════════════════════════════════════
 const MỤC_BRIEF = ['mang', 'skill', 'ten', 'nhiem_vu', 'han_chot'];
@@ -260,7 +261,7 @@ async function phieu() {
     await db.nhét('tasks', hợpLệ.map((v, i) => ({
       id: v.id, ngay: ngày, mang: v.mang, tieu_de: v.ten,
       chi_tiet: v.nhiem_vu, han_chot: v.han_chot, brief: v,
-      trang_thai: 'cho_chot', thu_tu: i,
+      trang_thai: 'da_chot', thu_tu: i,
     })));
   }
 
@@ -268,7 +269,7 @@ async function phieu() {
     ngay: ngày,
     da_ghi: hợpLệ.map(v => ({ id: v.id, mang: v.mang, skill: v.skill, ten: v.ten, han_chot: v.han_chot })),
     khong_ghi_vi_brief_thieu_muc: loại,
-    nhac: 'Tất cả đang ở nhãn chờ sếp chốt. Sếp chốt trên app thì /lam mới làm.',
+    nhac: 'Tất cả vào thẳng nhãn đã chốt. Chạy node agent/viec.mjs doc để lấy việc làm.',
   }, null, 2));
 }
 

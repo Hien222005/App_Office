@@ -260,7 +260,7 @@
   NG.chotNgay = async (ids) => Promise.all(ids.map((id) => NG.doiNhan(id, 'da_duyet')));
 
   /* ── KẾ HOẠCH TUẦN ────────────────────────────────────────────────────────
-   * Bảng sếp tự ghi. `/report` mỗi sáng đọc nó rồi lập phiếu việc, thay cho việc
+   * Bảng sếp tự ghi. `/lam` đọc nó, lập phiếu rồi làm luôn, thay cho việc
    * agent tự đọc nguồn từng phòng rồi tự nghĩ ra việc.
    *
    * `tuan` để trống = LẶP MỌI TUẦN. Đây là cột đáng giá nhất của bảng: việc lặp theo

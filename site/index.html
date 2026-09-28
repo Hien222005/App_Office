@@ -25,7 +25,7 @@
   --bg:#0C111C; --bg2:#111726; --panel:#121824; --panel2:#19212F;
   --line:#242E3F; --line2:#36435A;
   --tx:#E9EFF8; --mut:#8A99AE; --dim:#5F6D83;
-  --lab:#22E5C4; --el:#7B61FF; --biz:#FF4D6D; --food:#FFB020;
+  --lab:#22E5C4; --el:#7B61FF; --biz:#FF4D6D;
   --ok:#2FE39B; --wait:#FFC24D; --bad:#FF5C72;
   --okbg:#0C2A20; --waitbg:#2E2410; --badbg:#2C1419;
 }
@@ -270,26 +270,6 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
 .fld textarea::placeholder,.fld input::placeholder{color:var(--dim); font-weight:500}
 .fld.hi{border-color:var(--ok); border-width:1.5px} .fld.hi .lb{color:var(--ok)}
 
-.rings{display:flex; gap:12px}
-.ringbox{flex:1; text-align:center}
-.ringbox .cap{font-size:13px; font-weight:700; color:var(--mut); margin-top:4px}
-.cam{border:1.5px dashed var(--line2); border-radius:18px; padding:18px 12px; text-align:center;
-  background:var(--panel); width:100%}
-.cam:active{background:var(--panel2)}
-.cam .ic{font-size:25px; line-height:1}
-.cam .tx{font-size:13.5px; color:var(--mut); margin-top:8px; font-weight:600}
-.meal{display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:12px; align-items:center;
-  border:1px solid var(--line); border-radius:16px; padding:10px 12px; background:var(--panel); width:100%}
-.meal .th2{width:44px; height:44px; border-radius:14px; background:var(--panel2);
-  border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:21px}
-.meal .nm{display:block; font-size:15px; font-weight:700}
-.meal .sub{font-size:12.5px; color:var(--mut); margin-top:1px; font-weight:600}
-.meal .kc{font-size:18px; font-weight:900; color:var(--food)}
-.gramrow{display:flex; align-items:center; gap:10px; margin-top:10px}
-.gramrow button{width:46px; height:46px; border-radius:16px; border:1px solid var(--line2);
-  background:var(--panel2); font-size:22px; font-weight:800; display:flex;
-  align-items:center; justify-content:center; flex:0 0 auto}
-.gramrow .v{flex:1; text-align:center; font-size:19px; font-weight:800}
 
 .labsec{border-left:3px solid var(--lab); padding-left:14px}
 .labsec b{display:block; font-size:14px; font-weight:800; color:var(--lab); margin-bottom:5px}
@@ -482,9 +462,6 @@ robot-mascot.fab-3d{transform:translateY(var(--robot-ha))}
   background:linear-gradient(135deg,#22E5C455,#4FF0D6);
   box-shadow:0 0 18px rgba(34,229,196,.5), inset 0 0 10px rgba(190,255,245,.45)}
 .bar-kinh .tabs[data-i="2"] .glider{
-  background:linear-gradient(135deg,#FFB02055,#FFC94D);
-  box-shadow:0 0 18px rgba(255,176,32,.5), inset 0 0 10px rgba(255,235,150,.45)}
-.bar-kinh .tabs[data-i="3"] .glider{
   background:linear-gradient(135deg,#2FE39B55,#5BEDB4);
   box-shadow:0 0 18px rgba(47,227,155,.5), inset 0 0 10px rgba(200,255,230,.45)}
 .bar-kinh .fab{background:rgba(255,255,255,.12); color:#FFFFFF;
@@ -503,8 +480,7 @@ robot-mascot.fab-3d{transform:translateY(var(--robot-ha))}
 .bar-noi .glider{background:#e0e0e0; border-radius:22px;
   box-shadow:inset 3px 3px 7px #bcbcbc, inset -3px -3px 7px #ffffff}
 .bar-noi .tabs[data-i="1"] .glider{box-shadow:inset 3px 3px 7px #a9c9c2, inset -3px -3px 7px #ffffff}
-.bar-noi .tabs[data-i="2"] .glider{box-shadow:inset 3px 3px 7px #cbb894, inset -3px -3px 7px #ffffff}
-.bar-noi .tabs[data-i="3"] .glider{box-shadow:inset 3px 3px 7px #a8c9b8, inset -3px -3px 7px #ffffff}
+.bar-noi .tabs[data-i="2"] .glider{box-shadow:inset 3px 3px 7px #a8c9b8, inset -3px -3px 7px #ffffff}
 .bar-noi .tab{color:#7B8492}
 .bar-noi .tab:hover{color:#3E4650}
 .bar-noi .tab.on{color:#171C24}
@@ -536,11 +512,9 @@ const DUPHONG={
 const pha=(hex,v)=>{const n=parseInt(hex.slice(1),16),f=x=>Math.round(v<0?x*(1+v):x+(255-x)*v);
   return '#'+[f(n>>16&255),f(n>>8&255),f(n&255)].map(x=>x.toString(16).padStart(2,'0')).join('')};
 
-/* Mảng đang bật xếp trước, rồi theo tên. Dinh dưỡng là mảng sẵn có của app, không từ Skill. */
+/* Mảng đang bật xếp trước, rồi theo tên. */
 const MANG=Object.entries((window.CAU_HINH&&window.CAU_HINH.mang)||DUPHONG)
   .sort((a,b)=>(a[1].tat-b[1].tat)||a[1].ten.localeCompare(b[1].ten,'vi'));
-
-const PHONG=[...MANG.map(([m])=>m),'food'];
 
 /* HIỆN NHỮNG MẢNG NÀO — một nguồn duy nhất cho tab Việc lẫn màn Nhà.
    Mảng đang bật: luôn hiện. Mảng tạm dừng: chỉ hiện khi còn việc đang sống, để việc
@@ -554,14 +528,12 @@ function mangHienThi(){
     return !x.tat || S.tasks.some(t=>t.mang===m&&VIEC_SONG(t));
   });
 }
-const TEN={...Object.fromEntries(MANG.map(([m,v])=>[m,v.ten])), food:'Dinh dưỡng'};
-const NEON={...Object.fromEntries(MANG.map(([m,v])=>
-  [m,{c:v.mau, toi:pha(v.mau,-.45), canh:pha(v.mau,.42), bong:v.mau}])),
-  food:{c:'#FFB020', toi:'#9A660A', canh:'#FFD98A', bong:'#FFB020'}};
+const TEN=Object.fromEntries(MANG.map(([m,v])=>[m,v.ten]));
+const NEON=Object.fromEntries(MANG.map(([m,v])=>
+  [m,{c:v.mau, toi:pha(v.mau,-.45), canh:pha(v.mau,.42), bong:v.mau}]));
 const ICO={
   nha:'<path d="M3.2 9.4 12 2.8l8.8 6.6"/><path d="M5.4 11v8.2h13.2V11"/><path d="M9.6 19.2v-5h4.8v5"/>',
   viec:'<rect x="3.5" y="4" width="17" height="16" rx="3.5"/><path d="M8 9.5h8M8 13h8M8 16.5h5"/>',
-  an:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
   kq:'<path d="M5 19V11M12 19V5M19 19V9"/>',
   check:'<path d="M5 12.5 10 17.5 19 6.5"/>',
   chay:'<path d="M7 4.5 19 12 7 19.5Z"/>',
@@ -580,15 +552,17 @@ const ICO={
 };
 const sv=(k,vb=24)=>`<svg viewBox="0 0 ${vb} ${vb}">${ICO[k]}</svg>`;
 /* thứ tự tab để glider biết trượt đi đâu */
-const TAB=['office','phong','food','kehoach'];
+const TAB=['office','phong','kehoach'];
 
 /* ══════════ DỮ LIỆU ══════════ */
 const SEED=()=>({
-  man:'office',taskId:null,kieu:'kinh',locDe:null,mealId:null,dangChay:false,
+  man:'office',taskId:null,kieu:'kinh',locDe:null,dangChay:false,
   chatMo:false, chatBan:false, chatTin:[], chatNhap:'', nghe:false, doc:true, chinhBar:false,
   nguon:'mau', dangTai:false, emailGui:'', dangNhapXong:false, maNhap:'',
   kehoach:[], khNhap:'', khMang:null, khThu:null, khLoc:null, khXoa:null,
-  khNgay:null, lichMo:false, lichNho:false, lichThang:null,
+  // Ngày ghi việc mặc định là HÔM NAY — sếp ghi gì thì làm ngay hôm đó. Muốn lặp mọi
+  // ngày thì tự chạm "Mọi ngày" trong dải ngày.
+  khNgay:new Date().toLocaleDateString('sv-SE'), lichMo:false, lichNho:false, lichThang:null,
   tasks:[
     {id:'t-0147',mang:'elearn',ngay:'2026-09-18',han:'14:00 hôm nay',lan:0,
      tieu_de:'Fix bug #13 — khoảng cách câu hỏi khi xem lại quiz',
@@ -617,7 +591,7 @@ const SEED=()=>({
      tieu_de:'Rà Module 5 theo checklist định dạng',
      chi_tiet:'Đối chiếu 9 unit của Module 5 với checklist Stage A, chỉ liệt kê chỗ lệch, không sửa.',
      tieu_chi:'Danh sách chỗ lệch, mỗi mục có unit và dòng.',
-     tt:'cho_chot',phan_hoi:'',ket:'',link:'',nk:['07:05 · đề xuất từ checklist định dạng']},
+     tt:'da_chot',phan_hoi:'',ket:'',link:'',nk:['07:05 · lập từ kế hoạch']},
     {id:'t-0149',mang:'elearn',ngay:'2026-09-18',han:'Hôm nay',lan:0,
      tieu_de:'Đóng gói lại module-04-scorm.zip sau khi fix',
      chi_tiet:'Nén lại module-04 thành gói SCORM, đặt tên theo ngày.',
@@ -645,28 +619,11 @@ const SEED=()=>({
   ],
   hoi:{id:'q-31',task_id:'t-0149',
     cau_hoi:'Module 4 đang có hai bản đã đóng gói. Dùng bản nào làm gốc để đóng gói lại?',
-    pa:['module-04-scorm.zip','Module 4 Test Coding v2','Để tôi xem đã'],tl:null},
-  meals:[
-    {id:1,ten:'Phở bò tái',icon:'🍜',gram:450,gio:'07:20',kcal100:115,pro100:6.5},
-    {id:2,ten:'Ức gà + cơm gạo lứt',icon:'🍗',gram:330,gio:'12:10',kcal100:200,pro100:14.8}
-  ],
-  tuan:[2050,1890,2310,2180,1720,2240], mt:{kcal:2200,pro:150}
+    pa:['module-04-scorm.zip','Module 4 Test Coding v2','Để tôi xem đã'],tl:null}
 });
-const MENU=[
-  {ten:'Phở bò tái',icon:'🍜',gram:450,kcal100:115,pro100:6.5},
-  {ten:'Ức gà luộc',icon:'🍗',gram:150,kcal100:165,pro100:31},
-  {ten:'Cơm gạo lứt',icon:'🍚',gram:180,kcal100:111,pro100:2.6},
-  {ten:'Sữa chua Hy Lạp',icon:'🥛',gram:150,kcal100:59,pro100:10},
-  {ten:'Trứng gà',icon:'🥚',gram:110,kcal100:155,pro100:13},
-  {ten:'Chuối',icon:'🍌',gram:120,kcal100:89,pro100:1.1}
-];
 let S=SEED(), toastT=null;
 
 /* ══════════ TÍNH ══════════ */
-const kcalOf=m=>Math.round(m.gram*m.kcal100/100);
-const proOf =m=>Math.round(m.gram*m.pro100/100);
-const tongKcal=()=>S.meals.reduce((a,m)=>a+kcalOf(m),0);
-const tongPro =()=>S.meals.reduce((a,m)=>a+proOf(m),0);
 const byMang=k=>k?S.tasks.filter(t=>t.mang===k):S.tasks;   // không truyền phòng = cả ngày
 const dem=(k,tt)=>byMang(k).filter(t=>Array.isArray(tt)?tt.includes(t.tt):t.tt===tt).length;
 
@@ -706,7 +663,9 @@ const dangLam=k=>(k?byMang(k):S.tasks)
 const daGhi=k=>dem(k,['da_ghi']);
 const choGhi=k=>dem(k,['da_duyet']);
 const treHan=k=>(k?byMang(k):S.tasks).filter(t=>t.tre&&!NHAN[t.tt]?.het).length;
-const laTon=t=>t.ngay<HOM_NAY&&!NHAN[t.tt]?.het;
+const laTon=t=>t.ngay<HOM_NAY&&!NHAN[t.tt]?.het&&t.tt!=='da_duyet';
+/* Xong với sếp: đã duyệt (chỉ còn chờ ghi), đã ghi, hoặc bỏ. */
+const laXong=t=>['da_duyet','da_ghi','bo'].includes(t.tt);
 const viecTon=()=>S.tasks.filter(laTon);
 const xongHet=()=>S.tasks.some(t=>['da_duyet','da_ghi'].includes(t.tt));
 /* Chốt ngày được khi không còn việc chờ bạn, và có việc đã duyệt đang chờ ghi. */
@@ -714,7 +673,6 @@ const chotDuoc=()=>choSep()===0&&choGhi()>0;
 
 /* Chỉ còn BA trạng thái cho văn phòng neon. */
 function trangThai(k){
-  if(k==='food') return S.meals.length ? 'xong' : 'lam';
   if(choSep(k))                                   return 'duyet';
   if(dangLam(k))                                  return 'lam';
   if(daGhi(k)||choGhi(k))                         return 'xong';
@@ -752,7 +710,6 @@ function go(man,opt={}){
   S.man=man;
   if(opt.loc!==undefined) S.locDe=opt.loc;
   if(opt.task!==undefined) S.taskId=opt.task;
-  if(opt.meal!==undefined) S.mealId=opt.meal;
 
   // Cho viên trượt bay NGAY, rồi mới dựng thân màn ở khung hình sau. Dựng màn Nhà
   // tốn hàng chục mili giây trên điện thoại; làm trước thì nó nuốt mất mấy khung hình
@@ -844,15 +801,6 @@ function chayLenhLam(){
   };
   setTimeout(buoc,800);
 }
-function themBua(mon){
-  S.meals.push({id:Date.now(),ten:mon.ten,icon:mon.icon,gram:mon.gram,
-    gio:new Date().toTimeString().slice(0,5),kcal100:mon.kcal100,pro100:mon.pro100});
-  toast('Agent đoán: '+mon.ten+' ~'+mon.gram+'g'); go('food');
-}
-function doiGram(d){
-  const m=S.meals.find(x=>x.id===S.mealId); if(!m) return;
-  m.gram=Math.max(20,m.gram+d); render();
-}
 
 /* ══════════ VẼ VĂN PHÒNG NEON ══════════ */
 const BAN_VT=[[-28,-10],[6,-14],[-2,8]];   // ba bàn mỗi phòng, không che nhau
@@ -865,16 +813,13 @@ const NV3={
   elearn:[{ao:'#8F8CE0',toc:'#1E1A16',da:'#EFD2AE',bui:0},{ao:'#B9B6F0',toc:'#3A2A1E',da:'#D7AC83',bui:1},
        {ao:'#A3A0E8',toc:'#4C3524',da:'#F2D9B8',bui:0}],
   biz:[{ao:'#E08A93',toc:'#2A1D18',da:'#F2D6B6',bui:0},{ao:'#F5B3AC',toc:'#503523',da:'#DDB68F',bui:1},
-       {ao:'#EA9E9E',toc:'#1C1512',da:'#E8C49C',bui:0}],
-  food:[{ao:'#E0B871',toc:'#221A12',da:'#EED2AC',bui:0},{ao:'#F2D5A4',toc:'#453020',da:'#D9AF86',bui:1},
-       {ao:'#E9C78B',toc:'#38271A',da:'#F0D4AF',bui:0}]
+       {ao:'#EA9E9E',toc:'#1C1512',da:'#E8C49C',bui:0}]
 };
 /* icon riêng từng phòng, đặt trong biển tên */
 const ICON_PHONG={
   lab:'<path d="M-2.6 -4v3.4L-5.4 4a1 1 0 0 0 .9 1.4h9a1 1 0 0 0 .9-1.4L2.6 -.6V-4"/><path d="M-3.8 -4h7.6"/>',
   elearn:'<path d="M-5 -4.2h4.2a1.6 1.6 0 0 1 1.6 1.6v7a1.3 1.3 0 0 0-1.3-1.3H-5z"/><path d="M5 -4.2H.8A1.6 1.6 0 0 0-.8 -2.6v7a1.3 1.3 0 0 1 1.3-1.3H5z"/>',
   biz:'<path d="M-5 4.6h10"/><path d="M-3 4.6v-4M0 4.6v-7M3 4.6v-9.4"/>',
-  food:'<path d="M0 -2.6c1.6-3 5-2.4 5 .6 0 3.4-3.4 6-5 6.6-1.6-.6-5-3.2-5-6.6 0-3 3.4-3.6 5-.6z"/><path d="M0 -2.6v-2.4"/>',
   /* Mảng mới chưa vẽ hình riêng thì dùng hình này, đừng để ra ô trống. */
   _chung:'<rect x="-4.4" y="-4.4" width="8.8" height="8.8" rx="2.2"/><path d="M-1.8 0h3.6"/>'
 };
@@ -891,10 +836,7 @@ const CAY={
     stroke-linecap="round"/>`).join('')+`<circle cx="0" cy="-1.6" r="1.2" fill="#2F8A5C"/>`,
   biz:[[-2.4,-7.2],[-.8,-9.4],[.9,-8.6],[2.4,-6.6]].map(([x,y])=>
     `<path d="M${x} -1.2 q${(x*.2).toFixed(2)} ${((y+1.2)/2).toFixed(1)} ${(x*.35).toFixed(2)} ${(y+1.2).toFixed(1)}
-      q${(-x*.35).toFixed(2)} ${(-(y+1.2)*.55).toFixed(1)} ${(-x*.42).toFixed(2)} ${(-(y+1.2)).toFixed(1)}" fill="#3E9E68"/>`).join(''),
-  food:`<path d="M-.5 -1.4 v-4.4" stroke="#7A5A38" stroke-width="1.1"/>
-    <circle cx="-2" cy="-6.4" r="2.5" fill="#4FBE7E"/><circle cx="1.8" cy="-7.2" r="2.9" fill="#3FA36A"/>
-    <circle cx=".2" cy="-9.4" r="2.3" fill="#5ACD8B"/><circle cx="2.6" cy="-4.6" r="1.9" fill="#54C485"/>`
+      q${(-x*.35).toFixed(2)} ${(-(y+1.2)*.55).toFixed(1)} ${(-x*.42).toFixed(2)} ${(-(y+1.2)).toFixed(1)}" fill="#3E9E68"/>`).join('')
 };
 /* Mảng mới chưa vẽ cây riêng thì mượn cây của Lab — đừng để SVG in ra chữ "undefined". */
 const chau=k=>`<g><ellipse cx="0" cy="5.4" rx="4.4" ry="1.8" fill="#000" opacity=".3"/>${CAY[k]||CAY.lab}
@@ -969,7 +911,7 @@ function bienTen(k,cx,y){
 }
 /* huy hiệu trạng thái nổi trên nóc — chỉ "cần duyệt" được phép động mạnh */
 function huyHieu(k,cx,y){
-  const tt=trangThai(k), P=PING[tt], R=13, so = k==='food' ? 0 : choDuyet(k);
+  const tt=trangThai(k), P=PING[tt], R=13, so = choDuyet(k);
   let tr;
   if(tt==='xong') tr=`<path d="M-5 .4 L-1.4 4 L5.2 -3.2" fill="none" stroke="${P.mau}"
     stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
@@ -1018,18 +960,18 @@ function luong(VT){
     + '</g>';
 }
 /* Bốn mốc đầu giữ đúng tọa độ cũ để bố cục quen mắt không xê dịch. Quá bốn sàn thì
-   nối dài xuống, so le trái phải như cũ. Dinh dưỡng luôn đứng cuối. */
+   nối dài xuống, so le trái phải như cũ. */
 const MOC_SAN=[[104,118],[256,236],[104,372],[252,494]];
 function sanVT(){
-  return [...mangHienThi(),'food'].map((k,i)=>{
+  return mangHienThi().map((k,i)=>{
     const [x,y]=MOC_SAN[i]||[i%2?254:104, 494+(i-3)*124];
     return {k,x,y};
   });
 }
 function vanPhong(){
-  const VT=sanVT(), cao=Math.max(580, VT[VT.length-1].y+86);
+  const VT=sanVT(), cao=Math.max(580, (VT.at(-1)?.y||0)+86);
   return `<svg viewBox="0 0 361 ${cao}" class="scene" xmlns:xlink="http://www.w3.org/1999/xlink" role="img"
-    aria-label="Bốn phòng ban neon nối nhau bằng luồng sáng. Chạm một phòng để vào.">
+    aria-label="Các phòng ban neon nối nhau bằng luồng sáng. Chạm một phòng để vào.">
     <defs>
       <filter id="glow" x="-70%" y="-70%" width="240%" height="240%">
         <feGaussianBlur stdDeviation="3" result="b"/>
@@ -1115,14 +1057,15 @@ const theHoi=()=>`<div class="qcard"><div class="qh">◆ Cần bạn trả lời
 
 function manPhong(){
   const k=S.locDe;
-  if(k==='food') return manFood();
-  const ton=viecTon();
   // Câu hỏi chỉ hiện khi việc của nó còn chờ bạn.
   const viecHoi=S.tasks.find(t=>t.id===S.hoi.task_id);
   const hoiCho=!!viecHoi&&dangVuong(viecHoi);
+  // Việc xong (đã duyệt, đã ghi, bỏ) không nằm trong khối phòng — gom hết xuống cuối.
+  // Trên đầu mỗi phòng: việc chờ bạn, rồi việc hôm nay, rồi việc khác.
+  const diem=t=>(NHAN[t.tt]?.cho||canBanSua(t)||dangVuong(t)?0:2)+(t.ngay===HOM_NAY?0:1);
+  const ton=viecTon().sort((a,b)=>diem(a)-diem(b));
   const khoi=(m)=>{
-    const l=byMang(m).filter(t=>!laTon(t)).sort((a,b)=>
-      (NHAN[b.tt]?.cho?1:0)-(NHAN[a.tt]?.cho?1:0));
+    const l=byMang(m).filter(t=>!laTon(t)&&!laXong(t)).sort((a,b)=>diem(a)-diem(b));
     if(!l.length) return '';
     return `<div class="grp" id="kh-${m}" style="color:${NEON[m].c}">${TEN[m]}
         <span>${choSep(m)?choSep(m)+' chờ bạn':'không cần bạn'}</span></div>
@@ -1131,7 +1074,7 @@ function manPhong(){
   const dsPhong=k?khoi(k):mangHienThi().map(khoi).join('');
   // Skill báo cáo chốt: việc cần sếp sửa ghi riêng, kèm lý do chạm trần.
   const canSua=S.tasks.filter(t=>canBanSua(t)&&!laTon(t));
-  const daGhiDs=S.tasks.filter(t=>t.tt==='da_ghi');
+  const xongDs=byMang(k).filter(laXong).sort((a,b)=>(b.ngay||'').localeCompare(a.ngay||''));
   return {back:'office',
     head:`<h1>${k?TEN[k]:'Việc'}</h1><span class="sub">${S.dangTai?'đang tải…':choSep()?choSep()+' chờ bạn':'đã xử lý hết'}</span>
       ${S.nguon==='that'?`<button class="kh" data-tailai="1" aria-label="Cập nhật dữ liệu" title="Cập nhật">${sv('taiLai')}</button>`:''}`,
@@ -1147,10 +1090,8 @@ function manPhong(){
       ${!k&&canSua.length?`<div class="grp" style="color:var(--bad)">Cần bạn sửa
         <span>đã trả lại ${TRAN_LAM_LAI} lần</span></div>${canSua.map(t=>theTask(t,true)).join('')}`:''}
       ${dsPhong}
-      ${!k&&daGhiDs.length?`<button class="plink" data-go="ketqua" style="margin:4px 0">
-        <span><b>Đã ghi vào file gốc · ${daGhiDs.length} việc</b><span style="font-size:12.5px;color:var(--mut)">
-        ${daGhiDs.map(t=>t.tieu_de).join(' · ')}</span></span>
-        <span style="font-size:19px;color:var(--mut)">›</span></button>`:''}
+      ${xongDs.length?`<div class="grp" style="color:var(--ok)">Đã xong
+        <span>${xongDs.length} việc</span></div>${xongDs.map(t=>theTask(t,true)).join('')}`:''}
       ${chotDuoc()?`<div class="btnrow" style="margin-top:auto;padding-top:6px">
         <button class="btn pri" data-chot="1">Chốt ngày · ghi ${choGhi()} việc vào file gốc</button></div>`
         :choSep()?`<div class="fld" style="margin-top:auto"><div class="tx" style="font-size:13.5px;color:var(--mut)">
@@ -1245,7 +1186,7 @@ async function khBat(id){
   try{
     await NG().suaKeHoach(id,{bat:moi});
     k.bat=moi; render();
-    toast(moi?'Đã bật lại':'Đã tạm ngưng · /report sẽ bỏ qua việc này');
+    toast(moi?'Đã bật lại':'Đã tạm ngưng · /lam sẽ bỏ qua việc này');
   }catch(e){ toast('Không đổi được: '+e.message,true); }
 }
 
@@ -1335,7 +1276,7 @@ function daiNgay(){
 }
 
 /* ══════════ MÀN KẾ HOẠCH TUẦN ══════════
-   Bảng sếp tự ghi; `/report` mỗi sáng đọc nó rồi lập phiếu việc. Bố cục "một dòng một
+   Bảng sếp tự ghi; `/lam` đọc nó, lập phiếu rồi làm luôn — ghi vào đây là đã chốt. Bố cục "một dòng một
    việc": ô gõ nằm SẴN trên đầu, không phải mở màn nào khác — vì sếp ghi bằng điện thoại,
    mà gõ trên điện thoại thì chậm, thêm một bước nữa là thêm một lý do để không ghi. */
 const TEN_THU={2:'T2',3:'T3',4:'T4',5:'T5',6:'T6',7:'T7',8:'CN'};
@@ -1492,58 +1433,6 @@ function manTask(){
       </div>
       ${nut}`};
 }
-function vong(val,max,mau,nhan,don){
-  const R=42,C=2*Math.PI*R,p=Math.min(1,val/max);
-  return `<div class="ringbox"><svg viewBox="0 0 104 104" width="104" height="104"
-      role="img" aria-label="${val} trên ${max} ${nhan}">
-    <circle cx="52" cy="52" r="${R}" fill="none" stroke="#1D2635" stroke-width="10"/>
-    <circle cx="52" cy="52" r="${R}" fill="none" stroke="${mau}" stroke-width="10" stroke-linecap="round"
-      stroke-dasharray="${(C*p).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 52 52)"/>
-    <text x="52" y="50" text-anchor="middle" font-family="Nunito,sans-serif" font-size="25"
-      font-weight="900" fill="#E9EFF8">${val}</text>
-    <text x="52" y="68" text-anchor="middle" font-family="Nunito,sans-serif" font-size="12"
-      font-weight="700" fill="#8A99AE">/ ${max}${don}</text>
-  </svg><div class="cap">${nhan}</div></div>`;
-}
-function manFood(){
-  const m=S.mealId?S.meals.find(x=>x.id===S.mealId):null;
-  if(m) return {back:'food',head:`<h1>${m.ten}</h1><span class="sub">${m.gio}</span>`,
-    body:`<div class="fld"><div class="lb">Agent ước lượng</div>
-      <div class="tx">Nhận ra <b>${m.ten}</b>, ước khoảng ${m.gram}g. Tra bảng món:
-      ${m.kcal100} kcal và ${m.pro100}g protein trên 100g.</div></div>
-      <div class="fld"><div class="lb">Khẩu phần thật · sửa nếu đoán lệch</div>
-        <div class="gramrow"><button data-gram="-50">−</button>
-          <div class="v">${m.gram} g</div><button data-gram="50">+</button></div></div>
-      <div class="stats">
-        <div class="stat1"><div class="n" style="color:var(--food)">${kcalOf(m)}</div><div class="l">calo</div></div>
-        <div class="stat1"><div class="n" style="color:var(--ok)">${proOf(m)}g</div><div class="l">protein</div></div></div>
-      <div class="fld"><div class="lb">Ghi chú</div><div class="tx" style="font-size:13.5px;color:var(--mut)">
-        Mỗi lần bạn sửa gram, agent ghi lại làm mốc khẩu phần thật của bạn cho món này.</div></div>
-      <div class="btnrow" style="margin-top:auto"><button class="btn pri" data-go="food">Xong</button></div>`};
-  const hnay=tongKcal(), tuan=S.tuan.concat([hnay]), mx=Math.max(2400,...tuan);
-  const cot=tuan.map((v,i)=>{const h=Math.round(v/mx*78);
-    return `<rect x="${38+i*43}" y="${104-h}" width="32" height="${h}" rx="5" fill="var(--food)"
-      opacity="${i===6?'.45':'1'}"/>`;}).join('');
-  const yMt=104-Math.round(S.mt.kcal/mx*78);
-  return {back:'office',head:`<h1 style="color:var(--food)">Dinh dưỡng</h1>
-      <span class="sub">${S.meals.length} bữa hôm nay</span>`,
-    body:`<div class="rings">${vong(tongKcal(),S.mt.kcal,'var(--food)','kcal','')}
-        ${vong(tongPro(),S.mt.pro,'var(--ok)','protein',' g')}</div>
-      <button class="cam" data-cam="1"><div class="ic">📷</div>
-        <div class="tx">Chụp bữa ăn · agent đoán món và gram</div></button>
-      ${S.meals.map(x=>`<button class="meal" data-meal="${x.id}"><div class="th2">${x.icon}</div>
-        <div><span class="nm">${x.ten}</span><div class="sub">~${x.gram}g · ${x.gio}</div></div>
-        <div class="kc">${kcalOf(x)}</div></button>`).join('')}
-      <svg viewBox="0 0 340 126" style="width:100%;height:auto;margin-top:auto" role="img"
-        aria-label="Calo bảy ngày so với mục tiêu ${S.mt.kcal}">
-        <line x1="34" y1="${yMt}" x2="338" y2="${yMt}" stroke="var(--bad)" stroke-width="1.3" stroke-dasharray="4 4"/>
-        <text x="0" y="${yMt+4}" font-family="Nunito,sans-serif" font-size="11" font-weight="800"
-          fill="var(--bad)">${S.mt.kcal}</text>${cot}
-        <line x1="34" y1="104" x2="338" y2="104" stroke="#242E3F" stroke-width="1"/>
-        <g font-family="Nunito,sans-serif" font-size="12" font-weight="700" fill="#8A99AE" text-anchor="middle">
-          ${['T2','T3','T4','T5','T6','T7','CN'].map((d,i)=>`<text x="${54+i*43}" y="121">${d}</text>`).join('')}</g>
-      </svg>`};
-}
 function manLab(){
   const t=S.tasks.find(x=>x.id==='t-0150'), co=t&&['cho_duyet','da_duyet','da_ghi'].includes(t.tt);
   return {back:'phong',head:`<h1 style="color:var(--lab)">Lab chiều</h1>
@@ -1688,12 +1577,7 @@ function boiCanh(){
     da_xong_hoac_bo: S.tasks.filter(t=>['bo','da_ghi'].includes(t.tt)).length,
     ke_hoach: S.kehoach.map(k=>({mang:TEN[k.mang]||k.mang, viec:k.viec,
       ngay:k.ngay||null, lap_moi_tuan:!k.ngay, dang_bat:k.bat})),
-    cau_hoi_agent: S.hoi.tl ? null : {hoi:S.hoi.cau_hoi, phuong_an:S.hoi.pa},
-    dinh_duong: {
-      da_an_kcal: tongKcal(), muc_tieu_kcal: S.mt.kcal,
-      da_an_protein: tongPro(), muc_tieu_protein: S.mt.pro,
-      cac_bua: S.meals.map(m=>({ten:m.ten, gram:m.gram, gio:m.gio, kcal:kcalOf(m)}))
-    }
+    cau_hoi_agent: S.hoi.tl ? null : {hoi:S.hoi.cau_hoi, phuong_an:S.hoi.pa}
   };
 }
 
@@ -1726,7 +1610,7 @@ function cuaSoChat(){
   const tin = S.chatTin.length
     ? S.chatTin.map(m=>`<div class="m ${m.ai==='toi'?'toi':m.ai==='loi'?'loi':'bot'}">${
         veChuChat(m.noi)}</div>`).join('')
-    : `<div class="m bot">Chào sếp. Tôi nắm được việc hôm nay, tình hình duyệt và số liệu ăn uống — hỏi gì cũng được.</div>`;
+    : `<div class="m bot">Chào sếp. Tôi nắm được việc hôm nay, tình hình duyệt và kế hoạch — hỏi gì cũng được.</div>`;
   return `<div class="nen" data-chat="dong"></div>
     <div class="sheet">
       <div class="sh"><b>Hỏi nhanh</b><span class="md">Gemini</span>
@@ -1761,7 +1645,6 @@ function thanhDuoi(){
       <span class="glider"></span>
       ${tab('office','nha','Nhà',0)}
       ${tab('phong','viec','Việc',cd)}
-      ${tab('food','an','Ăn',0)}
       ${tab('kehoach','kh','Kế hoạch',0)}
     </div>
     <span class="cho-robot" aria-hidden="true"></span>
@@ -1913,7 +1796,6 @@ function manHienTai(){
   if(S.man==='office')  return manOffice();
   if(S.man==='phong')   return manPhong();
   if(S.man==='task')    return manTask();
-  if(S.man==='food')    return manFood();
   if(S.man==='dangnhap')return manDangNhap();
   if(S.man==='lab')     return manLab();
   if(S.man==='kehoach') return manKeHoach();
@@ -2041,7 +1923,7 @@ document.getElementById('dev').addEventListener('click',e=>{
 
   const p=e.target.closest('.phong');
   if(p){const k=p.dataset.p;
-    if(k==='food') go('food',{loc:'food',meal:null}); else go('phong',{loc:k}); return;}
+    go('phong',{loc:k}); return;}
   const t=e.target.closest('[data-task]'); if(t){go('task',{task:t.dataset.task}); return;}
   const pa=e.target.closest('[data-pa]'); if(pa){traLoi(pa.dataset.pa); return;}
   if(e.target.closest('[data-patu]')){
@@ -2069,9 +1951,6 @@ document.getElementById('dev').addEventListener('click',e=>{
       giao_lai:'Đã giao lại cho agent · bộ đếm làm lại về 0'};
     duyetTask(S.taskId,act.dataset.act,NH[act.dataset.act]); return;}
   if(e.target.closest('[data-duyet]')){duyetPhong(); return;}
-  const g=e.target.closest('[data-gram]'); if(g){doiGram(+g.dataset.gram); return;}
-  const me=e.target.closest('[data-meal]'); if(me){go('food',{meal:+me.dataset.meal}); return;}
-  if(e.target.closest('[data-cam]')){themBua(MENU[Math.floor(Math.random()*MENU.length)]); return;}
   const xm=e.target.closest('[data-xem]'); if(xm){ e.preventDefault(); moXem(xm.dataset.xem); return; }
   const ts=e.target.closest('[data-toast]'); if(ts){toast(ts.dataset.toast); return;}
   const bar=e.target.closest('[data-bar]');
@@ -2114,9 +1993,8 @@ document.getElementById('dev').addEventListener('click',e=>{
   if(v==='run'){chayLenhLam(); return;}
   if(v==='phieu'){go('phong',{loc:null}); return;}
   if(v==='phong'){go('phong',{loc:S.locDe}); return;}
-  if(v==='food'){go('food',{loc:'food',meal:null}); return;}
   if(v==='lab'){go('lab',{}); return;}
-  go(v,{loc:null,meal:null});
+  go(v,{loc:null});
 });
 document.getElementById('dev').addEventListener('input', e=>{
   if(e.target.id!=='pRange') return;

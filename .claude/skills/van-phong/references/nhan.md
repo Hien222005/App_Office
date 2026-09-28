@@ -6,8 +6,8 @@ Nguồn duy nhất: `agent/nhan.mjs`. File này chỉ giải thích; lệch nhau
 
 | Mã | Nhóm | Nghĩa | Chờ sếp? |
 |---|---|---|---|
-| `cho_chot` | kế hoạch | Agent đề xuất, chờ sếp chốt | **có** |
-| `da_chot` | kế hoạch | Sếp đã chốt, agent được làm | không |
+| `cho_chot` | kế hoạch | Việc cũ chờ sếp chốt · **không còn sinh ra từ 28/09** | **có** |
+| `da_chot` | kế hoạch | Lập từ Kế hoạch sếp ghi, agent được làm | không |
 | `bo` | kế hoạch | Sếp bỏ việc | không · kết thúc |
 | `dang_lam` | làm | Agent đang làm trong bản nháp | không |
 | `cho_duyet` | kết quả | Xong, qua soát, chờ sếp xem link sản phẩm | **có** |
@@ -31,7 +31,8 @@ nên agent không thể quên đánh dấu:
 
 | Người | Từ | Sang |
 |---|---|---|
-| Sếp | `cho_chot` | `da_chot` · `bo` |
+| Sếp | `cho_chot` (việc cũ) | `da_chot` · `bo` |
+| Lệnh `phieu` | Kế hoạch | `da_chot` |
 | Sếp | `cho_duyet` | `da_duyet` · `da_chot` (trả lại) · `bo` |
 | Sếp | `dang_lam` | `bo` |
 | Agent | `da_chot` | `dang_lam` |
